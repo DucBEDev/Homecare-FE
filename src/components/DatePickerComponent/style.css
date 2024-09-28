@@ -1,0 +1,80 @@
+.ant-picker-header {
+  font-size: 20px;
+  color: black;
+}
+
+.ant-picker-input {
+  margin-left: 2px;
+}
+
+.ant-picker-content tbody {
+  font-size: 40px;
+}
+
+.ant-picker-content thead {
+  font-size: 34px;
+}
+
+.ant-space-item p {
+  font-size: 14px;
+}
+
+.ant-picker svg{
+  color: #222;
+  width: 12px;
+  height: auto;
+  margin-left: -18px;
+}
+
+.ant-picker-suffix {
+  font-size: 30px;
+  margin-right: 2px;
+}
+
+.ant-picker-clear {
+  font-size: 30px;
+  margin-top: 8px;
+  margin-right: 2px;
+}
+
+/* style.css */
+
+/* Default styles for the date picker panel */
+
+.ant-picker-panel-container {
+  padding: 10px; /* Default padding */
+}
+
+.ant-picker-panel {
+  font-size: 14px; /* Default font size */
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .ant-picker-dropdown {
+    width: 300px; /* Full width on smaller screens */
+  }
+
+  .ant-picker-panel-container {
+    padding: 5px; /* Less padding on smaller screens */
+  }
+
+  .ant-picker-panel {
+    font-size: 12px; /* Smaller font size on smaller screens */
+  }
+}
+
+/* Responsive styles for very small screens */
+@media (max-width: 480px) {
+  .ant-picker-dropdown {
+    width: 300px; /* Full width on very small screens */
+  }
+
+  .ant-picker-panel-container {
+    padding: 2px; /* Minimal padding on very small screens */
+  }
+
+  .ant-picker-panel {
+    font-size: 10px; /* Even smaller font size on very small screens */
+  }
+}

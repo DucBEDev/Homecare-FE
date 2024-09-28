@@ -1,0 +1,41 @@
+.filter-col-responsive {
+    margin-left: 30px;
+}
+
+@media (max-width: 1200px) {
+    .filter-col-responsive {
+        margin-top: 30px;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 992px) {
+
+    .filter-col-responsive {
+        margin-top: 14px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-col-responsive {
+        margin-left: -40px;
+    }
+
+    .date-picker-text {
+        display: none;
+    }
+}
+
+@media (max-width: 576px) {
+    .filter-col-responsive {
+        margin-left: -26px;
+    }
+}
+
+@media (max-width: 992px) {
+    .ButtonInputSearch {
+        margin-top: 10px !important;
+        margin-right: 60px;
+    }
+
+}
