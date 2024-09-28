@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Pagination, Table } from "antd";
 import "./styleTable.css";
 import axios from "axios";
-import HeadOrderPage from "./HeadOrderPage";
 
 const columns = [
   {
@@ -222,7 +221,24 @@ const data = [
 const PendingOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
+  // const [loading, setLoading] = useState(true);
+  // const [data, setData] = useState([]);
   const pageSize = 6;
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await axios.get('YOUR_API_ENDPOINT_HERE');
+  //       setData(response.data);
+  //       setLoading(false);
+  //     } catch (error) {
+  //       console.error('Error fetching data:', error);
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, []);
 
   const getCurrentPageData = useCallback(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -233,7 +249,7 @@ const PendingOrders = () => {
     if (!searchValue) {
       setFilteredData(data);
     } else {
-      const filtered = data.filter(item => 
+      const filtered = data.filter((item) =>
         item[searchType].toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredData(filtered);
@@ -242,10 +258,10 @@ const PendingOrders = () => {
   };
 
   const handleFilterChange = (filterType) => {
-    if (filterType === 'all') {
+    if (filterType === "all") {
       setFilteredData(data);
     } else {
-      const filtered = data.filter(item => item.requestType === filterType);
+      const filtered = data.filter((item) => item.requestType === filterType);
       setFilteredData(filtered);
     }
     setCurrentPage(1);
@@ -255,7 +271,7 @@ const PendingOrders = () => {
     if (!dateRange[0] || !dateRange[1]) {
       setFilteredData(data);
     } else {
-      const filtered = data.filter(item => {
+      const filtered = data.filter((item) => {
         const itemDate = new Date(item.requestDate);
         return itemDate >= dateRange[0] && itemDate <= dateRange[1];
       });
@@ -266,12 +282,13 @@ const PendingOrders = () => {
 
   return (
     <div className="pending-orders-container">
-      <Table 
-        columns={columns} 
-        dataSource={getCurrentPageData()} 
+      <Table
+        columns={columns}
+        dataSource={getCurrentPageData()}
         onChange={onChange}
         className="custom-table"
-        pagination={false} 
+        // loading={loading}
+        pagination={false}
       />
       <Pagination
         align="center"
@@ -279,38 +296,16 @@ const PendingOrders = () => {
         total={filteredData.length}
         pageSize={pageSize}
         onChange={setCurrentPage}
-        style={{ 
-          marginTop: '16px',
-          position: 'fixed',
-          bottom: '10px',
-          left: '120px',
-          right: '120px'
-         }}
+        style={{
+          marginTop: "16px",
+          position: "fixed",
+          bottom: "10px",
+          left: "120px",
+          right: "120px",
+        }}
       />
     </div>
   );
 };
 
 export default PendingOrders;
-
-
-
-
-// const [loading, setLoading] = useState(true);
-
-// useEffect(() => {
-//   const fetchData = async () => {
-//     try {
-//       const response = await axios.get('YOUR_API_ENDPOINT_HERE');
-//       setData(response.data);
-//       setLoading(false);
-//     } catch (error) {
-//       console.error('Error fetching data:', error);
-//       setLoading(false);
-//     }
-//   };
-
-//   fetchData();
-// }, []);
-
-// const [data, setData] = useState([]);
