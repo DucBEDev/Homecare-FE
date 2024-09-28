@@ -279,7 +279,13 @@ const PendingOrders = () => {
         total={filteredData.length}
         pageSize={pageSize}
         onChange={setCurrentPage}
-        style={{ marginTop: '16px' }}
+        style={{ 
+          marginTop: '16px',
+          position: 'fixed',
+          bottom: '10px',
+          left: '120px',
+          right: '120px'
+         }}
       />
     </div>
   );

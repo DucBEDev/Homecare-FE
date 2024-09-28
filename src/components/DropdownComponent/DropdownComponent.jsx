@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DownOutlined } from "@ant-design/icons";
 import { Dropdown, Menu, Space } from "antd";
 import { DropdownLink } from "./index";
@@ -15,7 +15,10 @@ import "./style.css"
 
 const DropdownComponent = () => {
   const navigate = useNavigate();
-  const [selectedLabel, setSelectedLabel] = useState("Selectable");
+  const [selectedLabel, setSelectedLabel] = useState("Chưa xác định chi phí");
+  useEffect(() => {
+    navigate("pending");
+  }, [])
   // const [dataType, setDataType] = useState(dataTypeMapping['Item 3']); // Phân loại dữ liệu mặc định
 
   const handleMenuClick = (e) => {
