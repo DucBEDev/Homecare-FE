@@ -63,7 +63,7 @@ const DropdownSortComponent = () => {
     <Menu
       items={menuItems}
       selectable
-      defaultSelectedKeys={["3"]}
+      defaultSelectedKeys={["0"]}
       onClick={handleMenuClick}
     />
   );

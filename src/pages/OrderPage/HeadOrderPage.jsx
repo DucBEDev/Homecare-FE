@@ -6,35 +6,14 @@ import {
   WrapperActionCol,
 } from "./indexHead";
 import DropdownComponent from "../../components/DropdownComponent/DropdownComponent";
-import ButtonInputSearch from "../../components/ButtonInputSearch/ButtonInputSearch";
 import ButtonComponent from "../../components/ButtonComponent/ButtonComponent";
 import { FileExcelOutlined } from "@ant-design/icons";
 import DropdownSortComponent from "../../components/DropdownComponent/DropdownSortComponent";
 import DatePickerComponent from "../../components/DatePickerComponent/DatePickerComponent";
 import "./styleHead.css";
-import { useState } from "react";
+import InputComponent from "../../components/InputComponent/InputComponent";
 
-const HeadOrderPage = ({ onSearch, onFilterChange, onDateChange }) => {
-  const [searchType, setSearchType] = useState("phoneNumber");
-  const [searchValue, setSearchValue] = useState("");
-
-  const handleSearch = () => {
-    onSearch(searchType, searchValue);
-  };
-
-  const handleInputChange = (e) => {
-    setSearchValue(e.target.value);
-    onSearch(searchType, e.target.value);
-  };
-
-  const handleFilterChange = (value) => {
-    onFilterChange(value);
-  };
-
-  const handleDateChange = (dates) => {
-    onDateChange(dates);
-  };
-
+const HeadOrderPage = ({ onSearch }) => {
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
@@ -114,14 +93,7 @@ const HeadOrderPage = ({ onSearch, onFilterChange, onDateChange }) => {
           Tìm kiếm theo:
         </div>
         <WrapperFilterCol xl={6} lg={8} md={24} sm={24} xs={24}>
-          <DropdownSortComponent
-            onChange={(value) => setSearchType(value)}
-            options={[
-              { value: "phoneNumber", label: "Số điện thoại" },
-              { value: "requestType", label: "Loại yêu cầu" },
-              { value: "serviceType", label: "Loại dịch vụ" },
-            ]}
-          />
+          <DropdownSortComponent />
         </WrapperFilterCol>
 
         <WrapperFilterCol
@@ -133,15 +105,13 @@ const HeadOrderPage = ({ onSearch, onFilterChange, onDateChange }) => {
           sm={14}
           xs={24}
         >
-          <ButtonInputSearch
+          <InputComponent
             // style={{marginLeft: "-10px"}}
             size="large"
             placeholder="Tìm kiếm"
             textButton="Enter"
             bordered={true}
-            onChange={handleInputChange}
-            onClick={handleSearch}
-          ></ButtonInputSearch>
+          ></InputComponent>
         </WrapperFilterCol>
 
         <WrapperFilterCol
@@ -152,7 +122,7 @@ const HeadOrderPage = ({ onSearch, onFilterChange, onDateChange }) => {
           sm={14}
           xs={24}
         >
-          <DatePickerComponent onChange={handleDateChange} />
+          <DatePickerComponent />
         </WrapperFilterCol>
       </WrapperFilterRow>
     </>

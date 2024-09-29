@@ -58,6 +58,10 @@
     font-size: 14px;
 }
 
+.ant-pagination-item {
+    margin-top: 2px;
+}
+
 .ant-pagination-item a {
     margin-top: 8px;
 }
