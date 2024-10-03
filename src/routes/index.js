@@ -10,9 +10,12 @@ import SystemPage from "../pages/SystemPage/SystemPage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 
 // Import các component con của OrderPage
-import PendingOrders from "../pages/OrderPage/PendingOrders";
-import ProcessingOrders from "../pages/OrderPage/ProcessingOrders";
-import OrderHistory from "../pages/OrderPage/OrderHistory";
+import PendingOrders from "../pages/OrderPage/PartPage/PendingOrders";
+import ProcessingOrders from "../pages/OrderPage/PartPage/ProcessingOrders";
+import OrderHistory from "../pages/OrderPage/PartPage/OrderHistory";
+import ShowProcessingDetail from "../pages/OrderPage/PartPage/ShowProcessingDetail";
+import ShowHistoryDetail from "../pages/OrderPage/PartPage/ShowHistoryDetail";
+
 
 export const routes = [
     {
@@ -34,6 +37,7 @@ export const routes = [
               path: 'processing', // Route con cho đơn hàng cần xử lý
               page: ProcessingOrders,
               isShowHeader: true,
+              
             },
             {
               path: 'history',    // Route con cho lịch sử đơn hàng
@@ -41,6 +45,16 @@ export const routes = [
               isShowHeader: true,
             },
           ],
+    },
+    {//option procesing
+        path: '/order/processing/showProcessingDetail',
+        page: ShowProcessingDetail,
+        isShowHeader: true,
+    },
+    { //option history
+        path: '/order/history/showHistoryDetail',
+        page: ShowHistoryDetail,
+        isShowHeader: true,
     },
     {
         path: '/account',

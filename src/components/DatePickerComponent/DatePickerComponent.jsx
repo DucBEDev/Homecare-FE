@@ -45,7 +45,7 @@ const DatePickerComponent = () => {
         <Space direction="vertical" size={12}>
           <RangePicker
             style={{ color: "#000" }}
-            defaultValue={[today.startOf("day"), null]} // Ngày hôm nay từ đầu đến cuối
+            defaultValue={[today.startOf("day"), null]} // Ngày hôm nay từ đầu đến cuối         today.startOf("day")
             format={dateFormat}
             onChange={onDateChange} // Hàm được gọi khi chọn ngày
           />

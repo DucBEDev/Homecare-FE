@@ -1,5 +1,5 @@
 import React from "react";
-import HeadOrderPage from "./HeadOrderPage";  
+import HeadOrderPage from "./PartPage/HeadOrderPage";  
 import { Outlet } from "react-router-dom";
 
 

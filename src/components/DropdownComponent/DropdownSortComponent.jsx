@@ -3,28 +3,14 @@ import { DownOutlined } from "@ant-design/icons";
 import { Dropdown, Menu, Space } from "antd";
 import { DropdownLink } from "./index";
 
-// const dataTypeMapping = {
-//   'Item 1': 'pendingOrders',   // Đơn hàng chưa xác định
-//   'Item 2': 'processingOrders', // Đơn hàng chờ xử lý
-//   'Item 3': 'orderHistory'      // Lịch sử đơn hàng
-// };
 
-const DropdownSortComponent = () => {
+const DropdownSortComponent = ({onChange}) => {
   const [selectedLabel, setSelectedLabel] = useState("Tất cả");
-  // const [dataType, setDataType] = useState(dataTypeMapping['Item 3']); // Phân loại dữ liệu mặc định
 
   const handleMenuClick = (e) => {
-    // Tìm nhãn của mục đã chọn dựa trên key
     const item = menuItems.find((item) => item.key === e.key);
     if (item) {
-      setSelectedLabel(item.label); // Cập nhật nhãn đã chọn
-
-      // Lấy phân loại dữ liệu từ ánh xạ dựa trên nhãn
-      // const type = dataTypeMapping[label];
-      // setDataType(type);
-
-      // // Thực hiện yêu cầu hoặc thao tác dựa trên phân loại dữ liệu
-      // fetchDataByType(type);
+      setSelectedLabel(item.label);
     }
   };
 

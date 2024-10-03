@@ -13,15 +13,15 @@ const SearchComponent = ({ onSearch }) => {
 
   return (
     <Space>
-      <DropdownSortComponent onSelect={setSearchType} />
+      <DropdownSortComponent onChange={setSearchType} />
       <Input 
         placeholder="Nhập từ khóa" 
         value={keyword} 
-        onChange={(e) => setKeyword(e.target.value)}
+        // onChange={(e) => setKeyword(e.target.value)}
         style={{ width: 200 }}
       />
-      <DatePicker.RangePicker onChange={setDateRange} />
-      <Button type="primary" onClick={handleSearch}>
+      <DatePicker.RangePicker />
+      <Button type="primary" >
         Tìm kiếm
       </Button>
     </Space>
