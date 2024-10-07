@@ -1,5 +1,5 @@
 import DashBoard from "../pages/DashBoard/DashBoard"
-import OrderPage from "../pages/OrderPage/OrderPage"
+import OrderPage from "../pages/OrderPage/PartPage/MainOrder/OrderPage"
 import AccountPage from "../pages/AccountPage/AccountPage"
 import CustomerPage from "../pages/CustomerPage/CustomerPage"
 import FinancePage from "../pages/FinancePage/FinancePage"
@@ -10,11 +10,10 @@ import SystemPage from "../pages/SystemPage/SystemPage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 
 // Import các component con của OrderPage
-import PendingOrders from "../pages/OrderPage/PartPage/PendingOrders";
-import ProcessingOrders from "../pages/OrderPage/PartPage/ProcessingOrders";
-import OrderHistory from "../pages/OrderPage/PartPage/OrderHistory";
-import ShowProcessingDetail from "../pages/OrderPage/PartPage/ShowProcessingDetail";
-import ShowHistoryDetail from "../pages/OrderPage/PartPage/ShowHistoryDetail";
+import ProcessingOrders from "../pages/OrderPage/PartPage/ProcessingOrders/ProcessingOrders";
+import OrderHistory from "../pages/OrderPage/PartPage/HistoryOrders/OrderHistory";
+import ShowProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/ShowProcessingDetail";
+import ShowHistoryDetail from "../pages/OrderPage/PartPage/HistoryOrders/ShowHistoryDetail";
 
 
 export const routes = [
@@ -28,11 +27,6 @@ export const routes = [
         page: OrderPage,
         isShowHeader: true,
         children: [
-            {
-              path: 'pending',    // Route con cho đơn hàng chưa xác định chi phí
-              page: PendingOrders,
-              isShowHeader: true,
-            },
             {
               path: 'processing', // Route con cho đơn hàng cần xử lý
               page: ProcessingOrders,
@@ -51,9 +45,19 @@ export const routes = [
         page: ShowProcessingDetail,
         isShowHeader: true,
     },
+    {//option procesing
+        path: '/order/processing/editProcessingDetail',
+        page: ShowProcessingDetail,
+        isShowHeader: true,
+    },
     { //option history
         path: '/order/history/showHistoryDetail',
         page: ShowHistoryDetail,
+        isShowHeader: true,
+    },
+    {//option history
+        path: '/order/history/editHistoryDetail',
+        page: ShowProcessingDetail,
         isShowHeader: true,
     },
     {

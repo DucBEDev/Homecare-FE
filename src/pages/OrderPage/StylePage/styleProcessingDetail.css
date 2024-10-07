@@ -1,0 +1,39 @@
+.title-processing-detail {
+    margin-top: 64px;
+    font-weight: 600 !important;
+    font-style: oblique;
+}
+
+.ant-card-head {
+    min-height: 40px !important;
+}
+
+.ant-descriptions-item-label span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ant-descriptions-item-content span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.ant-card-head-title {
+    font-size: 14px;
+    color: #41A767;
+    font-weight: 600;
+}
+
+.ant-card-body {
+    padding: 0 !important;
+}
+
+/* banghai */
+
+.ant-table-thead .ant-table-cell {
+    font-size: 14px;
+}
+
+.ant-table-tbody .ant-table-cell {
+    font-size: 12px;
+}

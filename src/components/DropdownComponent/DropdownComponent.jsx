@@ -15,9 +15,9 @@ import "./style.css"
 
 const DropdownComponent = () => {
   const navigate = useNavigate();
-  const [selectedLabel, setSelectedLabel] = useState("Chưa xác định chi phí");
+  const [selectedLabel, setSelectedLabel] = useState("Đơn hàng cần xử lý");
   useEffect(() => {
-    navigate("pending");
+    navigate("processing");
   }, [])
   // const [dataType, setDataType] = useState(dataTypeMapping['Item 3']); // Phân loại dữ liệu mặc định
 
@@ -40,10 +40,6 @@ const DropdownComponent = () => {
   };
 
   const menuItems = [
-    {
-      key: "pending",
-      label: "Chưa xác định chi phí",
-    },
     {
       key: "processing",
       label: "Đơn hàng cần xử lý",

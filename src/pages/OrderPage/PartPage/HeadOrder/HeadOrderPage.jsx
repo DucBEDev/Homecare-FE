@@ -4,14 +4,14 @@ import {
   WrapperFilterRow,
   WrapperFilterCol,
   WrapperActionCol,
-} from "../StylePage/indexHead";
-import DropdownComponent from "../../../components/DropdownComponent/DropdownComponent";
-import ButtonComponent from "../../../components/ButtonComponent/ButtonComponent";
+} from "../../StylePage/indexHead";
+import DropdownComponent from "../../../../components/DropdownComponent/DropdownComponent";
+import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
 import { FileExcelOutlined } from "@ant-design/icons";
-import DropdownSortComponent from "../../../components/DropdownComponent/DropdownSortComponent";
-import DatePickerComponent from "../../../components/DatePickerComponent/DatePickerComponent";
-import "../StylePage/styleHead.css";
-import InputComponent from "../../../components/InputComponent/InputComponent";
+import DropdownSortComponent from "../../../../components/DropdownComponent/DropdownSortComponent";
+import DatePickerComponent from "../../../../components/DatePickerComponent/DatePickerComponent";
+import "../../StylePage/styleHead.css";
+import InputComponent from "../../../../components/InputComponent/InputComponent";
 
 const HeadOrderPage = ({ onSearch }) => {
   return (
