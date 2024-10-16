@@ -14,49 +14,54 @@ import ProcessingOrders from "../pages/OrderPage/PartPage/ProcessingOrders/Proce
 import OrderHistory from "../pages/OrderPage/PartPage/HistoryOrders/OrderHistory";
 import ShowProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/ShowProcessingDetail";
 import ShowHistoryDetail from "../pages/OrderPage/PartPage/HistoryOrders/ShowHistoryDetail";
+import AddOrder from "../pages/OrderPage/PartPage/AddOrder/AddOrder";
 
 
-export const routes = [
-    {
+export const routes = [{
         path: '/',
         page: DashBoard,
         isShowHeader: true
     },
     {
+        path: 'add',
+        page: AddOrder,
+        isShowHeader: true,
+    },
+    {
         path: '/order',
         page: OrderPage,
         isShowHeader: true,
-        children: [
-            {
-              path: 'processing', // Route con cho đơn hàng cần xử lý
-              page: ProcessingOrders,
-              isShowHeader: true,
-              
+        children: [{
+                path: 'processing', // Route con cho đơn hàng cần xử lý
+                page: ProcessingOrders,
+                isShowHeader: true,
+
             },
             {
-              path: 'history',    // Route con cho lịch sử đơn hàng
-              page: OrderHistory,
-              isShowHeader: true,
+                path: 'history', // Route con cho lịch sử đơn hàng
+                page: OrderHistory,
+                isShowHeader: true,
             },
-          ],
+            
+        ],
     },
-    {//option procesing
-        path: '/order/processing/showProcessingDetail',
+    { //option procesing
+        path: '/order/processing/showDetail',
         page: ShowProcessingDetail,
         isShowHeader: true,
     },
-    {//option procesing
-        path: '/order/processing/editProcessingDetail',
+    { //option procesing
+        path: '/order/processing/editDetail',
         page: ShowProcessingDetail,
         isShowHeader: true,
     },
     { //option history
-        path: '/order/history/showHistoryDetail',
+        path: '/order/history/showDetail',
         page: ShowHistoryDetail,
         isShowHeader: true,
     },
-    {//option history
-        path: '/order/history/editHistoryDetail',
+    { //option history
+        path: '/order/history/editDetail',
         page: ShowProcessingDetail,
         isShowHeader: true,
     },

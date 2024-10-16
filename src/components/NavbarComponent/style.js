@@ -7,11 +7,12 @@ export const StyledMenu = styled(Menu)
 `
   display: flex;
   flex-direction: column;
-  height: 100vh - 0px;
+  height: 800px;
   width: 100%;
   background-color: #f0f2f5;
   margin-top: 90px;
   color: #fff;
+  overflow: hidden;
 
   .ant-menu-item {
     display: flex !important;

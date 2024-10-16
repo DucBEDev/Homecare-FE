@@ -9,12 +9,12 @@
 }
 
 .ant-descriptions-item-label span {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
 }
 
 .ant-descriptions-item-content span {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -31,9 +31,9 @@
 /* banghai */
 
 .ant-table-thead .ant-table-cell {
-    font-size: 14px;
+    font-size: 14px !important;
 }
 
 .ant-table-tbody .ant-table-cell {
-    font-size: 12px;
+    font-size: 14px !important;
 }

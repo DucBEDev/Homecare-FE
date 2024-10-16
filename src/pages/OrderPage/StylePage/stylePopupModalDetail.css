@@ -1,0 +1,89 @@
+.popup-content {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.info-section {
+  background-color: #f8eeee;
+  padding: 18px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.helper-section {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 10px !important;
+  padding-right: 14px;
+  font-weight: 500;
+}
+
+.info-item span:first-child {
+  font-weight: 500;
+  color: #10ce70;
+}
+
+.assign-button {
+  background-color: #10ce80;
+  border-color: #10ce80;
+}
+
+.change-button {
+  background-color: #10ce80;
+  border-color: #10ce80;
+}
+
+.change-button:hover {
+  background-color: #fff !important;
+  color: #10ce80 !important;
+  border-color: #10ce80 !important;
+}
+
+.ant-select-selector {
+  background-color: #f0f0f0 !important;
+}
+
+.ant-modal-footer button {
+  background-color: #10ce80;
+  color: #fff;
+}
+
+.ant-modal-footer button:hover {
+  background-color: #fff !important;
+  color: #10ce80 !important;
+  border-color: #10ce80 !important;
+}
+
+.ant-select-item-option-content {
+  font-size: 14px !important;
+  color: #000 !important;
+}
+
+.ant-select-selection-item {
+  font-size: 14px !important;
+}
+
+.helper-section>div:first-child {
+  margin-top: -12px;
+  margin-bottom: 20px;
+}
+
+.ant-select-item-option-content {
+  font-size: 14px !important;
+  color: #000 !important;
+  margin-top: 4px !important;
+}
+
+.helper-section span:first-of-type{
+    font-size: 14px;
+    color: #10ce80;
+}
+

@@ -152,12 +152,12 @@ const ProcessingOrders = () => {
 
   const handleViewDetails = useCallback((recordId) => {
     console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/processing/showProcessingDetail`, { state: { id: recordId }  });
+    navigate(`/order/processing/showDetail`, { state: { id: recordId }  });
   }, [navigate]);
   
   const handleEditDetails = useCallback((recordId) => {
     console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/processing/editProcessingDetail`, { state: { id: recordId}  });
+    navigate(`/order/processing/editDetail`, { state: { id: recordId}  });
   }, [navigate]);
   
   const handleDeleteDetails = useCallback((recordId) => {
@@ -170,7 +170,7 @@ const ProcessingOrders = () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`);
         console.log({response});
-        const transformedData = response.data.updatedRecords.map((record, index) => {
+        const transformedData = response.data.records.map((record, index) => {
           let requestName = record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
           let statusNow = ""
             if (record.status === "notDone") {
@@ -188,10 +188,10 @@ const ProcessingOrders = () => {
           key: record._id,
           phoneNumber: record.customerInfo.phone,
           requestType: requestName,
-          serviceType: record.serviceTitle,
+          serviceType: record.service.title,
           requestDate: new Date(record.createdAt).toLocaleDateString(),
           address: record.location.district,
-          cost: `${record.negotiationCosts}đ`,
+          cost: `${record.totalCost}đ`,
           status: statusNow,
           }
         });

@@ -1,0 +1,29 @@
+.card {
+    margin-top: 90px;
+    margin-left: 20px;
+}
+
+#phone {
+    width: 100%;
+}
+
+.ant-form-item-explain-error {
+    margin-top: 4px;
+    font-size: 10px;
+}
+
+.ant-radio-wrapper span {
+    font-size: 12px;
+}
+
+.ant-form-item-control-input {
+    margin-top: -28;
+}
+
+.ant-select-selection-item {
+    font-size: 14px;
+}
+
+.ant-cascader-menu-item-content {
+    font-size: 14px;
+}

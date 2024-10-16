@@ -28,14 +28,6 @@ const DropdownComponent = () => {
     if (item) {
       setSelectedLabel(item.label); // Cập nhật nhãn đã chọn
       navigate(e.key);
-      
-
-      // Lấy phân loại dữ liệu từ ánh xạ dựa trên nhãn
-      // const type = dataTypeMapping[label];
-      // setDataType(type);
-
-      // // Thực hiện yêu cầu hoặc thao tác dựa trên phân loại dữ liệu
-      // fetchDataByType(type);
     }
   };
 

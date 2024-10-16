@@ -3,15 +3,52 @@ import { useLocation } from "react-router-dom";
 import { Card, Descriptions, Table, Button, Typography } from "antd";
 import "../../StylePage/styleProcessingDetail.css";
 import axios from "axios";
+import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
+import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
 
 const { Title } = Typography;
 
 const ShowProcessingDetail = () => {
   const location = useLocation();
   const { id } = location.state || {};
-  const [orderData, setOrderData] = useState(null);
+  const [orderData, setOrderData] = useState();
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [allHelpers, setAllHelpers] = useState([]);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedEditRecord, setSelectedEditRecord] = useState(null);
+
+  const showModal = (record) => {
+    setSelectedRecord(record);
+    setIsModalVisible(true);
+  };
+
+  const handleAssign = () => {
+    // Xử lý logic giao việc ở đây
+    console.log("Giao việc cho:", selectedRecord);
+    setIsModalVisible(false);
+  };
+
+
+
+  const showEditModal = (record) => {
+    setSelectedEditRecord(record);
+    setIsEditModalVisible(true);
+  };
+
+  const handleSaveEdit = (editedRecord) => {
+    // Update the timeSlots state with the edited record
+    setTimeSlots(prevTimeSlots =>
+      prevTimeSlots.map(slot =>
+        slot.key === editedRecord.key ? editedRecord : slot
+      )
+    );
+    setIsEditModalVisible(false);
+  };
 
   const columns = [
     { title: "Giờ Bắt Đầu", dataIndex: "gioBatDau", key: "gioBatDau" },
@@ -30,25 +67,29 @@ const ShowProcessingDetail = () => {
         console.log({ record }),
         (
           <>
-            <Button type="primary" size="small" style={{ marginRight: 8 }}>
+            <Button type="primary" size="small" style={{ marginRight: 8 }} onClick={() => showEditModal(record)}>
               Sửa
             </Button>
 
-            {record.haveHelper ? (
+            {record.trangThai === "Hoạt động" ? (
               <>
-                <Button size="small" style={{ marginRight: 8 }}>
+                <Button size="small" style={{ marginRight: 8 }} onClick={() => showModal(record)}>
                   Đổi NGV
                 </Button>
                 <Button type="primary" size="small" style={{ marginRight: 8 }}>
                   Hoàn Thành
                 </Button>
               </>
-            ): (
-              <Button danger size="small">
+            ) : (
+              <Button
+                type="primary"
+                size="small"
+                style={{ marginRight: 8, background: "#10ce80" }}
+                onClick={() => showModal(record)}
+              >
                 Giao việc
-              </Button>
-            )
-          }
+              </Button> 
+            )}
 
             <Button danger size="small">
               Xóa
@@ -65,9 +106,22 @@ const ShowProcessingDetail = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/admin/requests/detail/${id}`
         );
+        console.log(response);
         const { data } = response;
+
+        const helperData = data.helpers.map((helper) => ({
+          id: helper.helper_id,
+          fullName: helper.fullName,
+          phone: helper.phone,
+          dateOfBirth: helper.birthDate,
+          age: helper.age,
+          address: helper.address,
+          // Add any other relevant helper information
+        }));
+        setAllHelpers(helperData);
+
         let requestType =
-          data.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+          data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
         let statusNow = "";
         if (data.request.status === "notDone") {
           statusNow = "Chưa tiến hành";
@@ -81,22 +135,16 @@ const ShowProcessingDetail = () => {
           statusNow = "Đã hoàn thành";
         }
         setOrderData({
-          maSoDonHang: data.request._id,
           loaiYeuCau: requestType,
           hoTenKhachHang: data.request.customerInfo.fullName,
           soDTKhachHang: data.request.customerInfo.phone,
-          loaiDichVu: [data.request.service_id],
+          loaiDichVu: [data.request.service.title],
           diaChiYeuCau: `${data.request.location.province}, ${data.request.location.district}`,
           ngayDatYeuCau: new Date(data.request.orderDate).toLocaleDateString(
             "vi-VN"
           ),
           trangThai: statusNow,
-          chiPhiCoBan: `${data.objectRequestCost.baseCost.toLocaleString()} VND`,
-          chiPhiNgoaiGio: `${data.objectRequestCost.negotiationCosts.toLocaleString()} VND`,
-          tongChiPhi: `${(
-            data.objectRequestCost.baseCost +
-            data.objectRequestCost.negotiationCosts
-          ).toLocaleString()} VND`,
+          tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
         });
 
         setTimeSlots(
@@ -121,10 +169,13 @@ const ShowProcessingDetail = () => {
             ),
             nguoiGiupViec: helper.fullName, // Assuming this is the helper's ID
 
-            trangThai: helper.status,
+            trangThai:
+              helper.status === "active" ? "Hoạt động" : "Chưa hoạt động",
 
             //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
+            helperId: helper.helper_id,  
             haveHelper: helper.fullName ? true : false,
+
           }))
         );
 
@@ -148,47 +199,69 @@ const ShowProcessingDetail = () => {
         <>
           <Card title="Thông tin đơn hàng:" style={{ marginBottom: 24 }}>
             <Descriptions bordered>
-              <Descriptions.Item label="Mã Số Đơn Hàng">
-                {orderData.maSoDonHang}
-              </Descriptions.Item>
               <Descriptions.Item label="Loại Yêu Cầu">
-                {orderData.loaiYeuCau}
+                {orderData?.loaiYeuCau || "N/A"}{" "}
+                {/* Fallback to "N/A" if undefined */}
               </Descriptions.Item>
               <Descriptions.Item label="Họ Tên Khách Hàng">
-                {orderData.hoTenKhachHang}
+                {orderData?.hoTenKhachHang || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Số ĐT Khách Hàng">
-                {orderData.soDTKhachHang}
+                {orderData?.soDTKhachHang || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Loại Dịch Vụ">
-                {orderData.loaiDichVu.join(", ")}
+                {orderData?.loaiDichVu.join(", ") || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Địa Chỉ Yêu Cầu">
-                {orderData.diaChiYeuCau}
+                {orderData?.diaChiYeuCau || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Ngày Đặt Yêu Cầu">
-                {orderData.ngayDatYeuCau}
+                {orderData?.ngayDatYeuCau || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Trạng Thái">
-                {orderData.trangThai}
-              </Descriptions.Item>
-              <Descriptions.Item label="Chi Phí Cơ Bản">
-                {orderData.chiPhiCoBan}
-              </Descriptions.Item>
-              <Descriptions.Item label="Chi Phí Ngoài Giờ">
-                {orderData.chiPhiNgoaiGio}
+                {orderData?.trangThai || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Tổng Chi Phí">
-                {orderData.tongChiPhi}
+                {orderData?.tongChiPhi || "N/A"}
               </Descriptions.Item>
             </Descriptions>
           </Card>
-          <Card title="Thông tin chi tiết khung giờ của đơn hàng">
+          <Card
+            style={{ position: "relative" }}
+            title="Thông tin chi tiết khung giờ của đơn hàng"
+          >
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "75%",
+                background: "#10ce80",
+              }}
+              type="primary"
+              size="normal"
+            >
+              Giao việc dài hạn
+            </Button>
             <Table
               columns={columns}
               dataSource={timeSlots}
               pagination={false}
             />
+            <PopupModalDetail
+        isVisible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onAssign={handleAssign}
+        record={selectedRecord}
+        orderData={orderData}
+        allHelpers={allHelpers}
+      />
+      <PopupModalEdit
+      isVisible={isEditModalVisible}
+      onClose={() => setIsEditModalVisible(false)}
+      onSave={handleSaveEdit}
+      record={selectedEditRecord}
+      orderData={orderData}
+    />
           </Card>
         </>
       )}

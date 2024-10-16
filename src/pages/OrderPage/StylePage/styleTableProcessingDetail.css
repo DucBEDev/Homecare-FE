@@ -7,10 +7,6 @@
     font-size: 130px !important;
 }
 
-.ant-table-tbody span{
-    font-size: 12px !important;
-}
-
 .ant-table-content tr th {
     font-size: 16px;
     font-weight: 400 !important;
@@ -23,7 +19,7 @@
 }
 
 .ant-table-content tr th:first-of-type {
-    font-size: 14px ;
+    font-size: 14px;
 
 }
 
