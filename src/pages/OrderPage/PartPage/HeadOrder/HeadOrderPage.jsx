@@ -12,8 +12,32 @@ import DropdownSortComponent from "../../../../components/DropdownComponent/Drop
 import DatePickerComponent from "../../../../components/DatePickerComponent/DatePickerComponent";
 import "../../StylePage/styleHead.css";
 import InputComponent from "../../../../components/InputComponent/InputComponent";
+import { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setSearchValue } from "../../../../redux/slides/searchSlice";
+import { setDateRange } from "../../../../redux/slides/dateRangeSlice";
 
-const HeadOrderPage = ({ onSearch }) => {
+const HeadOrderPage = () => {
+  const dispatch = useDispatch();
+  const searchValue = useSelector((state) => state.search.value);
+  const dateRange = useSelector((state) => state.dateRange);
+
+  const handleInputChange = useCallback((value) => {
+    dispatch(setSearchValue(value));
+  }, [dispatch]);
+
+  const handleDateRangeChange = useCallback(
+    (dates) => {
+      dispatch(
+        setDateRange({
+          startDate: dates[0]?.format("DD-MM-YYYY"),
+          endDate: dates[1]?.format("DD-MM-YYYY"),
+        })
+      );
+    },
+    [dispatch]
+  );
+
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
@@ -52,7 +76,7 @@ const HeadOrderPage = ({ onSearch }) => {
               width: "120px",
               // marginLeft: "-10px",
             }} // Prop styleButton
-            styleButtonText={{ color: "#fff" }} // Prop styleButtonText
+            styleButtonText={{ color: "#fff" }}
           >
             <FileExcelOutlined />
           </ButtonComponent>
@@ -111,6 +135,8 @@ const HeadOrderPage = ({ onSearch }) => {
             placeholder="Tìm kiếm"
             textButton="Enter"
             bordered={true}
+            onChange={handleInputChange}
+            value={searchValue}
           ></InputComponent>
         </WrapperFilterCol>
 
@@ -122,7 +148,10 @@ const HeadOrderPage = ({ onSearch }) => {
           sm={14}
           xs={24}
         >
-          <DatePickerComponent />
+          <DatePickerComponent
+            onChange={handleDateRangeChange}
+            value={[dateRange.startDate, dateRange.endDate]}
+          />
         </WrapperFilterCol>
       </WrapperFilterRow>
     </>

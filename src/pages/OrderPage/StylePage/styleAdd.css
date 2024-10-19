@@ -27,3 +27,12 @@
 .ant-cascader-menu-item-content {
     font-size: 14px;
 }
+
+.ant-select-selection-placeholder {
+    font-size: 12px;
+}
+
+.ant-picker-time-panel-cell-inner {
+    font-size: 12px !important;
+    line-height: 1.4;
+}

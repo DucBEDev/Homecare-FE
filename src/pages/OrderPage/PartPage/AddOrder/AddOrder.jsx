@@ -4,7 +4,6 @@ import {
   Form,
   Input,
   Select,
-  Checkbox,
   Radio,
   DatePicker,
   TimePicker,
@@ -20,20 +19,20 @@ const { Option } = Select;
 
 const AddOrder = () => {
   const [requestType, setRequestType] = useState("short");
-  const [selectedDistrict, setSelectedDistrict] = useState('q1');
-  const [cityData, setCityData] = useState([]); 
+  const [selectedDistrict, setSelectedDistrict] = useState("q1");
+  const [cityData, setCityData] = useState([]);
 
   const [form] = Form.useForm();
 
   const validatePhoneNumber = (_, value) => {
     if (!value) {
-        return Promise.resolve(); // Nếu trống, trả về resolved mà không có lỗi
-      }
+      return Promise.resolve(); // Nếu trống, trả về resolved mà không có lỗi
+    }
     const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
     if (!phoneRegex.test(value)) {
       return Promise.reject("Số điện thoại không hợp lệ!");
     }
-    return Promise.resolve()
+    return Promise.resolve();
   };
   const handlePhoneChange = (e) => {
     const phoneNumber = e.target.value;
@@ -41,9 +40,9 @@ const AddOrder = () => {
   };
 
   const handleDistrictChange = (value) => {
-    console.log(value)
+    console.log(value);
     setSelectedDistrict(value);
-  }
+  };
 
   const onFinish = (values) => {
     console.log("Received values:", values);
@@ -57,37 +56,46 @@ const AddOrder = () => {
     };
 
     // Send data to backend
-    fetch('/your-backend-api-endpoint', {  // Replace with your actual endpoint
-      method: 'POST',
+    fetch("/your-backend-api-endpoint", {
+      // Replace with your actual endpoint
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(dataForBackend),
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Response from backend:', data);
-      // Handle successful response, e.g., show a success message, redirect, etc.
-      message.success('Order created successfully!'); // Assuming you are using Ant Design's message API
-    })
-    .catch(error => {
-      console.error('Error sending data to backend:', error);
-      // Handle error, e.g., show an error message
-      message.error('Failed to create order.');
-    });
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Response from backend:", data);
+        // Handle successful response, e.g., show a success message, redirect, etc.
+        message.success("Order created successfully!"); // Assuming you are using Ant Design's message API
+      })
+      .catch((error) => {
+        console.error("Error sending data to backend:", error);
+        // Handle error, e.g., show an error message
+        message.error("Failed to create order.");
+      });
+  };
+
+  const handleRequestType = (value) => {
+    if (value === "short") {
+      setRequestType("short");
+    } else {
+      setRequestType("long");
+    }
   };
 
   useEffect(() => {
     // Fetch city data (replace with your actual API endpoint)
-    fetch('/api/cities') // Example endpoint
-      .then(response => response.json())
-      .then(data => setCityData(data))
-      .catch(error => console.error("Error fetching city data:", error));
+    fetch("/api/cities") // Example endpoint
+      .then((response) => response.json())
+      .then((data) => setCityData(data))
+      .catch((error) => console.error("Error fetching city data:", error));
   }, []);
 
   const renderWorkDate = () => {
@@ -106,13 +114,43 @@ const AddOrder = () => {
             </Col>
 
             <Col>
-              <DatePicker style={{marginTop:'-10px'}}/>
+              <DatePicker style={{ marginTop: "-10px" }} />
             </Col>
           </Row>
         </>
       );
     } else {
-      console.log("cl");
+      console.log("ccc");
+      return (
+        <>
+          <Row>
+            <Col>
+              <Form.Item
+                name="workDate"
+                label="Ngày Làm Việc"
+                rules={[
+                  { required: true, message: "Vui lòng chọn ngày làm việc!" },
+                ]}
+              ></Form.Item>
+            </Col>
+
+            <Col style={{ marginTop: "-2px" }}>
+              <span
+                style={{
+                  margin: "0 20px 0 30px",
+                  fontSize: "12px",
+                  fontWeight: "500",
+                }}
+              >
+                Từ
+              </span>
+              <DatePicker style={{ marginTop: "-10px" }} />
+              <span style={{ margin: "0 30px", fontSize: "12px" }}>đến</span>
+              <DatePicker style={{ marginTop: "-10px" }} />
+            </Col>
+          </Row>
+        </>
+      );
     }
   };
 
@@ -122,8 +160,9 @@ const AddOrder = () => {
         <Form.Item
           name="phone"
           label="Số Điện Thoại KH"
-          rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" },
-            { validator: validatePhoneNumber }
+          rules={[
+            { required: true, message: "Vui lòng nhập số điện thoại!" },
+            { validator: validatePhoneNumber },
           ]}
         >
           <Input onChange={handlePhoneChange} />
@@ -153,12 +192,12 @@ const AddOrder = () => {
           <Cascader
             options={cityData}
             placeholder="Chọn Tỉnh/Thành phố, Quận, Phường"
-            fieldNames={{ label: 'name', value: 'code', children: 'districts' }} // Adjust as needed
+            fieldNames={{ label: "name", value: "code", children: "districts" }} // Adjust as needed
             onChange={(value, selectedOptions) => {
-              console.log('Selected location:', value);
-              console.log('Selected options:', selectedOptions);
+              console.log("Selected location:", value);
+              console.log("Selected options:", selectedOptions);
             }}
-            className="cascader-custom" 
+            className="cascader-custom"
           />
         </Form.Item>
 
@@ -194,29 +233,27 @@ const AddOrder = () => {
           label="Loại Dịch Vụ"
           rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
         >
-          <Radio.Group style={{marginTop: "-30000px"}}>
-            <Radio value="osin">
-              Osin part time
-            </Radio>
-            <Radio value="cleaning">
-              Dọn dẹp
-            </Radio>
-            <Radio value="cooking">
-              Nấu ăn
-            </Radio>
+          <Radio.Group style={{ marginTop: "-30000px" }}>
+            <Radio value="osin">Osin part time</Radio>
+            <Radio value="cleaning">Dọn dẹp</Radio>
+            <Radio value="cooking">Nấu ăn</Radio>
           </Radio.Group>
         </Form.Item>
 
         <Form.Item name="requestType" label="Loại Yêu Cầu">
           <Radio.Group onChange={(e) => console.log(e)}>
-            <Radio value="short">Ngắn hạn</Radio>
-            <Radio value="long">Dài hạn</Radio>
+            <Radio value="short" onClick={() => handleRequestType("short")}>
+              Ngắn hạn
+            </Radio>
+            <Radio value="long" onClick={() => handleRequestType("long")}>
+              Dài hạn
+            </Radio>
           </Radio.Group>
         </Form.Item>
         {renderWorkDate()}
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={5}>
             <Form.Item
               name="startTime"
               label="Giờ Bắt Đầu"
@@ -224,10 +261,10 @@ const AddOrder = () => {
                 { required: true, message: "Vui lòng chọn giờ bắt đầu!" },
               ]}
             >
-              <TimePicker format="HH:mm" />
+              <TimePicker format="HH:mm" hourStep={1} minuteStep={30} />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col span={19}>
             <Form.Item
               name="endTime"
               label="Giờ Kết Thúc"
@@ -235,7 +272,7 @@ const AddOrder = () => {
                 { required: true, message: "Vui lòng chọn giờ kết thúc!" },
               ]}
             >
-              <TimePicker format="HH:mm" />
+              <TimePicker format="HH:mm" hourStep={1} minuteStep={30} />
             </Form.Item>
           </Col>
         </Row>

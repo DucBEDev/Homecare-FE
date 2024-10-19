@@ -5,43 +5,22 @@ import { DropdownLink } from "./index";
 
 
 const DropdownSortComponent = ({onChange}) => {
-  const [selectedLabel, setSelectedLabel] = useState("Tất cả");
+  const [selectedLabel, setSelectedLabel] = useState("Số ĐT khách hàng");
+  const [selectedKey, setSelectedKey] = useState("0");
 
   const handleMenuClick = (e) => {
     const item = menuItems.find((item) => item.key === e.key);
     if (item) {
       setSelectedLabel(item.label);
+      setSelectedKey(e.key);
+      onChange && onChange(e.key, item.label);
     }
   };
 
   const menuItems = [
     {
       key: "0",
-      label: "Tất cả",
-    },
-    {
-      key: "1",
-      label: "Mã số",
-    },
-    {
-      key: "2",
-      label: "Ngày yêu cầu",
-    },
-    {
-      key: "3",
       label: "Số ĐT khách hàng",
-    },
-    {
-      key: "4",
-      label: "Loại yêu cầu",
-    },
-    {
-      key: "5",
-      label: "Loại dịch vụ",
-    },
-    {
-      key: "6",
-      label: "Chi phí",
     },
   ];
 

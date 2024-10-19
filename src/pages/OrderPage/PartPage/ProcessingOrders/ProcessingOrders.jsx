@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect,  useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pagination, Table } from "antd";
 import "../../StylePage/styleTable.css";
 import axios from "axios";
 import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
-import { Outlet, useNavigate } from "react-router-dom"
-
-const onChange = (pagination, filters, sorter, extra) => {
-  console.log("params", pagination, filters, sorter, extra);
-};
+import { Outlet, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const ProcessingOrders = () => {
+  const searchValue = useSelector((state) => state.search.value);
+  const dateRange = useSelector((state) => state.dateRange);
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,109 +102,141 @@ const ProcessingOrders = () => {
       render: (_, record) => (
         <span className="column-with-icon action-icon">
           <ButtonComponent
-              size="large"
-              textButton="Chi tiết"
-              styleButton={{
-                backgroundColor: "#3cbe5d",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-                marginRight: "2px",
-              }}
-              styleButtonText={{ color: "#fff" }} 
-              onClick={() => handleViewDetails(record.key)}
-            >
-            </ButtonComponent>
-            <ButtonComponent
-              size="large"
-              textButton="Sửa"
-              styleButton={{
-                backgroundColor: "#3ebedd",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-                marginRight: "2px",
-              }}
-              styleButtonText={{ color: "#fff" }} 
-              onClick={() => handleEditDetails(record.key)}
-            >
-            </ButtonComponent>
-            <ButtonComponent
-              size="large"
-              textButton="Xóa"
-              styleButton={{
-                backgroundColor: "#d22d2d",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-              }} 
-              styleButtonText={{ color: "#fff" }}
-              onClick={() => handleDeleteDetails(record.key)}  
-            >
-            </ButtonComponent>
+            size="large"
+            textButton="Chi tiết"
+            styleButton={{
+              backgroundColor: "#3cbe5d",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+              marginRight: "2px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleViewDetails(record.key)}
+          ></ButtonComponent>
+          <ButtonComponent
+            size="large"
+            textButton="Sửa"
+            styleButton={{
+              backgroundColor: "#3ebedd",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+              marginRight: "2px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleEditDetails(record.key)}
+          ></ButtonComponent>
+          <ButtonComponent
+            size="large"
+            textButton="Xóa"
+            styleButton={{
+              backgroundColor: "#d22d2d",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleDeleteDetails(record.key)}
+          ></ButtonComponent>
         </span>
       ),
     },
   ];
 
-  const handleViewDetails = useCallback((recordId) => {
-    console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/processing/showDetail`, { state: { id: recordId }  });
-  }, [navigate]);
-  
-  const handleEditDetails = useCallback((recordId) => {
-    console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/processing/editDetail`, { state: { id: recordId}  });
-  }, [navigate]);
-  
-  const handleDeleteDetails = useCallback((recordId) => {
-    console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/processing/showDetail`);
-  }, [navigate]);
+  const handleViewDetails = useCallback(
+    (recordId) => {
+      console.log("Xem chi tiết đơn hàng có ID:", recordId);
+      navigate(`/order/processing/showDetail`, { state: { id: recordId } });
+    },
+    [navigate]
+  );
+
+  const handleEditDetails = useCallback(
+    (recordId) => {
+      console.log("Xem chi tiết đơn hàng có ID:", recordId);
+      navigate(`/order/processing/editDetail`, { state: { id: recordId } });
+    },
+    [navigate]
+  );
+
+  const handleDeleteDetails = useCallback(
+    (recordId) => {
+      console.log("Xem chi tiết đơn hàng có ID:", recordId);
+      navigate(`/processing/showDetail`);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`);
-        console.log({response});
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`
+        );
+        console.log({ response });
         const transformedData = response.data.records.map((record, index) => {
-          let requestName = record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
-          let statusNow = ""
-            if (record.status === "notDone") {
-              statusNow = "Chưa tiến hành"
-            } else if (record.status === "assigned") {
-              statusNow = "Chưa tiến hành (Đã giao việc)"
-            } else if (record.status === "unconfirmed") {
-              statusNow = "Chờ xác nhận"
-            } else if (record.status === "processing") {
-              statusNow = "Đang tiến hành"
-            } else {
-              statusNow = "Đã hoàn thành"
-            }
-          return {
-          key: record._id,
-          phoneNumber: record.customerInfo.phone,
-          requestType: requestName,
-          serviceType: record.service.title,
-          requestDate: new Date(record.createdAt).toLocaleDateString(),
-          address: record.location.district,
-          cost: `${record.totalCost}đ`,
-          status: statusNow,
+          let requestName =
+            record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+          let statusNow = "";
+          if (record.status === "notDone") {
+            statusNow = "Chưa tiến hành";
+          } else if (record.status === "assigned") {
+            statusNow = "Chưa tiến hành (Đã giao việc)";
+          } else if (record.status === "unconfirmed") {
+            statusNow = "Chờ xác nhận";
+          } else if (record.status === "processing") {
+            statusNow = "Đang tiến hành";
+          } else {
+            statusNow = "Đã hoàn thành";
           }
+          return {
+            key: record._id,
+            phoneNumber: record.customerInfo.phone,
+            requestType: requestName,
+            serviceType: record.service.title,
+            requestDate: new Date(record.createdAt).toLocaleDateString(),
+            address: record.location.district,
+            cost: `${record.totalCost}đ`,
+            status: statusNow,
+          };
         });
         setData(transformedData);
         setFilteredData(transformedData);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    let filtered = data;
+
+    if (searchValue) {
+      filtered = filtered.filter((item) =>
+        item.phoneNumber.includes(searchValue)
+      );
+    }
+    // console.log("dateRange", dateRange);
+    // if (dateRange.startDate && dateRange.endDate) {
+    //   filtered = filtered.filter((item) => {
+    //     const itemDate = item.orderDate.format("DD/MM/YYYY");
+    //     const startDate = dateRange.startDate.format("DD/MM/YYYY");
+    //     const endDate = dateRange.endDate.format("DD/MM/YYYY");
+    //     return (
+    //       itemDate >= startDate && itemDate <= endDate
+    //     );
+    //   });
+    // }
+
+    setFilteredData(filtered);
+  }, [searchValue, dateRange, data]);
 
   const getCurrentPageData = useCallback(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -216,7 +248,6 @@ const ProcessingOrders = () => {
       <Table
         columns={columns}
         dataSource={getCurrentPageData()}
-        onChange={onChange}
         className="custom-table"
         loading={loading}
         pagination={false}
@@ -227,11 +258,10 @@ const ProcessingOrders = () => {
         total={filteredData.length}
         pageSize={pageSize}
         onChange={setCurrentPage}
-        style={{fontSize: "36px", transform: "translateX(-20px)"}}
+        style={{ fontSize: "36px", transform: "translateX(-20px)" }}
       />
       <Outlet />
     </div>
-    
   );
 };
 

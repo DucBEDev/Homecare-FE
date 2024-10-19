@@ -143,6 +143,7 @@ const PopupModalEdit = ({ isVisible, onClose, onSave, record, orderData }) => {
                 popupClassName="custom-time-picker-dropdown"
                 hourStep={1}
                 minuteStep={30}
+                allowClear={false}
               />
             </div>
           </Col>
@@ -162,6 +163,7 @@ const PopupModalEdit = ({ isVisible, onClose, onSave, record, orderData }) => {
                 popupClassName="custom-time-picker-dropdown"
                 hourStep={1}
                 minuteStep={30}
+                allowClear={false}
               />
             </div>
           </Col>

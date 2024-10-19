@@ -1,8 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
-import counterReducer from './slides/counterSlide'
+import searchReducer from './slides/searchSlice'
+import dateRangeReducer from './slides/dateRangeSlice'
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
+    search: searchReducer,
+    dateRange: dateRangeReducer,
   },
 })
+
+export default store;
