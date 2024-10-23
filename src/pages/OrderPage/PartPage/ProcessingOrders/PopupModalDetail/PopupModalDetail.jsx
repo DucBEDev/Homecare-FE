@@ -12,9 +12,6 @@ const PopupModalDetail = ({
   orderData,
   allHelpers,
 }) => {
-  console.log({ record });
-  console.log({ orderData });
-  console.log({ allHelpers });
   const [selectedHelper, setSelectedHelper] = useState(record?.helperId);
   const [selectedHelperInfo, setSelectedHelperInfo] = useState(null);
 
@@ -38,13 +35,20 @@ const PopupModalDetail = ({
   const handleHelperChange = (value) => {
     setSelectedHelper(value);
   };
+
+  const handleAssign = () => {
+    onAssign({
+      ...record,
+      helperId: selectedHelper
+    });
+  };
   return (
     <Modal
       title="Giao việc"
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button key="assign" onClick={onAssign}>
+        <Button key="assign" onClick={handleAssign}>
           Giao việc
         </Button>,
         <Button key="cancel" onClick={onClose}>

@@ -149,7 +149,6 @@ const ProcessingOrders = () => {
 
   const handleViewDetails = useCallback(
     (recordId) => {
-      console.log("Xem chi tiết đơn hàng có ID:", recordId);
       navigate(`/order/processing/showDetail`, { state: { id: recordId } });
     },
     [navigate]
@@ -157,7 +156,6 @@ const ProcessingOrders = () => {
 
   const handleEditDetails = useCallback(
     (recordId) => {
-      console.log("Xem chi tiết đơn hàng có ID:", recordId);
       navigate(`/order/processing/editDetail`, { state: { id: recordId } });
     },
     [navigate]
@@ -165,7 +163,6 @@ const ProcessingOrders = () => {
 
   const handleDeleteDetails = useCallback(
     (recordId) => {
-      console.log("Xem chi tiết đơn hàng có ID:", recordId);
       navigate(`/processing/showDetail`);
     },
     [navigate]
@@ -177,7 +174,7 @@ const ProcessingOrders = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`
         );
-        console.log({ response });
+        console.log("response", response);
         const transformedData = response.data.records.map((record, index) => {
           let requestName =
             record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
@@ -202,6 +199,7 @@ const ProcessingOrders = () => {
             address: record.location.district,
             cost: `${record.totalCost}đ`,
             status: statusNow,
+            scheduleIds: record.scheduleIds,
           };
         });
         setData(transformedData);
@@ -211,6 +209,7 @@ const ProcessingOrders = () => {
         console.error("Error fetching data:", error);
         setLoading(false);
       }
+
     };
     fetchData();
   }, []);

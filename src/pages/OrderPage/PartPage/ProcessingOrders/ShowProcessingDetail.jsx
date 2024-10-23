@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Card, Descriptions, Table, Button, Typography } from "antd";
+import { Card, Descriptions, Table, Button, Typography, Modal } from "antd";
 import "../../StylePage/styleProcessingDetail.css";
 import axios from "axios";
 import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
@@ -23,17 +23,25 @@ const ShowProcessingDetail = () => {
   const [selectedEditRecord, setSelectedEditRecord] = useState(null);
 
   const showModal = (record) => {
-    setSelectedRecord(record);
+    setSelectedRecord({
+      ...record,
+      mainOrderId: id, // Thêm id của đơn hàng lớn vào record
+      scheduleIds: record.scheduleIds,
+    });
     setIsModalVisible(true);
   };
 
   const handleAssign = () => {
-    // Xử lý logic giao việc ở đây
-    console.log("Giao việc cho:", selectedRecord);
+    if (selectedRecord) {
+      console.log('Giao việc cho đơn hàng:', {
+        mainOrderId: selectedRecord.mainOrderId, // id của đơn hàng lớn
+        detailOrderId: selectedRecord.key, // id của chi tiết đơn hàng
+        helperId: selectedRecord.helperId // id của người giúp việc được chọn
+      });
+      // Thực hiện logic giao việc ở đây
+    }
     setIsModalVisible(false);
   };
-
-
 
   const showEditModal = (record) => {
     setSelectedEditRecord(record);
@@ -50,6 +58,30 @@ const ShowProcessingDetail = () => {
     setIsEditModalVisible(false);
   };
 
+  const handleDelete = (record) => {
+    // console.log({record});
+    Modal.confirm({
+      title: 'Xác nhận xóa',
+      content: 'Bạn có chắc chắn muốn xóa mục này?',
+      okText: 'Xóa',
+      styles: {
+        content: {
+          fontSize: '14px',
+        },
+      },
+      onOk() {
+        console.log('Xóa đơn hàng:', {
+          mainOrderId: id, // id của đơn hàng lớn
+          detailOrderId: record.key // id của chi tiết đơn hàng
+        });
+        // logic xóa
+      },
+      onCancel() {
+        console.log('Hủy xóa');
+      },
+    });
+  };
+
   const columns = [
     { title: "Giờ Bắt Đầu", dataIndex: "gioBatDau", key: "gioBatDau" },
     { title: "Giờ Kết Thúc", dataIndex: "gioKetThuc", key: "gioKetThuc" },
@@ -64,7 +96,8 @@ const ShowProcessingDetail = () => {
       title: "Xử Lý",
       key: "xuLy",
       render: (_, record) => (
-        console.log({ record }),
+        // console.log("âsssasssssssssssssss"),
+        // console.log({ record }),
         (
           <>
             <Button type="primary" size="small" style={{ marginRight: 8 }} onClick={() => showEditModal(record)}>
@@ -91,7 +124,7 @@ const ShowProcessingDetail = () => {
               </Button> 
             )}
 
-            <Button danger size="small">
+            <Button danger size="small" onClick={() => handleDelete(record)}>
               Xóa
             </Button>
           </>
@@ -106,7 +139,7 @@ const ShowProcessingDetail = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/admin/requests/detail/${id}`
         );
-        console.log(response);
+        // console.log("detailresponse", response);
         const { data } = response;
 
         const helperData = data.helpers.map((helper) => ({
@@ -145,6 +178,7 @@ const ShowProcessingDetail = () => {
           ),
           trangThai: statusNow,
           tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
+          
         });
 
         setTimeSlots(
@@ -175,7 +209,7 @@ const ShowProcessingDetail = () => {
             //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
             helperId: helper.helper_id,  
             haveHelper: helper.fullName ? true : false,
-
+            scheduleIds: data.request.scheduleIds,
           }))
         );
 

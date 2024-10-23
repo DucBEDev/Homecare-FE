@@ -3,9 +3,13 @@
     margin-left: 20px;
 }
 
-#phone,#address,#name,#location {
+#phone,#address,#name{
     width: 500px;
     border-radius: 30px !important;
+}
+
+.coefficient-custom {
+    width: 100px;
 }
 
 .ant-select-selector {
@@ -41,4 +45,31 @@
 .ant-picker-time-panel-cell-inner {
     font-size: 12px !important;
     line-height: 1.4;
+}
+
+.table-custom {
+    width: 404px;
+    margin-left: -10px !important;
+}
+
+.table-custom th {
+    border: 1px solid #ccc !important;
+}
+
+.table-custom td {
+    border: 1px solid #ccc !important;
+    border-top: none !important;
+}
+
+.ant-cascader-menu-item-content {
+    font-size: 12px;
+}
+
+.ant-cascader-menu-item-keyword {
+    font-size: 12px;
+    font-weight: bold; 
+}
+
+.ant-select-selection-search-input {
+    font-size: 12px !important;
 }

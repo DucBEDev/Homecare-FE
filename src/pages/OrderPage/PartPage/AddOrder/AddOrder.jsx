@@ -23,6 +23,7 @@ import axios from "axios";
 
 const AddOrder = () => {
   const [locations, setLocations] = useState([]);
+  const [coefficient, setCoefficient] = useState([]);
 
   const [requestType, setRequestType] = useState("short");
   const [form] = Form.useForm();
@@ -102,88 +103,75 @@ const AddOrder = () => {
     }
   };
 
-  // const fetchLocations = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       `${process.env.REACT_APP_API_URL}/admin/locations`
-  //     );
-  //     console.log("response lo");
-  //     console.log({ response });
-  //     setLocations(response.data.records);
-  //   } catch (error) {
-  //     console.error("Error fetching locations:", error);
-  //     message.error("Không thể tải dữ liệu địa điểm");
-  //   }
-  // };
   const locationsData = [
     {
-      value: 'ho-chi-minh',
-      label: 'Thành phố Hồ Chí Minh',
+      value: "ho-chi-minh",
+      label: "Thành phố Hồ Chí Minh",
       children: [
         {
-          value: 'quan-1',
-          label: 'Quận 1',
+          value: "quan-1",
+          label: "Quận 1",
           children: [
-            { value: 'phuong-ben-nghe', label: 'Phường Bến Nghé' },
-            { value: 'phuong-ben-thanh', label: 'Phường Bến Thành' },
-            { value: 'phuong-da-kao', label: 'Phường Đa Kao' },
+            { value: "phuong-ben-nghe", label: "Phường Bến Nghé" },
+            { value: "phuong-ben-thanh", label: "Phường Bến Thành" },
+            { value: "phuong-da-kao", label: "Phường Đa Kao" },
           ],
         },
         {
-          value: 'quan-2',
-          label: 'Quận 2',
+          value: "quan-2",
+          label: "Quận 2",
           children: [
-            { value: 'phuong-thao-dien', label: 'Phường Thảo Điền' },
-            { value: 'phuong-an-phu', label: 'Phường An Phú' },
-            { value: 'phuong-binh-an', label: 'Phường Bình An' },
+            { value: "phuong-thao-dien", label: "Phường Thảo Điền" },
+            { value: "phuong-an-phu", label: "Phường An Phú" },
+            { value: "phuong-binh-an", label: "Phường Bình An" },
           ],
         },
       ],
     },
     {
-      value: 'ha-noi',
-      label: 'Hà Nội',
+      value: "ha-noi",
+      label: "Hà Nội",
       children: [
         {
-          value: 'quan-hoan-kiem',
-          label: 'Quận Hoàn Kiếm',
+          value: "quan-hoan-kiem",
+          label: "Quận Hoàn Kiếm",
           children: [
-            { value: 'phuong-hang-bac', label: 'Phường Hàng Bạc' },
-            { value: 'phuong-hang-bo', label: 'Phường Hàng Bồ' },
-            { value: 'phuong-cua-dong', label: 'Phường Cửa Đông' },
+            { value: "phuong-hang-bac", label: "Phường Hàng Bạc" },
+            { value: "phuong-hang-bo", label: "Phường Hàng Bồ" },
+            { value: "phuong-cua-dong", label: "Phường Cửa Đông" },
           ],
         },
         {
-          value: 'quan-ba-dinh',
-          label: 'Quận Ba Đình',
+          value: "quan-ba-dinh",
+          label: "Quận Ba Đình",
           children: [
-            { value: 'phuong-truc-bach', label: 'Phường Trúc Bạch' },
-            { value: 'phuong-vinh-phuc', label: 'Phường Vĩnh Phúc' },
-            { value: 'phuong-cong-vi', label: 'Phường Cống Vị' },
+            { value: "phuong-truc-bach", label: "Phường Trúc Bạch" },
+            { value: "phuong-vinh-phuc", label: "Phường Vĩnh Phúc" },
+            { value: "phuong-cong-vi", label: "Phường Cống Vị" },
           ],
         },
       ],
     },
     {
-      value: 'da-nang',
-      label: 'Đà Nẵng',
+      value: "da-nang",
+      label: "Đà Nẵng",
       children: [
         {
-          value: 'quan-hai-chau',
-          label: 'Quận Hải Châu',
+          value: "quan-hai-chau",
+          label: "Quận Hải Châu",
           children: [
-            { value: 'phuong-thanh-binh', label: 'Phường Thanh Bình' },
-            { value: 'phuong-thuan-phuoc', label: 'Phường Thuận Phước' },
-            { value: 'phuong-hoa-thuan-dong', label: 'Phường Hòa Thuận Đông' },
+            { value: "phuong-thanh-binh", label: "Phường Thanh Bình" },
+            { value: "phuong-thuan-phuoc", label: "Phường Thuận Phước" },
+            { value: "phuong-hoa-thuan-dong", label: "Phường Hòa Thuận Đông" },
           ],
         },
         {
-          value: 'quan-son-tra',
-          label: 'Quận Sơn Trà',
+          value: "quan-son-tra",
+          label: "Quận Sơn Trà",
           children: [
-            { value: 'phuong-man-thai', label: 'Phường Mân Thái' },
-            { value: 'phuong-phuoc-my', label: 'Phường Phước Mỹ' },
-            { value: 'phuong-an-hai-bac', label: 'Phường An Hải Bắc' },
+            { value: "phuong-man-thai", label: "Phường Mân Thái" },
+            { value: "phuong-phuoc-my", label: "Phường Phước Mỹ" },
+            { value: "phuong-an-hai-bac", label: "Phường An Hải Bắc" },
           ],
         },
       ],
@@ -193,6 +181,21 @@ const AddOrder = () => {
   useEffect(() => {
     // fetchLocations();
     setLocations(locationsData);
+  }, []);
+
+  const coefficientData = [
+    {
+      value: "1.3",
+      label: "Hệ số ngoài giờ",
+    },
+    {
+      value: "1.4",
+      label: "Hệ số cuối tuần",
+    },
+  ];
+
+  useEffect(() => {
+    setCoefficient(coefficientData);
   }, []);
 
   const renderWorkDate = () => {
@@ -242,7 +245,6 @@ const AddOrder = () => {
   };
 
   const onFinish = (values) => {
-    console.log("Received values:", values);
 
     // Prepare data for backend
     const dataForBackend = {
@@ -257,14 +259,21 @@ const AddOrder = () => {
               to: values.workDate?.[1]?.format("YYYY-MM-DD"),
             },
       location: values.location?.join(", "), // Convert array to string
+      coefficient: values.coefficient?.join(", "),
     };
+    console.log("dataForBackend", dataForBackend);
 
     // Send data to backend
-    axios.post(`${process.env.REACT_APP_API_URL}/admin/requests/create`, dataForBackend, {
-      headers: {
-        "Content-Type": "application/json",
-        },
-      })
+    axios
+      .post(
+        `${process.env.REACT_APP_API_URL}/admin/requests/s`,
+        dataForBackend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
       .then((response) => {
         if (!response) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -283,7 +292,12 @@ const AddOrder = () => {
 
   return (
     <Card className="card" title="Thông tin đơn hàng">
-      <Form form={form} layout="vertical" onFinish={onFinish}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        style={{ marginTop: "12px" }}
+      >
         <Row>
           <Col span={10}>
             <Form.Item
@@ -329,47 +343,10 @@ const AddOrder = () => {
                 placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
                 showSearch
                 changeOnSelect
-                // fieldNames={{
-                //   label: "name",
-                //   value: "code",
-                //   children: "districts",
-                // }} // Adjust as needed
-                // onChange={(value, selectedOptions) => {
-                //   console.log("Selected location:", value);
-                //   console.log("Selected options:", selectedOptions);
-                // }}
                 className="cascader-custom"
               />
             </Form.Item>
           </Col>
-          {/* <Col span={8}>
-            <Form.Item
-              name="district"
-              label="Quận"
-              rules={[{ required: true, message: "Vui lòng chọn quận!" }]}
-            >
-              <Select value={selectedDistrict} onChange={handleDistrictChange}>
-                <Option value="q1">Quận 1</Option>
-                <Option value="q2">Quận 2</Option>
-                <Option value="q3">Quận 3</Option>
-                <Option value="q4">Quận 4</Option>
-                <Option value="q5">Quận 5</Option>
-                <Option value="q6">Quận 6</Option>
-                <Option value="q7">Quận 7</Option>
-                <Option value="q8">Quận 8</Option>
-                <Option value="q9">Quận 9</Option>
-                <Option value="q10">Quận 10</Option>
-                <Option value="q11">Quận 11</Option>
-                <Option value="q12">Quận 12</Option>
-                <Option value="tanphu">Quận Tân Phú</Option>
-                <Option value="tanbinh">Quận Tân Bình</Option>
-                <Option value="binhtan">Quận Bình Tân</Option>
-                <Option value="binhthanh">Quận Bình Thạnh</Option>
-                <Option value="govap">Quận Gò Vấp</Option>
-                <Option value="hocmon">Quận Hóc Môn</Option>
-              </Select>
-            </Form.Item>
-          </Col> */}
         </Row>
         <Row>
           <Col span={7}>
@@ -402,8 +379,8 @@ const AddOrder = () => {
           </Col>
         </Row>
 
-        <Row gutter={16}>
-          <Col span={5}>
+        <Row>
+          <Col span={3}>
             <Form.Item
               name="startTime"
               label="Giờ Bắt Đầu"
@@ -420,7 +397,7 @@ const AddOrder = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={19}>
+          <Col span={3}>
             <Form.Item
               name="endTime"
               label="Giờ Kết Thúc"
@@ -437,15 +414,33 @@ const AddOrder = () => {
               />
             </Form.Item>
           </Col>
+          <Col span={3}>
+            <Form.Item
+              name="coefficient"
+              label="Hệ số"
+              rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
+            >
+              <Cascader
+                options={coefficient}
+                placeholder="Chọn hệ số phụ"
+                showSearch
+                changeOnSelect
+                allowClear={false}
+              />
+            </Form.Item>
+          </Col>
         </Row>
+
         {timeErrors && (
           <div style={{ color: "red", marginBottom: "10px" }}>{timeErrors}</div>
         )}
+
         <Table
           columns={columns}
           dataSource={data}
           pagination={false}
           bordered
+          className="table-custom"
         />
 
         <Form.Item style={{ marginTop: "40px" }}>
