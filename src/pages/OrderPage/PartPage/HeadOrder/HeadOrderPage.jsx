@@ -16,8 +16,10 @@ import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSearchValue } from "../../../../redux/slides/searchSlice";
 import { setDateRange } from "../../../../redux/slides/dateRangeSlice";
+import { useNavigate} from 'react-router-dom'
 
 const HeadOrderPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const searchValue = useSelector((state) => state.search.value);
   const dateRange = useSelector((state) => state.dateRange);
@@ -71,6 +73,7 @@ const HeadOrderPage = () => {
           <ButtonComponent
             size="large"
             textButton="Thêm đơn hàng"
+            onClick={() => navigate('/order/add')}
             styleButton={{
               backgroundColor: "#3cbe5d",
               width: "120px",
@@ -149,6 +152,7 @@ const HeadOrderPage = () => {
           xs={24}
         >
           <DatePickerComponent
+            title="time"
             onChange={handleDateRangeChange}
             value={[dateRange.startDate, dateRange.endDate]}
           />

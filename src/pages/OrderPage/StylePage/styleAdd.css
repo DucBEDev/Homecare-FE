@@ -3,8 +3,14 @@
     margin-left: 20px;
 }
 
-#phone {
-    width: 100%;
+#phone,#address,#name,#location {
+    width: 500px;
+    border-radius: 30px !important;
+}
+
+.ant-select-selector {
+    border-radius: 30px !important;
+    width: 500px !important;
 }
 
 .ant-form-item-explain-error {

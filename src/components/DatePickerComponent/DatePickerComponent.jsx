@@ -13,7 +13,7 @@ const { RangePicker } = DatePicker;
 
 const dateFormat = "YYYY/MM/DD";
 
-const DatePickerComponent = () => {
+const DatePickerComponent = ({title}) => {
   const [startEndDate, setStartEndDate] = useState([]);
 
   // Hàm xử lý khi chọn ngày bắt đầu và kết thúc
@@ -25,7 +25,8 @@ const DatePickerComponent = () => {
 
   // Lấy ngày hôm nay
   const today = dayjs();
-
+  let label = "";
+  if (title === "time") label = "Thời gian:";
   return (
     <>
       <div
@@ -39,7 +40,8 @@ const DatePickerComponent = () => {
           width: "100%",
         }}
       >
-        Thời gian: 
+        
+        {label}
       </div>
       <ConfigProvider locale={locale}>
         <Space direction="vertical" size={12}>

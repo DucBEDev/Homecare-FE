@@ -6,4 +6,4 @@ const MaidPage = () => {
     )
 }
 
-export default MaidPage
+export default MaidPage;
