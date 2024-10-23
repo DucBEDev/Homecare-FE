@@ -29,6 +29,25 @@ const AddOrder = () => {
   const [form] = Form.useForm();
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const disabledHours = () => {
+    const hours = [];
+    for (let i = 0; i < 24; i++) {
+      if (i < 8 || i > 20) {
+        hours.push(i);
+      }
+    }
+    return hours;
+  };
+
+  const disabledMinutes = (selectedHour) => {
+    const minutes = [];
+    if (selectedHour === 20) {
+      for (let i = 1; i < 60; i++) {
+        minutes.push(i);
+      }
+    }
+    return minutes;
+  };
   const isValidTimeRange = (startTime, endTime) => {
     if (!startTime || !endTime) return false;
 
@@ -96,11 +115,8 @@ const AddOrder = () => {
   };
 
   const handleRequestType = (value) => {
-    if (value === "short") {
-      setRequestType("short");
-    } else {
-      setRequestType("long");
-    }
+    console.log("valueeeeeeeeeeee", value);
+    setRequestType(value.target.value);
   };
 
   const locationsData = [
@@ -198,53 +214,9 @@ const AddOrder = () => {
     setCoefficient(coefficientData);
   }, []);
 
-  const renderWorkDate = () => {
-    if (requestType === "short") {
-      return (
-        <>
-          <Form.Item
-            name="workDate"
-            label="Ngày Làm Việc"
-            rules={[
-              { required: true, message: "Vui lòng chọn ngày làm việc!" },
-            ]}
-          >
-            <DatePicker />
-          </Form.Item>
-        </>
-      );
-    } else {
-      console.log("ccc");
-      return (
-        <>
-          <Form.Item
-            name="workDate"
-            label="Ngày Làm Việc"
-            rules={[
-              { required: true, message: "Vui lòng chọn ngày làm việc!" },
-            ]}
-          >
-            {/* <span
-              style={{
-                fontSize: "12px",
-                fontWeight: "500",
-                marginRight: "6px",
-              }}
-            >
-              Từ
-            </span>
-            <DatePicker />
-            <span style={{ margin: "0 10px", fontSize: "12px" }}>đến</span>
-            <DatePicker /> */}
-            <span style={{ margin: "0 10px", fontSize: "12px" }}></span>
-            <DatePickerComponent />
-          </Form.Item>
-        </>
-      );
-    }
-  };
-
+  
   const onFinish = (values) => {
+    console.log("values", values);
 
     // Prepare data for backend
     const dataForBackend = {
@@ -259,7 +231,7 @@ const AddOrder = () => {
               to: values.workDate?.[1]?.format("YYYY-MM-DD"),
             },
       location: values.location?.join(", "), // Convert array to string
-      coefficient: values.coefficient?.join(", "),
+      coefficient_other: values.coefficient_other?.join(", "),
     };
     console.log("dataForBackend", dataForBackend);
 
@@ -313,7 +285,7 @@ const AddOrder = () => {
           </Col>
           <Col span={12}>
             <Form.Item
-              name="name"
+              name="fullName"
               label="Họ và Tên KH"
               rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
             >
@@ -351,7 +323,7 @@ const AddOrder = () => {
         <Row>
           <Col span={7}>
             <Form.Item
-              name="services"
+              name="serviceTitle"
               label="Loại Dịch Vụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
@@ -364,18 +336,33 @@ const AddOrder = () => {
           </Col>
           <Col span={5}>
             <Form.Item name="requestType" label="Loại Yêu Cầu">
-              <Radio.Group onChange={(e) => console.log(e)}>
-                <Radio value="short" onClick={() => handleRequestType("short")}>
-                  Ngắn hạn
-                </Radio>
-                <Radio value="long" onClick={() => handleRequestType("long")}>
-                  Dài hạn
-                </Radio>
+              <Radio.Group onChange={handleRequestType}>
+                <Radio value="short">Ngắn hạn</Radio>
+                <Radio value="long">Dài hạn</Radio>
               </Radio.Group>
             </Form.Item>
           </Col>
           <Col span={12} style={{ marginTop: "0px" }}>
-            {renderWorkDate()}
+            <Form.Item
+              name="workDate"
+              label={
+                requestType === "short"
+                  ? "Ngày Làm Việc"
+                  : "Khoảng Thời Gian Làm Việc"
+              }
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng chọn thời gian làm việc!",
+                },
+              ]}
+            >
+              {requestType === "short" ? (
+                <DatePicker />
+              ) : (
+                <DatePicker.RangePicker />
+              )}
+            </Form.Item>
           </Col>
         </Row>
 
@@ -394,6 +381,9 @@ const AddOrder = () => {
                 minuteStep={30}
                 allowClear={false}
                 onChange={(time) => handleTimeChange("startTime", time)}
+                disabledHours={disabledHours}
+        disabledMinutes={disabledMinutes}
+        hideDisabledOptions={true}
               />
             </Form.Item>
           </Col>
@@ -411,12 +401,15 @@ const AddOrder = () => {
                 minuteStep={30}
                 allowClear={false}
                 onChange={(time) => handleTimeChange("endTime", time)}
+                disabledHours={disabledHours}
+        disabledMinutes={disabledMinutes}
+        hideDisabledOptions={true}
               />
             </Form.Item>
           </Col>
           <Col span={3}>
             <Form.Item
-              name="coefficient"
+              name="coefficient_other"
               label="Hệ số"
               rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
             >
