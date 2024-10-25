@@ -3,7 +3,6 @@ import {
   Card,
   Form,
   Input,
-  Select,
   Radio,
   DatePicker,
   TimePicker,
@@ -15,7 +14,6 @@ import {
 } from "antd";
 import { Table } from "antd";
 import dayjs from "dayjs";
-import DatePickerComponent from "../../../../components/DatePickerComponent/DatePickerComponent";
 import "../../StylePage/styleAdd.css";
 import axios from "axios";
 
@@ -29,6 +27,23 @@ const AddOrder = () => {
   const [form] = Form.useForm();
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const [dataFetch, setDataFetch] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/admin/requests/create`
+        );
+        console.log("responsaaaaaaaaaaaaaae", response);
+        setDataFetch(response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   const disabledHours = () => {
     const hours = [];
     for (let i = 0; i < 24; i++) {
@@ -214,23 +229,39 @@ const AddOrder = () => {
     setCoefficient(coefficientData);
   }, []);
 
-  
   const onFinish = (values) => {
-    console.log("values", values);
+    const {
+      startTime,
+      endTime,
+      location,
+      requestType,
+      workDate,
+      ...otherValues
+    } = values;
 
     // Prepare data for backend
     const dataForBackend = {
-      ...values,
+      ...otherValues,
       startTime: values.startTime?.format("HH:mm"),
       endTime: values.endTime?.format("HH:mm"),
-      workDate:
+      requestType: requestType === "short" ? "Ngắn hạn" : "Dài hạn",
+      serviceBasePrice: dataFetch?.serviceList?.find(
+        (item) => item.title === values.serviceTitle
+      )?.basicPrice,
+      coefficient_service: dataFetch?.serviceList?.find(
+        (item) => item.title === values.serviceTitle
+      )?.coefficient,
+      startDate:
         requestType === "short"
           ? values.workDate?.format("YYYY-MM-DD")
-          : {
-              from: values.workDate?.[0]?.format("YYYY-MM-DD"),
-              to: values.workDate?.[1]?.format("YYYY-MM-DD"),
-            },
-      location: values.location?.join(", "), // Convert array to string
+          : values.workDate?.[0]?.format("YYYY-MM-DD"),
+      endDate:
+        requestType === "short"
+          ? values.workDate?.format("YYYY-MM-DD")
+          : values.workDate?.[1]?.format("YYYY-MM-DD"),
+      province: values.location?.[0],
+      district: values.location?.[1],
+      ward: values.location?.[2],
       coefficient_other: values.coefficient_other?.join(", "),
     };
     console.log("dataForBackend", dataForBackend);
@@ -238,7 +269,7 @@ const AddOrder = () => {
     // Send data to backend
     axios
       .post(
-        `${process.env.REACT_APP_API_URL}/admin/requests/s`,
+        `${process.env.REACT_APP_API_URL}/admin/requests/create`,
         dataForBackend,
         {
           headers: {
@@ -304,7 +335,7 @@ const AddOrder = () => {
               <Input />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          <Col span={8} className="location-custom">
             <Form.Item
               name="location" // Name for the location data in form values
               label="Địa điểm"
@@ -328,9 +359,8 @@ const AddOrder = () => {
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
               <Radio.Group style={{ marginTop: "-30000px" }}>
-                <Radio value="osin">Osin part time</Radio>
-                <Radio value="cleaning">Dọn dẹp</Radio>
-                <Radio value="cooking">Nấu ăn</Radio>
+                <Radio value="Dọn dẹp">Dọn dẹp</Radio>
+                <Radio value="Chăm sóc người già">Chăm sóc người già</Radio>
               </Radio.Group>
             </Form.Item>
           </Col>
@@ -382,8 +412,8 @@ const AddOrder = () => {
                 allowClear={false}
                 onChange={(time) => handleTimeChange("startTime", time)}
                 disabledHours={disabledHours}
-        disabledMinutes={disabledMinutes}
-        hideDisabledOptions={true}
+                disabledMinutes={disabledMinutes}
+                hideDisabledOptions={true}
               />
             </Form.Item>
           </Col>
@@ -402,8 +432,8 @@ const AddOrder = () => {
                 allowClear={false}
                 onChange={(time) => handleTimeChange("endTime", time)}
                 disabledHours={disabledHours}
-        disabledMinutes={disabledMinutes}
-        hideDisabledOptions={true}
+                disabledMinutes={disabledMinutes}
+                hideDisabledOptions={true}
               />
             </Form.Item>
           </Col>

@@ -9,14 +9,14 @@ import DropdownComponent from "../../../../components/DropdownComponent/Dropdown
 import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
 import { FileExcelOutlined } from "@ant-design/icons";
 import DropdownSortComponent from "../../../../components/DropdownComponent/DropdownSortComponent";
-import DatePickerComponent from "../../../../components/DatePickerComponent/DatePickerComponent";
 import "../../StylePage/styleHead.css";
 import InputComponent from "../../../../components/InputComponent/InputComponent";
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSearchValue } from "../../../../redux/slides/searchSlice";
 import { setDateRange } from "../../../../redux/slides/dateRangeSlice";
-import { useNavigate} from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
+import { DatePicker } from "antd";
 
 const HeadOrderPage = () => {
   const navigate = useNavigate();
@@ -24,21 +24,27 @@ const HeadOrderPage = () => {
   const searchValue = useSelector((state) => state.search.value);
   const dateRange = useSelector((state) => state.dateRange);
 
-  const handleInputChange = useCallback((value) => {
-    dispatch(setSearchValue(value));
-  }, [dispatch]);
-
-  const handleDateRangeChange = useCallback(
-    (dates) => {
-      dispatch(
-        setDateRange({
-          startDate: dates[0]?.format("DD-MM-YYYY"),
-          endDate: dates[1]?.format("DD-MM-YYYY"),
-        })
-      );
+  const handleInputChange = useCallback(
+    (value) => {
+      dispatch(setSearchValue(value));
     },
     [dispatch]
   );
+
+  const handleDateRangeChange = useCallback((dates) => {
+    if (dates) {
+      dispatch(setDateRange({
+        startDate: dates[0],
+        endDate: dates[1]
+      }));
+    } else {
+      // Xử lý khi người dùng xóa ngày (clear)
+      dispatch(setDateRange({
+        startDate: null,
+        endDate: null
+      }));
+    }
+  }, [dispatch]);
 
   return (
     <>
@@ -73,7 +79,7 @@ const HeadOrderPage = () => {
           <ButtonComponent
             size="large"
             textButton="Thêm đơn hàng"
-            onClick={() => navigate('/order/add')}
+            onClick={() => navigate("/order/add")}
             styleButton={{
               backgroundColor: "#3cbe5d",
               width: "120px",
@@ -119,7 +125,14 @@ const HeadOrderPage = () => {
         >
           Tìm kiếm theo:
         </div>
-        <WrapperFilterCol xl={6} lg={8} md={24} sm={24} xs={24}>
+        <WrapperFilterCol
+          xl={6}
+          lg={8}
+          md={24}
+          sm={24}
+          xs={24}
+          className="dropdown-sort-text"
+        >
           <DropdownSortComponent />
         </WrapperFilterCol>
 
@@ -150,11 +163,29 @@ const HeadOrderPage = () => {
           md={12}
           sm={14}
           xs={24}
+          style={{ marginTop: "-20px" }}
         >
-          <DatePickerComponent
+          {/* <DatePickerComponent
             title="time"
             onChange={handleDateRangeChange}
             value={[dateRange.startDate, dateRange.endDate]}
+          /> */}
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: "700",
+              marginLeft: "4px",
+              marginBottom: "4px",
+              width: "100%",
+            }}
+            className="date-picker-text"
+          >
+            Thời gian:
+          </div>
+          <DatePicker.RangePicker
+            style={{ height: "38px", marginTop: "-2px" }}
+            onChange={handleDateRangeChange}
+            value={dateRange.startDate && dateRange.endDate ? [dateRange.startDate, dateRange.endDate] : null}
           />
         </WrapperFilterCol>
       </WrapperFilterRow>

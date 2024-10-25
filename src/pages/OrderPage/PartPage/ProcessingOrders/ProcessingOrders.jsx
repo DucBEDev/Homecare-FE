@@ -175,7 +175,7 @@ const ProcessingOrders = () => {
           `${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`
         );
         console.log("response", response);
-        const transformedData = response.data.records.map((record, index) => {
+        const transformedData = response.data.requestList.map((record, index) => {
           let requestName =
             record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
           let statusNow = "";
@@ -233,6 +233,17 @@ const ProcessingOrders = () => {
     //     );
     //   });
     // }
+    if (dateRange === null) {
+      console.log("dateRange", dateRange);
+    }
+    else if (dateRange.startDate && dateRange.endDate) {
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.requestDate);
+        const startDate = new Date(dateRange.startDate);
+        const endDate = new Date(dateRange.endDate);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+    }
 
     setFilteredData(filtered);
   }, [searchValue, dateRange, data]);

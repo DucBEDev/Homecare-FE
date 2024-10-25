@@ -3,18 +3,19 @@
     margin-left: 20px;
 }
 
-#phone,#address,#name{
+#phone,#address,#fullName{
     width: 500px;
     border-radius: 30px !important;
 }
 
-.coefficient-custom {
-    width: 100px;
+.location-custom .ant-select-selector {
+    border-radius: 30px !important;
+    width: 500px !important;
 }
 
 .ant-select-selector {
     border-radius: 30px !important;
-    width: 500px !important;
+    width: 210px !important;
 }
 
 .ant-form-item-explain-error {
@@ -72,4 +73,8 @@
 
 .ant-select-selection-search-input {
     font-size: 12px !important;
+}
+
+.ant-picker-cell-inner {
+    font-size: 10px !important;
 }

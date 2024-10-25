@@ -103,11 +103,12 @@ const PopupModalDetail = ({
             <Col span={6}>
               <span>Người Giúp Việc:</span>
             </Col>
-            <Col span={10} offset={2}>
+            <Col span={10} offset={2} >
               <Select
                 style={{ width: "100%" }}
                 value={selectedHelper}
                 onChange={handleHelperChange}
+                
               >
                 {allHelpers.map((helper) => (
                   <Option key={helper.id} value={helper.id}>

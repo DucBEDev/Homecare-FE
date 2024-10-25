@@ -32,13 +32,55 @@ const ShowProcessingDetail = () => {
   };
 
   const handleAssign = () => {
+    console.log("selectedRecord", { selectedRecord });
     if (selectedRecord) {
-      console.log('Giao việc cho đơn hàng:', {
-        mainOrderId: selectedRecord.mainOrderId, // id của đơn hàng lớn
-        detailOrderId: selectedRecord.key, // id của chi tiết đơn hàng
-        helperId: selectedRecord.helperId // id của người giúp việc được chọn
+      const assignInfo = {
+        mainOrderId: selectedRecord.mainOrderId,
+        detailOrderId: selectedRecord.scheduleIds[selectedRecord.key]._id,
+        helperId: selectedRecord.helperId,
+      };
+      console.log("aa", { assignInfo });
+
+      Modal.confirm({
+        title: "Xác nhận giao việc",
+        content: "Bạn có chắc chắn muốn giao việc cho người giúp việc này?",
+        okText: "Giao việc",
+        styles: {
+          content: {
+            fontSize: "14px",
+          },
+        },
+        onOk() {
+          axios
+            .post(
+              `${process.env.REACT_APP_API_URL}/admin/requests/assign`,
+              assignInfo
+            )
+            .then((response) => {
+              console.log("Giao việc thành công:", response.data);
+
+              // cap nhat timeslot
+              setTimeSlots((prevTimeSlots) =>
+                prevTimeSlots.map((slot) =>
+                  slot.key === selectedRecord.key
+                    ? {
+                        ...slot,
+                        nguoiGiupViec: response.data.helperName,
+                        trangThai: "Hoạt động",
+                      }
+                    : slot
+                )
+              );
+
+              fetchData(); // load lại data
+            })
+            .catch((error) => {
+              console.error("Lỗi khi giao việc:", error);
+            });
+        },
+        onCancel() {
+        },
       });
-      // Thực hiện logic giao việc ở đây
     }
     setIsModalVisible(false);
   };
@@ -50,8 +92,8 @@ const ShowProcessingDetail = () => {
 
   const handleSaveEdit = (editedRecord) => {
     // Update the timeSlots state with the edited record
-    setTimeSlots(prevTimeSlots =>
-      prevTimeSlots.map(slot =>
+    setTimeSlots((prevTimeSlots) =>
+      prevTimeSlots.map((slot) =>
         slot.key === editedRecord.key ? editedRecord : slot
       )
     );
@@ -59,26 +101,42 @@ const ShowProcessingDetail = () => {
   };
 
   const handleDelete = (record) => {
-    // console.log({record});
+    console.log({ record });
     Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa mục này?',
-      okText: 'Xóa',
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa mục này?",
+      okText: "Xóa",
       styles: {
         content: {
-          fontSize: '14px',
+          fontSize: "14px",
         },
       },
       onOk() {
-        console.log('Xóa đơn hàng:', {
+        const deleteInfo = {
           mainOrderId: id, // id của đơn hàng lớn
-          detailOrderId: record.key // id của chi tiết đơn hàng
-        });
-        // logic xóa
+          detailOrderId: record.scheduleIds[record.key]._id, // id của chi tiết đơn hàng
+        };
+        console.log("bb", { deleteInfo });
+
+        axios
+          .delete(
+            `${process.env.REACT_APP_API_URL}/admin/requests/delete`,
+            { data: deleteInfo }
+          )
+          .then((response) => {
+            console.log("Xóa thành công:", response.data);
+
+            setTimeSlots((prevTimeSlots) =>
+              prevTimeSlots.filter((slot) => slot.key !== record.key)
+            );
+
+            fetchData();
+          })
+          .catch((error) => {
+            console.error("Lỗi khi xóa:", error);
+          });
       },
-      onCancel() {
-        console.log('Hủy xóa');
-      },
+      onCancel() {},
     });
   };
 
@@ -98,127 +156,134 @@ const ShowProcessingDetail = () => {
       render: (_, record) => (
         // console.log("âsssasssssssssssssss"),
         // console.log({ record }),
-        (
-          <>
-            <Button type="primary" size="small" style={{ marginRight: 8 }} onClick={() => showEditModal(record)}>
-              Sửa
-            </Button>
+        <>
+          <Button
+            type="primary"
+            size="small"
+            style={{ marginRight: 8 }}
+            onClick={() => showEditModal(record)}
+          >
+            Sửa
+          </Button>
 
-            {record.trangThai === "Hoạt động" ? (
-              <>
-                <Button size="small" style={{ marginRight: 8 }} onClick={() => showModal(record)}>
-                  Đổi NGV
-                </Button>
-                <Button type="primary" size="small" style={{ marginRight: 8 }}>
-                  Hoàn Thành
-                </Button>
-              </>
-            ) : (
+          {record.trangThai === "Hoạt động" ? (
+            <>
               <Button
-                type="primary"
                 size="small"
-                style={{ marginRight: 8, background: "#10ce80" }}
+                style={{ marginRight: 8 }}
                 onClick={() => showModal(record)}
               >
-                Giao việc
-              </Button> 
-            )}
-
-            <Button danger size="small" onClick={() => handleDelete(record)}>
-              Xóa
+                Đổi NGV
+              </Button>
+              <Button type="primary" size="small" style={{ marginRight: 8 }}>
+                Hoàn Thành
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              size="small"
+              style={{ marginRight: 8, background: "#10ce80" }}
+              onClick={() => showModal(record)}
+            >
+              Giao việc
             </Button>
-          </>
-        )
+          )}
+
+          <Button danger size="small" onClick={() => handleDelete(record)}>
+            Xóa
+          </Button>
+        </>
       ),
     },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/admin/requests/detail/${id}`
-        );
-        // console.log("detailresponse", response);
-        const { data } = response;
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/admin/requests/detail/${id}`
+      );
+      console.log("detailresponse", response);
+      const { data } = response;
+      const helperData = data.helpers.map((helper) => ({
+        id: helper.helper_id,
+        fullName: helper.fullName,
+        phone: helper.phone,
+        dateOfBirth: helper.birthDate,
+        age: helper.age,
+        address: helper.address,
+        // Add any other relevant helper information
+      }));
+      setAllHelpers(helperData);
 
-        const helperData = data.helpers.map((helper) => ({
-          id: helper.helper_id,
-          fullName: helper.fullName,
-          phone: helper.phone,
-          dateOfBirth: helper.birthDate,
-          age: helper.age,
-          address: helper.address,
-          // Add any other relevant helper information
-        }));
-        setAllHelpers(helperData);
-
-        let requestType =
-          data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
-        let statusNow = "";
-        if (data.request.status === "notDone") {
-          statusNow = "Chưa tiến hành";
-        } else if (data.request.status === "assigned") {
-          statusNow = "Chưa tiến hành (Đã giao việc)";
-        } else if (data.request.status === "unconfirmed") {
-          statusNow = "Chờ xác nhận";
-        } else if (data.request.status === "processing") {
-          statusNow = "Đang tiến hành";
-        } else {
-          statusNow = "Đã hoàn thành";
-        }
-        setOrderData({
-          loaiYeuCau: requestType,
-          hoTenKhachHang: data.request.customerInfo.fullName,
-          soDTKhachHang: data.request.customerInfo.phone,
-          loaiDichVu: [data.request.service.title],
-          diaChiYeuCau: `${data.request.location.province}, ${data.request.location.district}`,
-          ngayDatYeuCau: new Date(data.request.orderDate).toLocaleDateString(
-            "vi-VN"
-          ),
-          trangThai: statusNow,
-          tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
-          
-        });
-
-        setTimeSlots(
-          data.helpers.map((helper, index) => ({
-            key: index.toString(),
-            gioBatDau: new Date(data.request.startTime).toLocaleTimeString(
-              "vi-VN",
-              { hour: "2-digit", minute: "2-digit" }
-            ),
-            gioKetThuc: new Date(data.request.endTime).toLocaleTimeString(
-              "vi-VN",
-              { hour: "2-digit", minute: "2-digit" }
-            ),
-            ngayLam: new Date(data.request.startTime).toLocaleDateString(
-              "vi-VN",
-              {
-                weekday: "long",
-                year: "numeric",
-                month: "numeric",
-                day: "numeric",
-              }
-            ),
-            nguoiGiupViec: helper.fullName, // Assuming this is the helper's ID
-
-            trangThai:
-              helper.status === "active" ? "Hoạt động" : "Chưa hoạt động",
-
-            //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
-            helperId: helper.helper_id,  
-            haveHelper: helper.fullName ? true : false,
-            scheduleIds: data.request.scheduleIds,
-          }))
-        );
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
+      let requestType =
+        data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+      let statusNow = "";
+      if (data.request.status === "notDone") {
+        statusNow = "Chưa tiến hành";
+      } else if (data.request.status === "assigned") {
+        statusNow = "Chưa tiến hành (Đã giao việc)";
+      } else if (data.request.status === "unconfirmed") {
+        statusNow = "Chờ xác nhận";
+      } else if (data.request.status === "processing") {
+        statusNow = "Đang tiến hành";
+      } else {
+        statusNow = "Đã hoàn thành";
       }
-    };
+      setOrderData({
+        loaiYeuCau: requestType,
+        hoTenKhachHang: data.request.customerInfo.fullName,
+        soDTKhachHang: data.request.customerInfo.phone,
+        loaiDichVu: [data.request.service.title],
+        diaChiYeuCau: `${data.request.location.province}, ${data.request.location.district}`,
+        ngayDatYeuCau: new Date(data.request.orderDate).toLocaleDateString(
+          "vi-VN"
+        ),
+        trangThai: statusNow,
+        tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
+      });
+
+      setTimeSlots(
+        data.helpers.map((helper, index) => ({
+          key: index.toString(),
+          gioBatDau: new Date(data.request.startTime).toLocaleTimeString(
+            "vi-VN",
+            { hour: "2-digit", minute: "2-digit" }
+          ),
+          gioKetThuc: new Date(data.request.endTime).toLocaleTimeString(
+            "vi-VN",
+            { hour: "2-digit", minute: "2-digit" }
+          ),
+          ngayLam: new Date(data.request.startTime).toLocaleDateString(
+            "vi-VN",
+            {
+              weekday: "long",
+              year: "numeric",
+              month: "numeric",
+              day: "numeric",
+            }
+          ),
+          nguoiGiupViec: helper.fullName, // Assuming this is the helper's ID
+
+          trangThai:
+            helper.status === "active" ? "Hoạt động" : "Chưa hoạt động",
+
+          //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
+          helperId: helper.helper_id,
+          haveHelper: helper.fullName ? true : false,
+
+          scheduleIds: data.request.scheduleIds,
+        }))
+      );
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [id]);
 
@@ -282,20 +347,20 @@ const ShowProcessingDetail = () => {
               pagination={false}
             />
             <PopupModalDetail
-        isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-        onAssign={handleAssign}
-        record={selectedRecord}
-        orderData={orderData}
-        allHelpers={allHelpers}
-      />
-      <PopupModalEdit
-      isVisible={isEditModalVisible}
-      onClose={() => setIsEditModalVisible(false)}
-      onSave={handleSaveEdit}
-      record={selectedEditRecord}
-      orderData={orderData}
-    />
+              isVisible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              onAssign={handleAssign}
+              record={selectedRecord}
+              orderData={orderData}
+              allHelpers={allHelpers}
+            />
+            <PopupModalEdit
+              isVisible={isEditModalVisible}
+              onClose={() => setIsEditModalVisible(false)}
+              onSave={handleSaveEdit}
+              record={selectedEditRecord}
+              orderData={orderData}
+            />
           </Card>
         </>
       )}
