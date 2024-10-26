@@ -9,19 +9,22 @@ import {
   Button,
   Row,
   Col,
-  message,
   Cascader,
 } from "antd";
 import { Table } from "antd";
 import dayjs from "dayjs";
 import "../../StylePage/styleAdd.css";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
+import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
 // const { Option } = Select;
 
 const AddOrder = () => {
+  const navigate = useNavigate();
+  const [showNotification, setShowNotification] = useState(false);
+
   const [locations, setLocations] = useState([]);
-  const [coefficient, setCoefficient] = useState([]);
+  const [coefficient, setCoefficient] = useState("0");
 
   const [requestType, setRequestType] = useState("short");
   const [form] = Form.useForm();
@@ -44,10 +47,70 @@ const AddOrder = () => {
     fetchData();
   }, []);
 
+  const timeToMinutes = (time) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const checkCoefficient = (orderDate, startTime, endTime, timeList) => {
+    if (!orderDate || !startTime || !endTime || !timeList) return "0";
+
+    const orderDay = orderDate.day();
+    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
+    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
+
+    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
+    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
+    const dayStartMinutes = timeToMinutes(timeList.openHour);
+    const dayEndMinutes = timeToMinutes(timeList.closeHour);
+
+    const coefficientWeekend = dataFetch.coefficientOtherList[1].value;
+    const coefficientOutside = dataFetch.coefficientOtherList[0].value;
+    const coefficientNormal = "0";
+
+    if (orderDay === 0 || orderDay === 6) {
+      return coefficientWeekend; // Weekend coefficient
+    }
+
+    if (
+      (orderStartMinutes >= dayStartMinutes &&
+        orderStartMinutes < officeStartMinutes) ||
+      (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+    ) {
+      return coefficientOutside; // Outside office hours coefficient
+    }
+
+    return coefficientNormal; // Default to normal coefficient
+  };
+
+  const updateCoefficient = () => {
+    const workDate = form.getFieldValue("workDate");
+    const startTime = form.getFieldValue("startTime");
+    const endTime = form.getFieldValue("endTime");
+
+    if (workDate && startTime && endTime && dataFetch.timeList) {
+      const newCoefficient = checkCoefficient(
+        dayjs(workDate),
+        dayjs(startTime),
+        dayjs(endTime),
+        dataFetch.timeList
+      );
+      setCoefficient(newCoefficient);
+      form.setFieldsValue({ coefficient_other: newCoefficient });
+    }
+  };
+
+  const handleDateChange = (date) => {
+    form.setFieldsValue({ workDate: date });
+    updateCoefficient();
+  };
+
   const disabledHours = () => {
+    const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
+    const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
     for (let i = 0; i < 24; i++) {
-      if (i < 8 || i > 20) {
+      if (i < openHour || i - 1 > closeHour) {
         hours.push(i);
       }
     }
@@ -55,8 +118,9 @@ const AddOrder = () => {
   };
 
   const disabledMinutes = (selectedHour) => {
+    const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const minutes = [];
-    if (selectedHour === 20) {
+    if (selectedHour === closeHour) {
       for (let i = 1; i < 60; i++) {
         minutes.push(i);
       }
@@ -77,6 +141,8 @@ const AddOrder = () => {
   };
   const handleTimeChange = (field, time) => {
     form.setFieldsValue({ [field]: time });
+
+    updateCoefficient();
 
     const startTime =
       field === "startTime" ? time : form.getFieldValue("startTime");
@@ -214,21 +280,6 @@ const AddOrder = () => {
     setLocations(locationsData);
   }, []);
 
-  const coefficientData = [
-    {
-      value: "1.3",
-      label: "Hệ số ngoài giờ",
-    },
-    {
-      value: "1.4",
-      label: "Hệ số cuối tuần",
-    },
-  ];
-
-  useEffect(() => {
-    setCoefficient(coefficientData);
-  }, []);
-
   const onFinish = (values) => {
     const {
       startTime,
@@ -262,10 +313,10 @@ const AddOrder = () => {
       province: values.location?.[0],
       district: values.location?.[1],
       ward: values.location?.[2],
-      coefficient_other: values.coefficient_other?.join(", "),
+      coefficient_other: values.coefficient_other,
     };
-    console.log("dataForBackend", dataForBackend);
 
+    console.log("dataForBackenddd", dataForBackend);
     // Send data to backend
     axios
       .post(
@@ -281,15 +332,28 @@ const AddOrder = () => {
         if (!response) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return response;
       })
       .then((data) => {
         console.log("Response from backend:", data);
-        message.success("Đơn hàng đã được tạo thành công!");
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Đơn hàng đã được tạo thành công!",
+        });
+
+        setTimeout(() => {
+          // navigate("/order");
+          setShowNotification(null);
+        }, 100000);
       })
       .catch((error) => {
         console.error("Error sending data to backend:", error);
-        message.error("Không thể tạo đơn hàng. Vui lòng thử lại.");
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: "Không thể tạo đơn hàng. Vui lòng thử lại.",
+        });
       });
   };
 
@@ -358,9 +422,18 @@ const AddOrder = () => {
               label="Loại Dịch Vụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
-              <Radio.Group style={{ marginTop: "-30000px" }}>
-                <Radio value="Dọn dẹp">Dọn dẹp</Radio>
-                <Radio value="Chăm sóc người già">Chăm sóc người già</Radio>
+              <Radio.Group className="service-radio-group">
+                {dataFetch &&
+                dataFetch.serviceList &&
+                dataFetch.serviceList.length > 0 ? (
+                  dataFetch.serviceList.map((service, index) => (
+                    <Radio key={index} value={service.title}>
+                      {service.title}
+                    </Radio>
+                  ))
+                ) : (
+                  <div>Đang tải dịch vụ...</div>
+                )}
               </Radio.Group>
             </Form.Item>
           </Col>
@@ -388,9 +461,9 @@ const AddOrder = () => {
               ]}
             >
               {requestType === "short" ? (
-                <DatePicker />
+                <DatePicker onChange={handleDateChange} />
               ) : (
-                <DatePicker.RangePicker />
+                <DatePicker.RangePicker onChange={handleDateChange} />
               )}
             </Form.Item>
           </Col>
@@ -443,13 +516,7 @@ const AddOrder = () => {
               label="Hệ số"
               rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
             >
-              <Cascader
-                options={coefficient}
-                placeholder="Chọn hệ số phụ"
-                showSearch
-                changeOnSelect
-                allowClear={false}
-              />
+              <Input disabled value={coefficient} />
             </Form.Item>
           </Col>
         </Row>
@@ -472,6 +539,14 @@ const AddOrder = () => {
           </Button>
         </Form.Item>
       </Form>
+
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </Card>
   );
 };

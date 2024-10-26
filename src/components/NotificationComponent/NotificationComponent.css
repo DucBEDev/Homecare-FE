@@ -1,0 +1,54 @@
+.success-notification {
+    background-color: #fff;
+    border-left: 4px solid #51da8c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: popUp 0.3s ease-out;
+    width: 320px !important;
+  }
+
+  .error-notification {
+    background-color: #fff;
+    border-left: 4px solid #f18a8c;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: popUp 0.3s ease-out;
+    width: 320px !important;
+  }
+
+  .ant-notification-notice-message {
+    font-weight: 600; 
+    font-size: 14px !important;
+    opacity: 0.8;
+    margin-left: 30px !important;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .ant-notification-notice-description {
+    font-size: 13px !important;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-left: 32px !important;
+    margin-top: -2px !important;
+  }
+  
+  .success-notification .ant-notification-notice-message {
+    color: #51da8c;
+  }
+
+  .error-notification .ant-notification-notice-message {
+    color: #f18a8c;
+  }
+  
+  .custom-notification .ant-notification-notice-description {
+    color: #333;
+  }
+
+  @keyframes popUp {
+    0% {
+      opacity: 0;
+      transform: scale(0.8) translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }

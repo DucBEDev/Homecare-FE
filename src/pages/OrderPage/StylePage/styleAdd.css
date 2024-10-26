@@ -78,3 +78,39 @@
 .ant-picker-cell-inner {
     font-size: 10px !important;
 }
+
+.ant-select-arrow {
+    display: none !important;
+}
+
+.ant-picker-header {
+    font-size: 20px !important;
+    font-weight: 500 !important;
+}
+
+.ant-picker-content {
+    font-size: 40px !important;
+}
+
+.ant-picker-cell-inner {
+    font-size: 10px !important;
+}
+
+.service-radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    margin: -4px; /* Bù trừ cho padding của các item con */
+  }
+  
+  .service-radio-group .ant-radio-wrapper {
+    flex-basis: calc(33.33% - 8px); /* Chiếm 1/3 chiều rộng trừ đi khoảng cách */
+    margin: 0;
+    padding: 4px;
+    box-sizing: border-box;
+  }
+  
+  /* Đảm bảo rằng hàng cuối cùng được căn chỉnh đúng khi không đủ 3 item */
+  .service-radio-group::after {
+    content: "";
+    flex: auto;
+  }
