@@ -49,10 +49,12 @@ const AddOrder = () => {
   }, []);
 
   //TOTAL COST 
+  //update cost into table
   const updateTotalCost = () => {
     const newTotalCost = calculateTotalCost();
     setTotalCost(newTotalCost);
   };
+  //calculate total cost
   const calculateTotalCost = () => {
     const formValues = form.getFieldsValue();
     const {
@@ -77,7 +79,7 @@ const AddOrder = () => {
     }
   
     const { basicPrice, coefficient: coefficient_service } = selectedService;
-    const coefficientWeekend = 1.4; // Hệ số cố định cho thứ 7 và chủ nhật
+    const coefficientWeekend = parseFloat(dataFetch.coefficientOtherList[1].value); // Hệ số cố định cho thứ 7 và chủ nhật
     const coefficientOvertime = parseFloat(dataFetch.coefficientOtherList[0].value);
   
     const start = dayjs(startTime);
@@ -206,7 +208,7 @@ const AddOrder = () => {
         dataFetch.timeList
       );
       setCoefficient(newCoefficient);
-      form.setFieldsValue({ coefficient_other: newCoefficient });
+      // form.setFieldsValue({ coefficient_other: newCoefficient });
     }
   };
 //once change date, update coefficient
@@ -607,15 +609,15 @@ const AddOrder = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={3}>
+          {/* <Col span={3}>
             <Form.Item
               name="coefficient_other"
               label="Hệ số"
               rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
             >
               <Input disabled value={coefficient} />  {/*value coeeeficient take from parent is form item */}
-            </Form.Item>
-          </Col>
+            {/* </Form.Item> */}
+          {/* </Col> */} 
         </Row>
 
         {timeErrors && (

@@ -14,7 +14,7 @@ const ProcessingOrders = () => {
   const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
-  const pageSize = 6;
+  const pageSize = 5;
   const navigate = useNavigate();
   const columns = [
     {
@@ -268,7 +268,9 @@ const ProcessingOrders = () => {
         total={filteredData.length}
         pageSize={pageSize}
         onChange={setCurrentPage}
-        style={{ fontSize: "36px", transform: "translateX(-20px)" }}
+        hideOnSinglePage={true}
+        showLessItems={true}
+        style={{ fontSize: "26px", transform: "translateX(-20px)", marginTop: "10px"}}
       />
       <Outlet />
     </div>
