@@ -5,6 +5,7 @@ import "../../StylePage/styleProcessingDetail.css";
 import axios from "axios";
 import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
 import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
 
 const { Title } = Typography;
 
@@ -14,6 +15,7 @@ const ShowProcessingDetail = () => {
   const [orderData, setOrderData] = useState();
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [allHelpers, setAllHelpers] = useState([]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -22,141 +24,67 @@ const ShowProcessingDetail = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedEditRecord, setSelectedEditRecord] = useState(null);
 
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
+
   const showModal = (record) => {
     setSelectedRecord({
       ...record,
       mainOrderId: id, // Thêm id của đơn hàng lớn vào record
-      scheduleIds: record.scheduleIds,
     });
     setIsModalVisible(true);
   };
 
-  const handleAssign = () => {
-    console.log("selectedRecord", { selectedRecord });
-    if (selectedRecord) {
-      const assignInfo = {
-        mainOrderId: selectedRecord.mainOrderId,
-        detailOrderId: selectedRecord.scheduleIds[selectedRecord.key]._id,
-        helperId: selectedRecord.helperId,
-      };
-      console.log("aa", { assignInfo });
-
-      Modal.confirm({
-        title: "Xác nhận giao việc",
-        content: "Bạn có chắc chắn muốn giao việc cho người giúp việc này?",
-        okText: "Giao việc",
-        styles: {
-          content: {
-            fontSize: "14px",
-          },
-        },
-        onOk() {
-          axios
-            .post(
-              `${process.env.REACT_APP_API_URL}/admin/requests/assign`,
-              assignInfo
-            )
-            .then((response) => {
-              console.log("Giao việc thành công:", response.data);
-
-              // cap nhat timeslot
-              setTimeSlots((prevTimeSlots) =>
-                prevTimeSlots.map((slot) =>
-                  slot.key === selectedRecord.key
-                    ? {
-                        ...slot,
-                        nguoiGiupViec: response.data.helperName,
-                        trangThai: "Hoạt động",
-                      }
-                    : slot
-                )
-              );
-
-              fetchData(); // load lại data
-            })
-            .catch((error) => {
-              console.error("Lỗi khi giao việc:", error);
-            });
-        },
-        onCancel() {
-        },
-      });
-    }
-    setIsModalVisible(false);
-  };
-
   const showEditModal = (record) => {
-    setSelectedEditRecord(record);
+    setSelectedEditRecord({
+      ...record,
+      mainOrderId: id,
+    });
     setIsEditModalVisible(true);
   };
 
-  const handleSaveEdit = (editedRecord) => {
-    // Update the timeSlots state with the edited record
-    setTimeSlots((prevTimeSlots) =>
-      prevTimeSlots.map((slot) =>
-        slot.key === editedRecord.key ? editedRecord : slot
-      )
-    );
-    setIsEditModalVisible(false);
+  // Thêm hàm show modal xóa
+  const showDeleteModal = (record) => {
+    setSelectedDeleteRecord({
+      ...record,
+      mainOrderId: id,
+    });
+    setIsDeleteModalVisible(true);
   };
 
-  const handleDelete = (record) => {
-    console.log({ record });
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn có chắc chắn muốn xóa mục này?",
-      okText: "Xóa",
-      styles: {
-        content: {
-          fontSize: "14px",
-        },
-      },
-      onOk() {
-        const deleteInfo = {
-          mainOrderId: id, // id của đơn hàng lớn
-          detailOrderId: record.scheduleIds[record.key]._id, // id của chi tiết đơn hàng
-        };
-        console.log("bb", { deleteInfo });
+  // Thêm hàm xử lý cho giao việc dài hạn
+  const handleLongTermAssignment = () => {
+    // Tạo một record mới cho giao việc dài hạn
+    const longTermRecord = {
+      mainOrderId: id,
+      scheduleId: id,
+      ngayLam: orderData?.ngayDatYeuCau,
+      gioBatDau: timeSlots[0]?.gioBatDau, // Lấy giờ bắt đầu từ slot đầu tiên
+      gioKetThuc: timeSlots[0]?.gioKetThuc, // Lấy giờ kết thúc từ slot đầu tiên
+      nguoiGiupViec: "Chưa có",
+      isLongTerm: true, // Thêm flag để đánh dấu là giao việc dài hạn cho nhiều đơn
+    };
 
-        axios
-          .delete(
-            `${process.env.REACT_APP_API_URL}/admin/requests/delete`,
-            { data: deleteInfo }
-          )
-          .then((response) => {
-            console.log("Xóa thành công:", response.data);
-
-            setTimeSlots((prevTimeSlots) =>
-              prevTimeSlots.filter((slot) => slot.key !== record.key)
-            );
-
-            fetchData();
-          })
-          .catch((error) => {
-            console.error("Lỗi khi xóa:", error);
-          });
-      },
-      onCancel() {},
-    });
+    setSelectedRecord(longTermRecord);
+    setIsModalVisible(true);
   };
 
   const columns = [
-    { title: "Giờ Bắt Đầu", dataIndex: "gioBatDau", key: "gioBatDau" },
-    { title: "Giờ Kết Thúc", dataIndex: "gioKetThuc", key: "gioKetThuc" },
-    { title: "Ngày Làm", dataIndex: "ngayLam", key: "ngayLam" },
+    { title: "Giờ Bắt Đầu", dataIndex: "gioBatDau", key: "gioBatDau", width: 150 },
+    { title: "Giờ Kết Thúc", dataIndex: "gioKetThuc", key: "gioKetThuc", width: 150 },
+    { title: "Ngày Làm", dataIndex: "ngayLam", key: "ngayLam", width: 190 },
     {
       title: "Người Giúp Việc",
       dataIndex: "nguoiGiupViec",
       key: "nguoiGiupViec",
+      width: 160
     },
-    { title: "Trạng Thái", dataIndex: "trangThai", key: "trangThai" },
+    { title: "Trạng Thái", dataIndex: "trangThai", key: "trangThai", width: 160 },
     {
       title: "Xử Lý",
       key: "xuLy",
       render: (_, record) => (
-        // console.log("âsssasssssssssssssss"),
-        // console.log({ record }),
-        <>
+        <div style={{ display: 'flex', gap: '4px', whiteSpace: 'nowrap' }}>
           <Button
             type="primary"
             size="small"
@@ -190,10 +118,10 @@ const ShowProcessingDetail = () => {
             </Button>
           )}
 
-          <Button danger size="small" onClick={() => handleDelete(record)}>
+          <Button danger size="small" onClick={() => showDeleteModal(record)}>
             Xóa
           </Button>
-        </>
+        </div>
       ),
     },
   ];
@@ -206,12 +134,12 @@ const ShowProcessingDetail = () => {
       console.log("detailresponse", response);
       const { data } = response;
       const helperData = data.helpers.map((helper) => ({
-        id: helper.helper_id,
+        id: helper._id,
         fullName: helper.fullName,
         phone: helper.phone,
         dateOfBirth: helper.birthDate,
-        age: helper.age,
         address: helper.address,
+        baseFactor: helper.baseFactor,
         // Add any other relevant helper information
       }));
       setAllHelpers(helperData);
@@ -244,36 +172,45 @@ const ShowProcessingDetail = () => {
       });
 
       setTimeSlots(
-        data.helpers.map((helper, index) => ({
-          key: index.toString(),
-          gioBatDau: new Date(data.request.startTime).toLocaleTimeString(
-            "vi-VN",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
-          gioKetThuc: new Date(data.request.endTime).toLocaleTimeString(
-            "vi-VN",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
-          ngayLam: new Date(data.request.startTime).toLocaleDateString(
-            "vi-VN",
-            {
-              weekday: "long",
-              year: "numeric",
-              month: "numeric",
-              day: "numeric",
-            }
-          ),
-          nguoiGiupViec: helper.fullName, // Assuming this is the helper's ID
+        data.scheduleRequest.map((schedule, index) => {
+          // Map helpers với key duy nhất
+          const helpersList = data.helpers.map((helper) => ({
+            key: `helper_${helper.id}`, // Sửa helper._id thành helper.id
+            helperId: helper.id,
+            helperName: helper.fullName,
+            haveHelper: true,
+          }));
 
-          trangThai:
-            helper.status === "active" ? "Hoạt động" : "Chưa hoạt động",
+          return {
+            key: `schedule_${schedule._id}`,
+            gioBatDau: schedule.startTime || "NaN", // Lấy trực tiếp từ API
+            gioKetThuc: schedule.endTime || "NaN", // Lấy trực tiếp từ API
+            ngayLam: new Date(schedule.workingDate).toLocaleDateString(
+              // Sửa thành workingDate
+              "vi-VN",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+              }
+            ),
+            nguoiGiupViec:
+              schedule.helper_id === "notAvailable"
+                ? "Chưa có"
+                : data.helpers.find((h) => h.id === schedule.helper_id)
+                    ?.fullName || "Chưa có",
+            trangThai:
+              schedule.status === "notDone" ? "Chưa hoạt động" : "Hoạt động",
 
-          //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
-          helperId: helper.helper_id,
-          haveHelper: helper.fullName ? true : false,
-
-          scheduleIds: data.request.scheduleIds,
-        }))
+            scheduleId: schedule._id,
+            helpers: helpersList,
+            currentHelperId: schedule.helper_id,
+            coefficient_service: data.request.service.coefficient_service,
+            coefficient_other: data.request.service.coefficient_other,
+            isLongTerm: false,
+          };
+        })
       );
 
       setLoading(false);
@@ -296,7 +233,19 @@ const ShowProcessingDetail = () => {
         <div>Loading...</div>
       ) : (
         <>
-          <Card title="Thông tin đơn hàng:" style={{ marginBottom: 24 }}>
+          <Card
+            style={{
+              position: "relative",
+              height: "calc(100vh - 460px)", // Chiều cao động dựa theo viewport
+              display: "flex",
+              flexDirection: "column",
+            }}
+            title="Thông tin chi tiết khung giờ của đơn hàng"
+            bodyStyle={{
+              flex: 1,
+              overflow: "hidden", // Ngăn scroll của Card
+            }}
+          >
             <Descriptions bordered>
               <Descriptions.Item label="Loại Yêu Cầu">
                 {orderData?.loaiYeuCau || "N/A"}{" "}
@@ -338,6 +287,7 @@ const ShowProcessingDetail = () => {
               }}
               type="primary"
               size="normal"
+              onClick={handleLongTermAssignment}
             >
               Giao việc dài hạn
             </Button>
@@ -345,11 +295,16 @@ const ShowProcessingDetail = () => {
               columns={columns}
               dataSource={timeSlots}
               pagination={false}
+              scroll={{ 
+                y: "calc(100vh - 500px)" // Chiều cao scroll của table
+              }}
+              style={{
+                height: "100%"
+              }}
             />
             <PopupModalDetail
               isVisible={isModalVisible}
               onClose={() => setIsModalVisible(false)}
-              onAssign={handleAssign}
               record={selectedRecord}
               orderData={orderData}
               allHelpers={allHelpers}
@@ -357,9 +312,22 @@ const ShowProcessingDetail = () => {
             <PopupModalEdit
               isVisible={isEditModalVisible}
               onClose={() => setIsEditModalVisible(false)}
-              onSave={handleSaveEdit}
               record={selectedEditRecord}
               orderData={orderData}
+              onEdit={() => {
+                fetchData(); // Refresh data sau khi edit
+                setIsEditModalVisible(false);
+              }}
+            />
+            <PopupModalDelete
+              isVisible={isDeleteModalVisible}
+              onClose={() => setIsDeleteModalVisible(false)}
+              record={selectedDeleteRecord}
+              orderData={orderData}
+              onDelete={() => {
+                fetchData(); // Refresh data sau khi xóa
+                setIsDeleteModalVisible(false);
+              }}
             />
           </Card>
         </>

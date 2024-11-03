@@ -28,6 +28,14 @@
     padding: 0 !important;
 }
 
+.info-section p {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #000;
+    margin: 2px 0 28px 0 !important;
+    text-align: center;
+}
+
 /* banghai */
 
 .ant-table-thead .ant-table-cell {
@@ -37,3 +45,4 @@
 .ant-table-tbody .ant-table-cell {
     font-size: 14px !important;
 }
+

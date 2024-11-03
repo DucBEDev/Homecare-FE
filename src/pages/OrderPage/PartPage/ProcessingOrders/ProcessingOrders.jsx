@@ -177,7 +177,7 @@ const ProcessingOrders = () => {
         console.log("response", response);
         const transformedData = response.data.requestList.map((record, index) => {
           let requestName =
-            record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+            record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
           let statusNow = "";
           if (record.status === "notDone") {
             statusNow = "Chưa tiến hành";
@@ -221,20 +221,6 @@ const ProcessingOrders = () => {
       filtered = filtered.filter((item) =>
         item.phoneNumber.includes(searchValue)
       );
-    }
-    // console.log("dateRange", dateRange);
-    // if (dateRange.startDate && dateRange.endDate) {
-    //   filtered = filtered.filter((item) => {
-    //     const itemDate = item.orderDate.format("DD/MM/YYYY");
-    //     const startDate = dateRange.startDate.format("DD/MM/YYYY");
-    //     const endDate = dateRange.endDate.format("DD/MM/YYYY");
-    //     return (
-    //       itemDate >= startDate && itemDate <= endDate
-    //     );
-    //   });
-    // }
-    if (dateRange === null) {
-      console.log("dateRange", dateRange);
     }
     else if (dateRange.startDate && dateRange.endDate) {
       filtered = filtered.filter((item) => {

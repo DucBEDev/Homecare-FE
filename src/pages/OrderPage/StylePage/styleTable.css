@@ -94,6 +94,14 @@
     font-size: 6px !important;
 }
 
+.anticon-close-circle {
+    font-size: 18px !important;
+}
+
+.anticon-calendar {
+    font-size: 18px !important;
+}
+
 @media (max-width: 992px) {
     .ant-table-container {
         margin-left: -30px;
