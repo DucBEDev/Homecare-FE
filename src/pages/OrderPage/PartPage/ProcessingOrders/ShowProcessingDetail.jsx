@@ -1,153 +1,146 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Pagination, Table } from "antd";
-import "../../StylePage/styleTable.css";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { Card, Descriptions, Table, Button, Typography, Modal } from "antd";
+import "../../StylePage/styleProcessingDetail.css";
 import axios from "axios";
-import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
-import { Outlet, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
+import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
 
-const ProcessingOrders = () => {
-  const searchValue = useSelector((state) => state.search.value);
-  const dateRange = useSelector((state) => state.dateRange);
+const { Title } = Typography;
 
+const ShowProcessingDetail = () => {
+  const location = useLocation();
+  const { id } = location.state || {};
+  const [orderData, setOrderData] = useState();
+  const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filteredData, setFilteredData] = useState(data);
-  const pageSize = 5;
-  const navigate = useNavigate();
+
+  const [allHelpers, setAllHelpers] = useState([]);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [selectedEditRecord, setSelectedEditRecord] = useState(null);
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
+
+  const showModal = (record) => {
+    setSelectedRecord({
+      ...record,
+      mainOrderId: id, // Thêm id của đơn hàng lớn vào record
+    });
+    setIsModalVisible(true);
+  };
+
+  const showEditModal = (record) => {
+    setSelectedEditRecord({
+      ...record,
+      mainOrderId: id,
+    });
+    setIsEditModalVisible(true);
+  };
+
+  // Thêm hàm show modal xóa
+  const showDeleteModal = (record) => {
+    setSelectedDeleteRecord({
+      ...record,
+      mainOrderId: id,
+    });
+    setIsDeleteModalVisible(true);
+  };
+
+  // Thêm hàm xử lý cho giao việc dài hạn
+  const handleLongTermAssignment = () => {
+    // Tạo một record mới cho giao việc dài hạn
+    const longTermRecord = {
+      mainOrderId: id,
+      scheduleId: id,
+      ngayLam: orderData?.ngayDatYeuCau,
+      gioBatDau: timeSlots[0]?.gioBatDau, // Lấy giờ bắt đầu từ slot đầu tiên
+      gioKetThuc: timeSlots[0]?.gioKetThuc, // Lấy giờ kết thúc từ slot đầu tiên
+      nguoiGiupViec: "Chưa có",
+      isLongTerm: true, // Thêm flag để đánh dấu là giao việc dài hạn cho nhiều đơn
+    };
+
+    setSelectedRecord(longTermRecord);
+    setIsModalVisible(true);
+  };
+
   const columns = [
     {
-      title: "Số ĐT Khách Hàng",
-      dataIndex: "phoneNumber",
-      key: "phoneNumber",
-      render: (text) => (
-        <span className="column-with-icon phone-icon">{text}</span>
-      ),
-      sorter: (a, b) => a.phoneNumber.localeCompare(b.phoneNumber),
+      title: "Giờ Bắt Đầu",
+      dataIndex: "gioBatDau",
+      key: "gioBatDau",
+      width: 150,
     },
     {
-      title: "Loại Yêu cầu",
-      dataIndex: "requestType",
-      key: "requestType",
-      render: (text) => (
-        <span className="column-with-icon request-icon">{text}</span>
-      ),
-      filters: [
-        { text: "Yêu cầu mới", value: "Yêu cầu mới" },
-        { text: "Đang xử lý", value: "Đang xử lý" },
-      ],
-      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+      title: "Giờ Kết Thúc",
+      dataIndex: "gioKetThuc",
+      key: "gioKetThuc",
+      width: 150,
+    },
+    { title: "Ngày Làm", dataIndex: "ngayLam", key: "ngayLam", width: 190 },
+    {
+      title: "Người Giúp Việc",
+      dataIndex: "nguoiGiupViec",
+      key: "nguoiGiupViec",
+      width: 160,
     },
     {
-      title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-      render: (text) => (
-        <span className="column-with-icon request-icon">{text}</span>
-      ),
-      filters: [
-        { text: "Quận 1", value: "Quận 1" },
-        { text: "Quận 2", value: "Quận 2" },
-        { text: "Quận 3", value: "Quận 3" },
-        { text: "Quận 4", value: "Quận 4" },
-        { text: "Quận 5", value: "Quận 5" },
-        { text: "Quận 6", value: "Quận 6" },
-        { text: "Quận 7", value: "Quận 7" },
-        { text: "Quận 8", value: "Quận 8" },
-        { text: "Quận 9", value: "Quận 9" },
-        { text: "Quận 10", value: "Quận 10" },
-        { text: "Quận 11", value: "Quận 11" },
-        { text: "Quận 12", value: "Quận 12" },
-        { text: "Quận Tân Phú", value: "Quận Tân Phú" },
-        { text: "Quận Tân Bình", value: "Quận Tân Bình" },
-      ],
-      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+      title: "Trạng Thái",
+      dataIndex: "trangThai",
+      key: "trangThai",
+      width: 160,
     },
     {
-      title: "Loại Dịch Vụ",
-      dataIndex: "serviceType",
-      key: "serviceType",
-      render: (text) => (
-        <span className="column-with-icon service-icon">{text}</span>
-      ),
-      filters: [
-        { text: "Dịch vụ A", value: "Dịch vụ A" },
-        { text: "Dịch vụ B", value: "Dịch vụ B" },
-      ],
-      onFilter: (value, record) => record.serviceType.indexOf(value) === 0,
-    },
-    {
-      title: "Ngày Đặt Yêu Cầu",
-      dataIndex: "requestDate",
-      key: "requestDate",
-      render: (text) => (
-        <span className="column-with-icon date-icon">{text}</span>
-      ),
-      sorter: (a, b) => new Date(a.requestDate) - new Date(b.requestDate),
-    },
-    {
-      title: "Trạng thái",
-      dataIndex: "status",
-      key: "status",
-      render: (text) => (
-        <span className="column-with-icon cost-icon">{text}</span>
-      ),
-      sorter: (a, b) =>
-        a.cost.replace(/[^\d]/g, "") - b.cost.replace(/[^\d]/g, ""),
-    },
-    {
-      title: "Lựa Chọn",
-      key: "actions",
+      title: "Xử Lý",
+      key: "xuLy",
       render: (_, record) => (
-        <span className="column-with-icon action-icon">
-          <ButtonComponent
-            size="large"
-            textButton="Chi tiết"
-            styleButton={{
-              backgroundColor: "#3cbe5d",
-              width: "40px",
-              height: "40px",
-              border: "1px",
-              borderRadius: "12px",
-              marginRight: "2px",
-            }}
-            styleButtonText={{ color: "#fff" }}
-            onClick={() => handleViewDetails(record.key)}
-          ></ButtonComponent>
-          <ButtonComponent
-            size="large"
-            textButton="Sửa"
-            styleButton={{
-              backgroundColor: "#3ebedd",
-              width: "40px",
-              height: "40px",
-              border: "1px",
-              borderRadius: "12px",
-              marginRight: "2px",
-            }}
-            styleButtonText={{ color: "#fff" }}
-            onClick={() => handleEditDetails(record.key)}
-          ></ButtonComponent>
-          <ButtonComponent
-            size="large"
-            textButton="Xóa"
-            styleButton={{
-              backgroundColor: "#d22d2d",
-              width: "40px",
-              height: "40px",
-              border: "1px",
-              borderRadius: "12px",
-            }}
-            styleButtonText={{ color: "#fff" }}
-            onClick={() => handleDeleteDetails(record.key)}
-          ></ButtonComponent>
-        </span>
+        <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
+          <Button
+            type="primary"
+            size="small"
+            style={{ marginRight: 8 }}
+            onClick={() => showEditModal(record)}
+          >
+            Sửa
+          </Button>
+
+          {record.trangThai === "Hoạt động" ? (
+            <>
+              <Button
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => showModal(record)}
+              >
+                Đổi NGV
+              </Button>
+              <Button type="primary" size="small" style={{ marginRight: 8 }}>
+                Hoàn Thành
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="primary"
+              size="small"
+              style={{ marginRight: 8, background: "#10ce80" }}
+              onClick={() => showModal(record)}
+            >
+              Giao việc
+            </Button>
+          )}
+
+          <Button danger size="small" onClick={() => showDeleteModal(record)}>
+            Xóa
+          </Button>
+        </div>
       ),
     },
   ];
 
-<<<<<<< HEAD
   const fetchData = async () => {
     try {
       const response = await axios.get(
@@ -165,123 +158,197 @@ const ProcessingOrders = () => {
         // Add any other relevant helper information
       }));
       setAllHelpers(helperData);
-=======
-  const handleViewDetails = useCallback(
-    (recordId) => {
-      navigate(`/order/processing/showDetail`, { state: { id: recordId } });
-    },
-    [navigate]
-  );
->>>>>>> 0b7a43d1adfd2dfdf2f7663d2b54ffde8f45fdd4
 
-  const handleEditDetails = useCallback(
-    (recordId) => {
-      navigate(`/order/processing/editDetail`, { state: { id: recordId } });
-    },
-    [navigate]
-  );
-
-  const handleDeleteDetails = useCallback(
-    (recordId) => {
-      navigate(`/processing/showDetail`);
-    },
-    [navigate]
-  );
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`
-        );
-        console.log("response", response);
-        const transformedData = response.data.requestList.map((record, index) => {
-          let requestName =
-            record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
-          let statusNow = "";
-          if (record.status === "notDone") {
-            statusNow = "Chưa tiến hành";
-          } else if (record.status === "assigned") {
-            statusNow = "Chưa tiến hành (Đã giao việc)";
-          } else if (record.status === "unconfirmed") {
-            statusNow = "Chờ xác nhận";
-          } else if (record.status === "processing") {
-            statusNow = "Đang tiến hành";
-          } else {
-            statusNow = "Đã hoàn thành";
-          }
-          return {
-            key: record._id,
-            phoneNumber: record.customerInfo.phone,
-            requestType: requestName,
-            serviceType: record.service.title,
-            requestDate: new Date(record.createdAt).toLocaleDateString(),
-            address: record.location.district,
-            cost: `${record.totalCost}đ`,
-            status: statusNow,
-            scheduleIds: record.scheduleIds,
-          };
-        });
-        setData(transformedData);
-        setFilteredData(transformedData);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setLoading(false);
+      let requestType =
+        data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+      let statusNow = "";
+      if (data.request.status === "notDone") {
+        statusNow = "Chưa tiến hành";
+      } else if (data.request.status === "assigned") {
+        statusNow = "Chưa tiến hành (Đã giao việc)";
+      } else if (data.request.status === "unconfirmed") {
+        statusNow = "Chờ xác nhận";
+      } else if (data.request.status === "processing") {
+        statusNow = "Đang tiến hành";
+      } else {
+        statusNow = "Đã hoàn thành";
       }
-
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    let filtered = data;
-
-    if (searchValue) {
-      filtered = filtered.filter((item) =>
-        item.phoneNumber.includes(searchValue)
-      );
-    }
-    else if (dateRange.startDate && dateRange.endDate) {
-      filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.requestDate);
-        const startDate = new Date(dateRange.startDate);
-        const endDate = new Date(dateRange.endDate);
-        return itemDate >= startDate && itemDate <= endDate;
+      setOrderData({
+        loaiYeuCau: requestType,
+        hoTenKhachHang: data.request.customerInfo.fullName,
+        soDTKhachHang: data.request.customerInfo.phone,
+        loaiDichVu: [data.request.service.title],
+        diaChiYeuCau: `${data.request.location.province}, ${data.request.location.district}`,
+        ngayDatYeuCau: new Date(data.request.orderDate).toLocaleDateString(
+          "vi-VN"
+        ),
+        trangThai: statusNow,
+        tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
       });
+
+      setTimeSlots(
+        data.scheduleRequest.map((schedule, index) => {
+          // Map helpers với key duy nhất
+          const helpersList = data.helpers.map((helper) => ({
+            key: `helper_${helper.id}`, // Sửa helper._id thành helper.id
+            helperId: helper.id,
+            helperName: helper.fullName,
+            haveHelper: true,
+          }));
+
+          return {
+            key: `schedule_${schedule._id}`,
+            gioBatDau: schedule.startTime || "NaN", // Lấy trực tiếp từ API
+            gioKetThuc: schedule.endTime || "NaN", // Lấy trực tiếp từ API
+            ngayLam: new Date(schedule.workingDate).toLocaleDateString(
+              // Sửa thành workingDate
+              "vi-VN",
+              {
+                weekday: "long",
+                year: "numeric",
+                month: "numeric",
+                day: "numeric",
+              }
+            ),
+            nguoiGiupViec:
+              schedule.helper_id === "notAvailable"
+                ? "Chưa có"
+                : data.helpers.find((h) => h.id === schedule.helper_id)
+                    ?.fullName || "Chưa có",
+            trangThai:
+              schedule.status === "notDone" ? "Chưa hoạt động" : "Hoạt động",
+
+            scheduleId: schedule._id,
+            helpers: helpersList,
+            currentHelperId: schedule.helper_id,
+            coefficient_service: data.request.service.coefficient_service,
+            coefficient_other: data.request.service.coefficient_other,
+            isLongTerm: false,
+          };
+        })
+      );
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setLoading(false);
     }
-
-    setFilteredData(filtered);
-  }, [searchValue, dateRange, data]);
-
-  const getCurrentPageData = useCallback(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, filteredData]);
-
-  return (
-    <div className="processing-orders-container">
-      <Table
-        columns={columns}
-        dataSource={getCurrentPageData()}
-        className="custom-table"
-        loading={loading}
-        pagination={false}
-      />
-      <Pagination
-        align="center"
-        current={currentPage}
-        total={filteredData.length}
-        pageSize={pageSize}
-        onChange={setCurrentPage}
-        hideOnSinglePage={true}
-        showLessItems={true}
-        style={{ fontSize: "26px", transform: "translateX(-20px)", marginTop: "10px"}}
-      />
-      <Outlet />
-    </div>
-  );
-}
   };
 
-export default ProcessingOrders;
+  useEffect(() => {
+    fetchData();
+  }, [id]);
+
+  return (
+    <div style={{ padding: 24 }}>
+      <Title className="title-processing-detail" level={5}>
+        Chi tiết đơn hàng chưa hoàn thành:
+      </Title>
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <>
+          <Card
+            style={{
+              position: "relative",
+              height: "calc(100vh - 460px)", // Chiều cao động dựa theo viewport
+              display: "flex",
+              flexDirection: "column",
+            }}
+            title="Thông tin chi tiết khung giờ của đơn hàng"
+            bodyStyle={{
+              flex: 1,
+              overflow: "hidden", // Ngăn scroll của Card
+            }}
+          >
+            <Descriptions bordered>
+              <Descriptions.Item label="Loại Yêu Cầu">
+                {orderData?.loaiYeuCau || "N/A"}{" "}
+                {/* Fallback to "N/A" if undefined */}
+              </Descriptions.Item>
+              <Descriptions.Item label="Họ Tên Khách Hàng">
+                {orderData?.hoTenKhachHang || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Số ĐT Khách Hàng">
+                {orderData?.soDTKhachHang || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Loại Dịch Vụ">
+                {orderData?.loaiDichVu.join(", ") || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Địa Chỉ Yêu Cầu">
+                {orderData?.diaChiYeuCau || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày Đặt Yêu Cầu">
+                {orderData?.ngayDatYeuCau || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng Thái">
+                {orderData?.trangThai || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Tổng Chi Phí">
+                {orderData?.tongChiPhi || "N/A"}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+          <Card
+            style={{ position: "relative" }}
+            title="Thông tin chi tiết khung giờ của đơn hàng"
+          >
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "75%",
+                background: "#10ce80",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleLongTermAssignment}
+            >
+              Giao việc dài hạn
+            </Button>
+            <Table
+              columns={columns}
+              dataSource={timeSlots}
+              pagination={false}
+              scroll={{
+                y: "calc(100vh - 500px)", // Chiều cao scroll của table
+              }}
+              style={{
+                height: "100%",
+              }}
+            />
+            <PopupModalDetail
+              isVisible={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              record={selectedRecord}
+              orderData={orderData}
+              allHelpers={allHelpers}
+            />
+            <PopupModalEdit
+              isVisible={isEditModalVisible}
+              onClose={() => setIsEditModalVisible(false)}
+              record={selectedEditRecord}
+              orderData={orderData}
+              onEdit={() => {
+                fetchData(); // Refresh data sau khi edit
+                setIsEditModalVisible(false);
+              }}
+            />
+            <PopupModalDelete
+              isVisible={isDeleteModalVisible}
+              onClose={() => setIsDeleteModalVisible(false)}
+              record={selectedDeleteRecord}
+              orderData={orderData}
+              onDelete={() => {
+                fetchData(); // Refresh data sau khi xóa
+                setIsDeleteModalVisible(false);
+              }}
+            />
+          </Card>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ShowProcessingDetail;
