@@ -25,7 +25,7 @@ const PopupModalDelete = ({
       
       // Gọi API
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}/admin/requests/deleteSchedule`,
+        `${process.env.REACT_APP_API_URL}admin/requests/deleteSchedule`,
         {
           data: payload,
           headers: {

@@ -91,7 +91,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       console.log("payload edit:", payload);
 
       const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/admin/requests/updateSchedule`,
+        `${process.env.REACT_APP_API_URL}admin/requests/updateSchedule`,
         payload,
         {
           headers: {

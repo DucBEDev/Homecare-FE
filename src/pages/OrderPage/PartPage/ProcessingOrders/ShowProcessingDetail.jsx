@@ -129,7 +129,7 @@ const ShowProcessingDetail = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/admin/requests/detail/${id}`
+        `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
       console.log("detailresponse", response);
       const { data } = response;

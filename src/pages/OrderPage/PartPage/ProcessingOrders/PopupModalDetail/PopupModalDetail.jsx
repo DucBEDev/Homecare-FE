@@ -86,7 +86,7 @@ const PopupModalDetail = ({
       let response = ""
      if(record.isLongTerm) {
       response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/admin/requests/assignFullRequest/${record.scheduleId}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/assignFullRequest/${record.scheduleId}`,
         
         payload,
         {
@@ -97,7 +97,7 @@ const PopupModalDetail = ({
       );
      } else {
       response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/admin/requests/assignSubRequest/${record.scheduleId}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/assignSubRequest/${record.scheduleId}`,
         
         payload,
         {
