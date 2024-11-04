@@ -37,7 +37,7 @@ const AddOrder = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/admin/requests/create`
+          `${process.env.REACT_APP_API_URL}admin/requests/create`
         );
         console.log("responsaaaaaaaaaaaaaae", response);
         setDataFetch(response.data);
@@ -417,7 +417,7 @@ const AddOrder = () => {
     // Send data to backend
     axios
       .post(
-        `${process.env.REACT_APP_API_URL}/admin/requests/create`,
+        `${process.env.REACT_APP_API_URL}admin/requests/create`,
         dataForBackend,
         {
           headers: {
