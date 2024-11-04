@@ -1,371 +1,266 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Card, Descriptions, Table, Button, Typography, Modal } from "antd";
-import "../../StylePage/styleProcessingDetail.css";
+import React, { useCallback, useEffect, useState } from "react";
+import { Pagination, Table } from "antd";
+import "../../StylePage/styleTable.css";
 import axios from "axios";
-import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
-import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
+import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const { Title } = Typography;
+const ProcessingOrders = () => {
+  const searchValue = useSelector((state) => state.search.value);
+  const dateRange = useSelector((state) => state.dateRange);
 
-const ShowProcessingDetail = () => {
-  const location = useLocation();
-  const { id } = location.state || {};
-  const [orderData, setOrderData] = useState();
-  const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [allHelpers, setAllHelpers] = useState([]);
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [selectedEditRecord, setSelectedEditRecord] = useState(null);
-
-  const showModal = (record) => {
-    setSelectedRecord({
-      ...record,
-      mainOrderId: id, // Thêm id của đơn hàng lớn vào record
-      scheduleIds: record.scheduleIds,
-    });
-    setIsModalVisible(true);
-  };
-
-  const handleAssign = () => {
-    console.log("selectedRecord", { selectedRecord });
-    if (selectedRecord) {
-      const assignInfo = {
-        mainOrderId: selectedRecord.mainOrderId,
-        detailOrderId: selectedRecord.scheduleIds[selectedRecord.key]._id,
-        helperId: selectedRecord.helperId,
-      };
-      console.log("aa", { assignInfo });
-
-      Modal.confirm({
-        title: "Xác nhận giao việc",
-        content: "Bạn có chắc chắn muốn giao việc cho người giúp việc này?",
-        okText: "Giao việc",
-        styles: {
-          content: {
-            fontSize: "14px",
-          },
-        },
-        onOk() {
-          axios
-            .post(
-              `${process.env.REACT_APP_API_URL}admin/requests/assign`,
-              assignInfo
-            )
-            .then((response) => {
-              console.log("Giao việc thành công:", response.data);
-
-              // cap nhat timeslot
-              setTimeSlots((prevTimeSlots) =>
-                prevTimeSlots.map((slot) =>
-                  slot.key === selectedRecord.key
-                    ? {
-                        ...slot,
-                        nguoiGiupViec: response.data.helperName,
-                        trangThai: "Hoạt động",
-                      }
-                    : slot
-                )
-              );
-
-              fetchData(); // load lại data
-            })
-            .catch((error) => {
-              console.error("Lỗi khi giao việc:", error);
-            });
-        },
-        onCancel() {
-        },
-      });
-    }
-    setIsModalVisible(false);
-  };
-
-  const showEditModal = (record) => {
-    setSelectedEditRecord(record);
-    setIsEditModalVisible(true);
-  };
-
-  const handleSaveEdit = (editedRecord) => {
-    // Update the timeSlots state with the edited record
-    setTimeSlots((prevTimeSlots) =>
-      prevTimeSlots.map((slot) =>
-        slot.key === editedRecord.key ? editedRecord : slot
-      )
-    );
-    setIsEditModalVisible(false);
-  };
-
-  const handleDelete = (record) => {
-    console.log({ record });
-    Modal.confirm({
-      title: "Xác nhận xóa",
-      content: "Bạn có chắc chắn muốn xóa mục này?",
-      okText: "Xóa",
-      styles: {
-        content: {
-          fontSize: "14px",
-        },
-      },
-      onOk() {
-        const deleteInfo = {
-          mainOrderId: id, // id của đơn hàng lớn
-          detailOrderId: record.scheduleIds[record.key]._id, // id của chi tiết đơn hàng
-        };
-        console.log("bb", { deleteInfo });
-
-        axios
-          .delete(
-            `${process.env.REACT_APP_API_URL}admin/requests/delete`,
-            { data: deleteInfo }
-          )
-          .then((response) => {
-            console.log("Xóa thành công:", response.data);
-
-            setTimeSlots((prevTimeSlots) =>
-              prevTimeSlots.filter((slot) => slot.key !== record.key)
-            );
-
-            fetchData();
-          })
-          .catch((error) => {
-            console.error("Lỗi khi xóa:", error);
-          });
-      },
-      onCancel() {},
-    });
-  };
-
+  const [data, setData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState(data);
+  const pageSize = 5;
+  const navigate = useNavigate();
   const columns = [
-    { title: "Giờ Bắt Đầu", dataIndex: "gioBatDau", key: "gioBatDau" },
-    { title: "Giờ Kết Thúc", dataIndex: "gioKetThuc", key: "gioKetThuc" },
-    { title: "Ngày Làm", dataIndex: "ngayLam", key: "ngayLam" },
     {
-      title: "Người Giúp Việc",
-      dataIndex: "nguoiGiupViec",
-      key: "nguoiGiupViec",
+      title: "Số ĐT Khách Hàng",
+      dataIndex: "phoneNumber",
+      key: "phoneNumber",
+      render: (text) => (
+        <span className="column-with-icon phone-icon">{text}</span>
+      ),
+      sorter: (a, b) => a.phoneNumber.localeCompare(b.phoneNumber),
     },
-    { title: "Trạng Thái", dataIndex: "trangThai", key: "trangThai" },
     {
-      title: "Xử Lý",
-      key: "xuLy",
+      title: "Loại Yêu cầu",
+      dataIndex: "requestType",
+      key: "requestType",
+      render: (text) => (
+        <span className="column-with-icon request-icon">{text}</span>
+      ),
+      filters: [
+        { text: "Yêu cầu mới", value: "Yêu cầu mới" },
+        { text: "Đang xử lý", value: "Đang xử lý" },
+      ],
+      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+    },
+    {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      render: (text) => (
+        <span className="column-with-icon request-icon">{text}</span>
+      ),
+      filters: [
+        { text: "Quận 1", value: "Quận 1" },
+        { text: "Quận 2", value: "Quận 2" },
+        { text: "Quận 3", value: "Quận 3" },
+        { text: "Quận 4", value: "Quận 4" },
+        { text: "Quận 5", value: "Quận 5" },
+        { text: "Quận 6", value: "Quận 6" },
+        { text: "Quận 7", value: "Quận 7" },
+        { text: "Quận 8", value: "Quận 8" },
+        { text: "Quận 9", value: "Quận 9" },
+        { text: "Quận 10", value: "Quận 10" },
+        { text: "Quận 11", value: "Quận 11" },
+        { text: "Quận 12", value: "Quận 12" },
+        { text: "Quận Tân Phú", value: "Quận Tân Phú" },
+        { text: "Quận Tân Bình", value: "Quận Tân Bình" },
+      ],
+      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+    },
+    {
+      title: "Loại Dịch Vụ",
+      dataIndex: "serviceType",
+      key: "serviceType",
+      render: (text) => (
+        <span className="column-with-icon service-icon">{text}</span>
+      ),
+      filters: [
+        { text: "Dịch vụ A", value: "Dịch vụ A" },
+        { text: "Dịch vụ B", value: "Dịch vụ B" },
+      ],
+      onFilter: (value, record) => record.serviceType.indexOf(value) === 0,
+    },
+    {
+      title: "Ngày Đặt Yêu Cầu",
+      dataIndex: "requestDate",
+      key: "requestDate",
+      render: (text) => (
+        <span className="column-with-icon date-icon">{text}</span>
+      ),
+      sorter: (a, b) => new Date(a.requestDate) - new Date(b.requestDate),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      render: (text) => (
+        <span className="column-with-icon cost-icon">{text}</span>
+      ),
+      sorter: (a, b) =>
+        a.cost.replace(/[^\d]/g, "") - b.cost.replace(/[^\d]/g, ""),
+    },
+    {
+      title: "Lựa Chọn",
+      key: "actions",
       render: (_, record) => (
-        // console.log("âsssasssssssssssssss"),
-        // console.log({ record }),
-        <>
-          <Button
-            type="primary"
-            size="small"
-            style={{ marginRight: 8 }}
-            onClick={() => showEditModal(record)}
-          >
-            Sửa
-          </Button>
-
-          {record.trangThai === "Hoạt động" ? (
-            <>
-              <Button
-                size="small"
-                style={{ marginRight: 8 }}
-                onClick={() => showModal(record)}
-              >
-                Đổi NGV
-              </Button>
-              <Button type="primary" size="small" style={{ marginRight: 8 }}>
-                Hoàn Thành
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="primary"
-              size="small"
-              style={{ marginRight: 8, background: "#10ce80" }}
-              onClick={() => showModal(record)}
-            >
-              Giao việc
-            </Button>
-          )}
-
-          <Button danger size="small" onClick={() => handleDelete(record)}>
-            Xóa
-          </Button>
-        </>
+        <span className="column-with-icon action-icon">
+          <ButtonComponent
+            size="large"
+            textButton="Chi tiết"
+            styleButton={{
+              backgroundColor: "#3cbe5d",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+              marginRight: "2px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleViewDetails(record.key)}
+          ></ButtonComponent>
+          <ButtonComponent
+            size="large"
+            textButton="Sửa"
+            styleButton={{
+              backgroundColor: "#3ebedd",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+              marginRight: "2px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleEditDetails(record.key)}
+          ></ButtonComponent>
+          <ButtonComponent
+            size="large"
+            textButton="Xóa"
+            styleButton={{
+              backgroundColor: "#d22d2d",
+              width: "40px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleDeleteDetails(record.key)}
+          ></ButtonComponent>
+        </span>
       ),
     },
   ];
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
-      );
-      console.log("detailresponse", response);
-      const { data } = response;
-      const helperData = data.helpers.map((helper) => ({
-        id: helper.helper_id,
-        fullName: helper.fullName,
-        phone: helper.phone,
-        dateOfBirth: helper.birthDate,
-        age: helper.age,
-        address: helper.address,
-        // Add any other relevant helper information
-      }));
-      setAllHelpers(helperData);
+  const handleViewDetails = useCallback(
+    (recordId) => {
+      navigate(`/order/processing/showDetail`, { state: { id: recordId } });
+    },
+    [navigate]
+  );
 
-      let requestType =
-        data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
-      let statusNow = "";
-      if (data.request.status === "notDone") {
-        statusNow = "Chưa tiến hành";
-      } else if (data.request.status === "assigned") {
-        statusNow = "Chưa tiến hành (Đã giao việc)";
-      } else if (data.request.status === "unconfirmed") {
-        statusNow = "Chờ xác nhận";
-      } else if (data.request.status === "processing") {
-        statusNow = "Đang tiến hành";
-      } else {
-        statusNow = "Đã hoàn thành";
-      }
-      setOrderData({
-        loaiYeuCau: requestType,
-        hoTenKhachHang: data.request.customerInfo.fullName,
-        soDTKhachHang: data.request.customerInfo.phone,
-        loaiDichVu: [data.request.service.title],
-        diaChiYeuCau: `${data.request.location.province}, ${data.request.location.district}`,
-        ngayDatYeuCau: new Date(data.request.orderDate).toLocaleDateString(
-          "vi-VN"
-        ),
-        trangThai: statusNow,
-        tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
-      });
+  const handleEditDetails = useCallback(
+    (recordId) => {
+      navigate(`/order/processing/editDetail`, { state: { id: recordId } });
+    },
+    [navigate]
+  );
 
-      setTimeSlots(
-        data.helpers.map((helper, index) => ({
-          key: index.toString(),
-          gioBatDau: new Date(data.request.startTime).toLocaleTimeString(
-            "vi-VN",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
-          gioKetThuc: new Date(data.request.endTime).toLocaleTimeString(
-            "vi-VN",
-            { hour: "2-digit", minute: "2-digit" }
-          ),
-          ngayLam: new Date(data.request.startTime).toLocaleDateString(
-            "vi-VN",
-            {
-              weekday: "long",
-              year: "numeric",
-              month: "numeric",
-              day: "numeric",
-            }
-          ),
-          nguoiGiupViec: helper.fullName, // Assuming this is the helper's ID
-
-          trangThai:
-            helper.status === "active" ? "Hoạt động" : "Chưa hoạt động",
-
-          //truyền thêm dữ liệu để check đk cho column là đã có ngv hay chưa
-          helperId: helper.helper_id,
-          haveHelper: helper.fullName ? true : false,
-
-          scheduleIds: data.request.scheduleIds,
-        }))
-      );
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setLoading(false);
-    }
-  };
+  const handleDeleteDetails = useCallback(
+    (recordId) => {
+      navigate(`/processing/showDetail`);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}/admin/requests?status=notDone`
+        );
+        console.log("response", response);
+        const transformedData = response.data.requestList.map((record, index) => {
+          let requestName =
+            record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
+          let statusNow = "";
+          if (record.status === "notDone") {
+            statusNow = "Chưa tiến hành";
+          } else if (record.status === "assigned") {
+            statusNow = "Chưa tiến hành (Đã giao việc)";
+          } else if (record.status === "unconfirmed") {
+            statusNow = "Chờ xác nhận";
+          } else if (record.status === "processing") {
+            statusNow = "Đang tiến hành";
+          } else {
+            statusNow = "Đã hoàn thành";
+          }
+          return {
+            key: record._id,
+            phoneNumber: record.customerInfo.phone,
+            requestType: requestName,
+            serviceType: record.service.title,
+            requestDate: new Date(record.createdAt).toLocaleDateString(),
+            address: record.location.district,
+            cost: `${record.totalCost}đ`,
+            status: statusNow,
+            scheduleIds: record.scheduleIds,
+          };
+        });
+        setData(transformedData);
+        setFilteredData(transformedData);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setLoading(false);
+      }
+
+    };
     fetchData();
-  }, [id]);
+  }, []);
+
+  useEffect(() => {
+    let filtered = data;
+
+    if (searchValue) {
+      filtered = filtered.filter((item) =>
+        item.phoneNumber.includes(searchValue)
+      );
+    }
+    else if (dateRange.startDate && dateRange.endDate) {
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.requestDate);
+        const startDate = new Date(dateRange.startDate);
+        const endDate = new Date(dateRange.endDate);
+        return itemDate >= startDate && itemDate <= endDate;
+      });
+    }
+
+    setFilteredData(filtered);
+  }, [searchValue, dateRange, data]);
+
+  const getCurrentPageData = useCallback(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredData]);
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title className="title-processing-detail" level={5}>
-        Chi tiết đơn hàng chưa hoàn thành:
-      </Title>
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          <Card title="Thông tin đơn hàng:" style={{ marginBottom: 24 }}>
-            <Descriptions bordered>
-              <Descriptions.Item label="Loại Yêu Cầu">
-                {orderData?.loaiYeuCau || "N/A"}{" "}
-                {/* Fallback to "N/A" if undefined */}
-              </Descriptions.Item>
-              <Descriptions.Item label="Họ Tên Khách Hàng">
-                {orderData?.hoTenKhachHang || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Số ĐT Khách Hàng">
-                {orderData?.soDTKhachHang || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Loại Dịch Vụ">
-                {orderData?.loaiDichVu.join(", ") || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa Chỉ Yêu Cầu">
-                {orderData?.diaChiYeuCau || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày Đặt Yêu Cầu">
-                {orderData?.ngayDatYeuCau || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng Thái">
-                {orderData?.trangThai || "N/A"}
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng Chi Phí">
-                {orderData?.tongChiPhi || "N/A"}
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-          <Card
-            style={{ position: "relative" }}
-            title="Thông tin chi tiết khung giờ của đơn hàng"
-          >
-            <Button
-              style={{
-                position: "absolute",
-                top: "2px",
-                left: "75%",
-                background: "#10ce80",
-              }}
-              type="primary"
-              size="normal"
-            >
-              Giao việc dài hạn
-            </Button>
-            <Table
-              columns={columns}
-              dataSource={timeSlots}
-              pagination={false}
-            />
-            <PopupModalDetail
-              isVisible={isModalVisible}
-              onClose={() => setIsModalVisible(false)}
-              onAssign={handleAssign}
-              record={selectedRecord}
-              orderData={orderData}
-              allHelpers={allHelpers}
-            />
-            <PopupModalEdit
-              isVisible={isEditModalVisible}
-              onClose={() => setIsEditModalVisible(false)}
-              onSave={handleSaveEdit}
-              record={selectedEditRecord}
-              orderData={orderData}
-            />
-          </Card>
-        </>
-      )}
+    <div className="processing-orders-container">
+      <Table
+        columns={columns}
+        dataSource={getCurrentPageData()}
+        className="custom-table"
+        loading={loading}
+        pagination={false}
+      />
+      <Pagination
+        align="center"
+        current={currentPage}
+        total={filteredData.length}
+        pageSize={pageSize}
+        onChange={setCurrentPage}
+        hideOnSinglePage={true}
+        showLessItems={true}
+        style={{ fontSize: "26px", transform: "translateX(-20px)", marginTop: "10px"}}
+      />
+      <Outlet />
     </div>
   );
 };
 
-export default ShowProcessingDetail;
+export default ProcessingOrders;

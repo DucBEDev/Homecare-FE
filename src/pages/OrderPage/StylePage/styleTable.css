@@ -71,11 +71,34 @@
 }
 
 .ant-table-cell {
-    padding: 14px 16px !important;
+    padding: 10px 16px !important;
     font-size: 14px !important;
 }
 
 .ant-table-tbody .ant-table-cell {
+    font-size: 18px !important;
+}
+
+.ant-pagination-options {
+    display: none !important;
+}
+
+.ant-pagination-item-container {
+    margin-top: 12px !important;
+}
+
+.ant-pagination-item-ellipsis{
+    font-weight: 400 !important;
+    margin-top: 4px !important;
+    color: #5b9bc3 !important;
+    font-size: 6px !important;
+}
+
+.anticon-close-circle {
+    font-size: 18px !important;
+}
+
+.anticon-calendar {
     font-size: 18px !important;
 }
 

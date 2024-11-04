@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button, Row, Col, TimePicker } from "antd";
+import { Modal, Button, Row, Col, TimePicker, message } from "antd";
 import dayjs from "dayjs";
 import "../../../StylePage/stylePopupModalEdit.css";
-const PopupModalEdit = ({ isVisible, onClose, onSave, record, orderData }) => {
+import axios from "axios";
+const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   const [editedRecord, setEditedRecord] = useState(null);
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
@@ -74,13 +75,61 @@ const PopupModalEdit = ({ isVisible, onClose, onSave, record, orderData }) => {
 
   if (!editedRecord) return null;
 
+
+  const handleSave = async (editedRecord) => {
+    try {
+      message.loading({ content: 'Đang xử lý...', key: 'editSchedule' });
+
+      const payload = {
+        scheduleId: editedRecord.scheduleId,
+        mainOrderId: editedRecord.mainOrderId,
+        startTime: editedRecord.gioBatDauMoi,
+        endTime: editedRecord.gioKetThucMoi,
+        workingDate: editedRecord.ngayLam
+      };
+
+      console.log("payload edit:", payload);
+
+      const response = await axios.put(
+        `${process.env.REACT_APP_API_URL}/admin/requests/updateSchedule`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success({
+          content: 'Cập nhật lịch làm việc thành công!',
+          key: 'editSchedule',
+          duration: 1000,
+        });
+
+        // Gọi callback để cập nhật UI
+        onEdit(response.data);
+        
+        // Đóng modal
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error editing schedule:', error);
+      message.error({
+        content: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật lịch làm việc!',
+        key: 'editSchedule',
+        duration: 2,
+      });
+    }
+  };
+
   return (
     <Modal
       title="Thay đổi thời gian của chi tiết yêu cầu"
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button key="save" type="primary" onClick={() => onSave(editedRecord)} disabled={!isFormValid}>
+        <Button key="save" type="primary" onClick={() => handleSave(editedRecord)} disabled={!isFormValid}>
           Lưu lại
         </Button>,
         <Button key="cancel" onClick={onClose}>

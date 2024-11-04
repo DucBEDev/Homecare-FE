@@ -23,7 +23,7 @@ const AddOrder = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [dataFetch, setDataFetch] = useState([]);
-  
+
   const [locations, setLocations] = useState([]);
   const [coefficient, setCoefficient] = useState("0");
   const [requestType, setRequestType] = useState("short");
@@ -48,11 +48,13 @@ const AddOrder = () => {
     fetchData();
   }, []);
 
-  //TOTAL COST 
+  //TOTAL COST
+  //update cost into table
   const updateTotalCost = () => {
     const newTotalCost = calculateTotalCost();
     setTotalCost(newTotalCost);
   };
+  //calculate total cost
   const calculateTotalCost = () => {
     const formValues = form.getFieldsValue();
     const {
@@ -63,90 +65,145 @@ const AddOrder = () => {
       coefficient_other,
       requestType,
     } = formValues;
-  
-    if (!serviceTitle || !startTime || !endTime || !workDate || !coefficient_other) {
+
+    if (
+      !serviceTitle ||
+      !startTime ||
+      !endTime ||
+      !workDate ||
+      !coefficient_other
+    ) {
       return 0;
     }
-  
+
     const selectedService = dataFetch.serviceList.find(
       (service) => service.title === serviceTitle
     );
-  
+
     if (!selectedService) {
       return 0;
     }
-  
+
     const { basicPrice, coefficient: coefficient_service } = selectedService;
-    const coefficientWeekend = 1.4; // Hệ số cố định cho thứ 7 và chủ nhật
-    const coefficientOvertime = parseFloat(dataFetch.coefficientOtherList[0].value);
-  
+    const coefficientWeekend = parseFloat(
+      dataFetch.coefficientOtherList[1].value
+    ); // Hệ số cố định cho thứ 7 và chủ nhật
+    const coefficientOvertime = parseFloat(
+      dataFetch.coefficientOtherList[0].value
+    );
+
     const start = dayjs(startTime);
     const end = dayjs(endTime);
-    
+
     const officeStartTime = dayjs(dataFetch.timeList.officeStartTime, "HH:mm");
     const officeEndTime = dayjs(dataFetch.timeList.officeEndTime, "HH:mm");
-  
+
     let totalCost = 0;
-  
-    if (requestType === 'long') {
+
+    if (requestType === "long") {
       const startDate = dayjs(workDate[0]);
       const endDate = dayjs(workDate[1]);
       let currentDate = startDate;
-  
-      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+
+      while (
+        currentDate.isBefore(endDate) ||
+        currentDate.isSame(endDate, "day")
+      ) {
         const dayOfWeek = currentDate.day();
-        const dailyHours = end.diff(start, 'hour');
-  
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          // Thứ 7 hoặc Chủ nhật: áp dụng hệ số 1.4 cho toàn bộ thời gian
-          totalCost += basicPrice * dailyHours * coefficient_service * coefficientWeekend;
+        const dailyHours = end.diff(start, "hour");
+
+        if (dayOfWeek === 0 || dayOfWeek === 6) { //cuoi tuan t7 cn
+          let normalHours = 0;
+          let overtimeHours = 0;
+
+          if (start.isBefore(officeStartTime)) {
+            overtimeHours += officeStartTime.diff(start, "hour");
+          }
+          if (end.isAfter(officeEndTime)) {
+            overtimeHours += end.diff(officeEndTime, "hour");
+          }
+          normalHours = dailyHours - overtimeHours;
+
+          const weekendCost = basicPrice * normalHours * coefficient_service * coefficientWeekend;
+          const overtimeCost =
+            basicPrice *
+            overtimeHours *
+            coefficient_service *
+            coefficientWeekend *
+            coefficientOvertime;
+          totalCost += weekendCost + overtimeCost;
         } else {
           // Ngày trong tuần
           let normalHours = 0;
           let overtimeHours = 0;
-  
+
           if (start.isBefore(officeStartTime)) {
-            overtimeHours += officeStartTime.diff(start, 'hour');
+            overtimeHours += officeStartTime.diff(start, "hour");
           }
           if (end.isAfter(officeEndTime)) {
-            overtimeHours += end.diff(officeEndTime, 'hour');
+            overtimeHours += end.diff(officeEndTime, "hour");
           }
           normalHours = dailyHours - overtimeHours;
-  
+
           const normalCost = basicPrice * normalHours * coefficient_service;
-          const overtimeCost = basicPrice * overtimeHours * coefficient_service * coefficientOvertime;
+          const overtimeCost =
+            basicPrice *
+            overtimeHours *
+            coefficient_service *
+            coefficientOvertime;
           totalCost += normalCost + overtimeCost;
         }
-  
-        currentDate = currentDate.add(1, 'day');
+
+        currentDate = currentDate.add(1, "day");
       }
     } else {
       // Đơn ngắn hạn
       const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = end.diff(start, 'hour');
-  
+      const dailyHours = end.diff(start, "hour");
+
       if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // Thứ 7 hoặc Chủ nhật: áp dụng hệ số 1.4 cho toàn bộ thời gian
-        totalCost = basicPrice * dailyHours * coefficient_service * coefficientWeekend;
+        let normalHours = 0;
+        let overtimeHours = 0;
+
+        if (start.isBefore(officeStartTime)) {
+          overtimeHours += officeStartTime.diff(start, "hour");
+        }
+        if (end.isAfter(officeEndTime)) {
+          overtimeHours += end.diff(officeEndTime, "hour");
+        }
+        normalHours = dailyHours - overtimeHours;
+
+        const weekendCost = basicPrice * normalHours * coefficient_service * coefficientWeekend;
+        const overtimeCost =
+          basicPrice *
+          overtimeHours *
+          coefficient_service *
+          coefficientWeekend *
+          coefficientOvertime;
+        totalCost = weekendCost + overtimeCost;
       } else {
         // Ngày trong tuần
         let normalHours = 0;
         let overtimeHours = 0;
-  
+
         if (start.isBefore(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, 'hour');
+          overtimeHours += officeStartTime.diff(start, "hour");
         }
         if (end.isAfter(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, 'hour');
+          overtimeHours += end.diff(officeEndTime, "hour");
         }
         normalHours = dailyHours - overtimeHours;
-  
+
         const normalCost = basicPrice * normalHours * coefficient_service;
-        const overtimeCost = basicPrice * overtimeHours * coefficient_service * coefficientOvertime;
+        const overtimeCost =
+          basicPrice *
+          overtimeHours *
+          coefficient_service *
+          coefficientOvertime;
         totalCost = normalCost + overtimeCost;
       }
     }
-  
+
     return Math.floor(totalCost);
   };
   //HANDLE SET COEFFICIENT AUTOMATICALLY
@@ -157,7 +214,7 @@ const AddOrder = () => {
   };
   //check coefficient automatically return value coefficient
   const checkCoefficient = (orderDate, startTime, endTime, timeList) => {
-    //when using dayjs libraries, we have 7 days, 0 is sunday and 6 is saturday 
+    //when using dayjs libraries, we have 7 days, 0 is sunday and 6 is saturday
     const saturday = 6;
     const sunday = 0;
 
@@ -177,10 +234,38 @@ const AddOrder = () => {
     const coefficientOutside = dataFetch.coefficientOtherList[0].value;
     const coefficientNormal = "0";
 
-    if (orderDay === saturday|| orderDay === sunday) {
-      return coefficientWeekend; 
+    if (orderDay === saturday || orderDay === sunday) {
+      return coefficientWeekend;
     }
 
+    if (Array.isArray(orderDate)) {
+      const startDate = orderDate[0];
+      const endDate = orderDate[1];
+      
+      // Kiểm tra xem có ngày nào trong khoảng là cuối tuần không
+      let currentDate = startDate;
+      while (currentDate.isSameOrBefore(endDate)) {
+        const currentDay = currentDate.day();
+        if (currentDay === saturday || currentDay === sunday) {
+          return coefficientWeekend;
+        }
+        currentDate = currentDate.add(1, 'day');
+      }
+  
+      // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
+      if (
+        (orderStartMinutes >= dayStartMinutes &&
+          orderStartMinutes < officeStartMinutes) ||
+        (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+      ) {
+        return coefficientOutside;
+      }
+  
+      return coefficientNormal;
+    }
+
+    
+    // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
     if (
       (orderStartMinutes >= dayStartMinutes &&
         orderStartMinutes < officeStartMinutes) ||
@@ -192,7 +277,7 @@ const AddOrder = () => {
     return coefficientNormal; // Default to normal coefficient
   };
 
-//update coefficient into form
+  //update coefficient into form
   const updateCoefficient = () => {
     const workDate = form.getFieldValue("workDate");
     const startTime = form.getFieldValue("startTime");
@@ -209,13 +294,12 @@ const AddOrder = () => {
       form.setFieldsValue({ coefficient_other: newCoefficient });
     }
   };
-//once change date, update coefficient
+  //once change date, update coefficient
   const handleDateChange = (date) => {
     form.setFieldsValue({ workDate: date });
     updateCoefficient();
     updateTotalCost();
   };
-
 
   //*HANDLE SET TIME*/
   //condition only choose hour in working time
@@ -230,7 +314,7 @@ const AddOrder = () => {
     }
     return hours;
   };
-//condition only choose hour in working time
+  //condition only choose hour in working time
   const disabledMinutes = (selectedHour) => {
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const minutes = [];
@@ -378,12 +462,14 @@ const AddOrder = () => {
 
   /*onFinish create order*/
   const onFinish = (values) => {
+    console.log("test value", values);
     const {
       startTime,
       endTime,
       location,
       requestType,
       workDate,
+      serviceTitle,
       ...otherValues
     } = values;
 
@@ -411,10 +497,11 @@ const AddOrder = () => {
       district: values.location?.[1],
       ward: values.location?.[2],
       coefficient_other: values.coefficient_other,
+      serviceTitle: values.serviceTitle,
     };
 
-    console.log("dataForBackenddd", dataForBackend);
     // Send data to backend
+    console.log("dttaforbe", dataForBackend)
     axios
       .post(
         `${process.env.REACT_APP_API_URL}admin/requests/create`,
@@ -433,6 +520,7 @@ const AddOrder = () => {
       })
       .then((data) => {
         console.log("Response from backend:", data);
+        console.log(dataForBackend);
         setShowNotification({
           status: "success",
           message: "Thành công",
@@ -440,9 +528,9 @@ const AddOrder = () => {
         });
 
         setTimeout(() => {
-          // navigate("/order");
+          navigate("/order");
           setShowNotification(null);
-        }, 100000);
+        }, 1500);
       })
       .catch((error) => {
         console.error("Error sending data to backend:", error);
@@ -519,7 +607,10 @@ const AddOrder = () => {
               label="Loại Dịch Vụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
-              <Radio.Group className="service-radio-group" onChange={updateTotalCost}>
+              <Radio.Group
+                className="service-radio-group"
+                onChange={updateTotalCost}
+              >
                 {dataFetch &&
                 dataFetch.serviceList &&
                 dataFetch.serviceList.length > 0 ? (
@@ -613,7 +704,7 @@ const AddOrder = () => {
               label="Hệ số"
               rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
             >
-              <Input disabled value={coefficient} />  {/*value coeeeficient take from parent is form item */}
+              <Input disabled value={coefficient} />
             </Form.Item>
           </Col>
         </Row>
@@ -622,24 +713,24 @@ const AddOrder = () => {
           <div style={{ color: "red", marginBottom: "10px" }}>{timeErrors}</div>
         )}
 
-<Table
-      columns={[
-        {
-          title: "Tổng Chi Phí",
-          dataIndex: "totalCost",
-          key: "totalCost",
-          render: () => (
-            <span style={{ color: "#32d48a", fontWeight: "bold" }}>
-              {totalCost.toLocaleString()} VND
-            </span>
-          ),
-        },
-      ]}
-      dataSource={[{ key: "1" }]}
-      pagination={false}
-      bordered
-      className="table-custom"
-    />
+        <Table
+          columns={[
+            {
+              title: "Tổng Chi Phí",
+              dataIndex: "totalCost",
+              key: "totalCost",
+              render: () => (
+                <span style={{ color: "#32d48a", fontWeight: "bold" }}>
+                  {totalCost.toLocaleString()} VND
+                </span>
+              ),
+            },
+          ]}
+          dataSource={[{ key: "1" }]}
+          pagination={false}
+          bordered
+          className="table-custom"
+        />
 
         <Form.Item style={{ marginTop: "40px" }}>
           <Button type="primary" htmlType="submit" disabled={!isFormValid}>

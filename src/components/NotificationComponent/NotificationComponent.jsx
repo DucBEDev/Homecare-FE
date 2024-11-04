@@ -15,7 +15,7 @@ const NotificationComponent = ({ status, message, description }) => {
             description ||
             "Đây là nội dung của thông báo. Bạn có thể tùy chỉnh nội dung này.",
           className: "custom-notification success-notification",
-          duration: 100000,
+          duration: 1000,
           placement: "topRight",
         });
     }
@@ -27,7 +27,7 @@ const NotificationComponent = ({ status, message, description }) => {
             description ||
             "Đây là nội dung của thông báo. Bạn có thể tùy chỉnh nội dung này.",
           className: "custom-notification error-notification",
-          duration: 100000,
+          duration: 1000,
           placement: "topRight",
         });
     }
