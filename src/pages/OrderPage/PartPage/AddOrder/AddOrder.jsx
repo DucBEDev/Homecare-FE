@@ -498,6 +498,7 @@ const AddOrder = () => {
       ward: values.location?.[2],
       coefficient_other: values.coefficient_other,
       serviceTitle: values.serviceTitle,
+      totalCost: totalCost,
     };
 
     // Send data to backend

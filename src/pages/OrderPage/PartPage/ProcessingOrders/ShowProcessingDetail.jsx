@@ -196,6 +196,11 @@ const ShowProcessingDetail = () => {
             haveHelper: true,
           }));
 
+          const coefficientOtherList = data.coefficientOtherLists.map((item) => ({
+            value: item.value,
+            title: item.title,
+          }));
+
           return {
             key: `schedule_${schedule._id}`,
             gioBatDau: schedule.startTime || "NaN", // Lấy trực tiếp từ API
@@ -224,6 +229,7 @@ const ShowProcessingDetail = () => {
             coefficient_service: data.request.service.coefficient_service,
             coefficient_other: data.request.service.coefficient_other,
             isLongTerm: false,
+            coefficientOtherList: coefficientOtherList,
           };
         })
       );
