@@ -4,8 +4,8 @@ import AccountPage from "../pages/AccountPage/AccountPage"
 import CustomerPage from "../pages/CustomerPage/CustomerPage"
 import FinancePage from "../pages/FinancePage/FinancePage"
 import LocationPage from "../pages/LocationPage/LocationPage"
-import MaidPage from "../pages/MaidPage/MaidPage"
-import StaffPage from "../pages/StaffPage/StaffPage"
+import MaidPage from "../pages/MaidPage/PartPage/MaidPage/MaidPage"
+import StaffPage from "../pages/StaffPage/PartPage/StaffPage/StaffPage"
 import SystemPage from "../pages/SystemPage/SystemPage"
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage"
 
@@ -15,6 +15,10 @@ import OrderHistory from "../pages/OrderPage/PartPage/HistoryOrders/OrderHistory
 import ShowProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/ShowProcessingDetail";
 import ShowHistoryDetail from "../pages/OrderPage/PartPage/HistoryOrders/ShowHistoryDetail";
 import AddOrder from "../pages/OrderPage/PartPage/AddOrder/AddOrder";
+//import component con cua MaidPage
+import BodyMaidTable from "../pages/MaidPage/PartPage/BodyMaid/BodyMaidTable/BodyMaidTable"
+//import component con cua StaffPage
+import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable/BodyStaffTable"
 
 
 export const routes = [{
@@ -88,12 +92,24 @@ export const routes = [{
     {
         path: '/maid',
         page: MaidPage,
-        isShowHeader: true
+        isShowHeader: true,
+        children: [{
+            path: 'processing', // Route con cho đơn hàng cần xử lý
+            page: BodyMaidTable,
+            isShowHeader: true,
+
+        },
+    ]
     },
     {
         path: '/staff',
         page: StaffPage,
-        isShowHeader: true
+        isShowHeader: true,
+        children: [{
+            path: 'processing',
+            page: BodyStaffTable,
+            isShowHeader: true,
+        }]
     },
     {
         path: '/system',

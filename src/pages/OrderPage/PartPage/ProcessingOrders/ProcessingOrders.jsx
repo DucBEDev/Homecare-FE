@@ -3,7 +3,7 @@ import { Pagination, Table } from "antd";
 import "../../StylePage/styleTable.css";
 import axios from "axios";
 import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 const ProcessingOrders = () => {
@@ -175,41 +175,41 @@ const ProcessingOrders = () => {
           `${process.env.REACT_APP_API_URL}admin/requests?status=notDone`
         );
         console.log("response", response);
-        const transformedData = response.data.requestList.map((record, index) => {
-          let requestName =
-            record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
-          let statusNow = "";
-          if (record.status === "notDone") {
-            statusNow = "Chưa tiến hành";
-          } else if (record.status === "assigned") {
-            statusNow = "Chưa tiến hành (Đã giao việc)";
-          } else if (record.status === "unconfirmed") {
-            statusNow = "Chờ xác nhận";
-          } else if (record.status === "processing") {
-            statusNow = "Đang tiến hành";
-          } else {
-            statusNow = "Đã hoàn thành";
+        const transformedData = response.data.requestList.map(
+          (record, index) => {
+            let requestName =
+              record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
+            let statusNow = "";
+            if (record.status === "notDone") {
+              statusNow = "Chưa tiến hành";
+            } else if (record.status === "assigned") {
+              statusNow = "Chưa tiến hành (Đã giao việc)";
+            } else if (record.status === "unconfirmed") {
+              statusNow = "Chờ xác nhận";
+            } else if (record.status === "processing") {
+              statusNow = "Đang tiến hành";
+            } else {
+              statusNow = "Đã hoàn thành";
+            }
+            return {
+              key: record._id,
+              phoneNumber: record.customerInfo.phone,
+              requestType: requestName,
+              serviceType: record.service.title,
+              requestDate: new Date(record.createdAt).toLocaleDateString(),
+              address: record.location.district,
+              cost: `${record.totalCost}đ`,
+              status: statusNow,
+              scheduleIds: record.scheduleIds,
+            };
           }
-          return {
-            key: record._id,
-            phoneNumber: record.customerInfo.phone,
-            requestType: requestName,
-            serviceType: record.service.title,
-            requestDate: new Date(record.createdAt).toLocaleDateString(),
-            address: record.location.district,
-            cost: `${record.totalCost}đ`,
-            status: statusNow,
-            scheduleIds: record.scheduleIds,
-          };
-        });
+        );
         setData(transformedData);
-        setFilteredData(transformedData);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
       }
-
     };
     fetchData();
   }, []);
@@ -221,8 +221,7 @@ const ProcessingOrders = () => {
       filtered = filtered.filter((item) =>
         item.phoneNumber.includes(searchValue)
       );
-    }
-    else if (dateRange.startDate && dateRange.endDate) {
+    } else if (dateRange.startDate && dateRange.endDate) {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.requestDate);
         const startDate = new Date(dateRange.startDate);
@@ -256,9 +255,16 @@ const ProcessingOrders = () => {
         onChange={setCurrentPage}
         hideOnSinglePage={true}
         showLessItems={true}
-        style={{ fontSize: "26px", transform: "translateX(-20px)", marginTop: "10px"}}
+        style={{
+          fontSize: "26px",
+          transform: "translateX(-20px)",
+          marginTop: "10px",
+          position: "fixed",
+          bottom: "20px",
+          left: "50%",
+          zIndex: 1000,
+        }}
       />
-      <Outlet />
     </div>
   );
 };

@@ -4,8 +4,8 @@ import { Dropdown, Menu, Space } from "antd";
 import { DropdownLink } from "./index";
 
 
-const DropdownSortComponent = ({onChange}) => {
-  const [selectedLabel, setSelectedLabel] = useState("Số ĐT khách hàng");
+const DropdownSortComponent = ({onChange, defaultLabel = "Số ĐT khách hàng"}) => {
+  const [selectedLabel, setSelectedLabel] = useState(defaultLabel);
   const [selectedKey, setSelectedKey] = useState("0");
 
   const handleMenuClick = (e) => {

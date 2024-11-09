@@ -56,13 +56,12 @@ const ShowProcessingDetail = () => {
   const handleLongTermAssignment = () => {
     // Tạo một record mới cho giao việc dài hạn
     const longTermRecord = {
-      mainOrderId: id,
-      scheduleId: id,
       ngayLam: orderData?.ngayDatYeuCau,
       gioBatDau: timeSlots[0]?.gioBatDau, // Lấy giờ bắt đầu từ slot đầu tiên
       gioKetThuc: timeSlots[0]?.gioKetThuc, // Lấy giờ kết thúc từ slot đầu tiên
       nguoiGiupViec: "Chưa có",
       isLongTerm: true, // Thêm flag để đánh dấu là giao việc dài hạn cho nhiều đơn
+
     };
 
     setSelectedRecord(longTermRecord);
