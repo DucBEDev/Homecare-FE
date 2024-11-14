@@ -138,7 +138,7 @@ const ProcessingOrders = () => {
           ></ButtonComponent>
           <ButtonComponent
             size="large"
-            textButton="Xóa"
+            textButton="Hủy"
             styleButton={{
               backgroundColor: "#d22d2d",
               width: "40px",
@@ -177,7 +177,8 @@ const ProcessingOrders = () => {
       ngayLam: record.requestDate,
       gioBatDau: record.startTime, 
       gioKetThuc: record.endTime, 
-      nguoiGiupViec: record.helperName || "Chưa có"
+      nguoiGiupViec: record.helperName || "Chưa có",
+      isLongTerm: true,
     });
     setIsDeleteModalVisible(true);
   }, [data]);

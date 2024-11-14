@@ -35,13 +35,7 @@ const ShowProcessingDetail = () => {
     setIsModalVisible(true);
   };
 
-  const handleAssignSuccess = () => {
-    // Refresh lại data sau khi giao việc thành công
-    fetchData();
-    // Đóng modal
-    setIsModalVisible(false);
-  };
-
+  
   const showEditModal = (record) => {
     setSelectedEditRecord({
       ...record,
@@ -50,12 +44,6 @@ const ShowProcessingDetail = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleEditSuccess = () => {
-    // Refresh lại data sau khi giao việc thành công
-    fetchData();
-    // Đóng modal
-    setIsEditModalVisible(false);
-  };
 
   // Thêm hàm show modal xóa
   const showDeleteModal = (record) => {
@@ -65,18 +53,31 @@ const ShowProcessingDetail = () => {
     });
     setIsDeleteModalVisible(true);
   };
+  
+  const handleSuccess = () => {
+    // Refresh lại data sau khi giao việc thành công
+    fetchData();
+    // Đóng modal
+    // setIsModalVisible(false);
+  };
 
   // Thêm hàm xử lý cho giao việc dài hạn
   const handleLongTermAssignment = () => {
     // Tạo một record mới cho giao việc dài hạn
     const longTermRecord = {
+      mainOrderId: id, // Thêm ID của đơn hàng chính
       ngayLam: orderData?.ngayDatYeuCau,
-      gioBatDau: timeSlots[0]?.gioBatDau, // Lấy giờ bắt đầu từ slot đầu tiên
-      gioKetThuc: timeSlots[0]?.gioKetThuc, // Lấy giờ kết thúc từ slot đầu tiên
+      gioBatDau: timeSlots[0]?.gioBatDau,
+      gioKetThuc: timeSlots[0]?.gioKetThuc,
       nguoiGiupViec: "Chưa có",
-      isLongTerm: true, // Thêm flag để đánh dấu là giao việc dài hạn cho nhiều đơn
-    };
+      isLongTerm: true,
 
+      coefficientOtherList: timeSlots[0]?.coefficientOtherList || [],
+      coefficient_service: timeSlots[0]?.coefficient_service,
+      coefficient_other: timeSlots[0]?.coefficient_other,
+      scheduleIds: timeSlots.map((slot) => slot.scheduleId),
+    };
+  
     setSelectedRecord(longTermRecord);
     setIsModalVisible(true);
   };
@@ -121,7 +122,7 @@ const ShowProcessingDetail = () => {
             Sửa
           </Button>
 
-          {record.trangThai === "Hoạt động" ? (
+          {record.nguoiGiupViec !== "Chưa có" ? (
             <>
               <Button
                 size="small"
@@ -146,7 +147,7 @@ const ShowProcessingDetail = () => {
           )}
 
           <Button danger size="small" onClick={() => showDeleteModal(record)}>
-            Xóa
+            Hủy
           </Button>
         </div>
       ),
@@ -219,12 +220,6 @@ const ShowProcessingDetail = () => {
             })
           );
 
-          // Kiểm tra helper_id một cách chặt chẽ hơn
-          const helperName =
-            schedule.helper_id && schedule.helper_id !== "notAvailable"
-              ? data.helpers.find((h) => h.id === schedule.helper_id)?.fullName
-              : "Chưa có";
-
           return {
             key: `schedule_${schedule._id}`,
             gioBatDau: schedule.startTime || "NaN", // Lấy trực tiếp từ API
@@ -240,9 +235,15 @@ const ShowProcessingDetail = () => {
               }
             ),
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
-            trangThai:
-              schedule.status === "notDone" ? "Chưa hoạt động" : "Hoạt động",
-
+            trangThai: (() => {
+              if (schedule.status === "notDone") return "Chưa tiến hành";
+              else if (schedule.status === "assigned") return "Đã giao việc";
+              else if (schedule.status === "unconfirmed") return "Chờ xác nhận";
+              else if (schedule.status === "processing") return "Đang tiến hành";
+              else if (schedule.status === "done") return "Đã hoàn thành";
+              else if (schedule.status === "cancelled") return "Đã hủy";
+              else return "Không xác định";
+            })(),
             scheduleId: schedule._id,
             helpers: helpersList,
             currentHelperId: schedule.helper_id,
@@ -329,6 +330,7 @@ const ShowProcessingDetail = () => {
               type="primary"
               size="normal"
               onClick={handleLongTermAssignment}
+              onAssignLong={handleSuccess}
             >
               Giao việc dài hạn
             </Button>
@@ -349,24 +351,21 @@ const ShowProcessingDetail = () => {
               record={selectedRecord}
               orderData={orderData}
               allHelpers={allHelpers}
-              onAssign={handleAssignSuccess}
+              onAssign={handleSuccess}
             />
             <PopupModalEdit
               isVisible={isEditModalVisible}
               onClose={() => setIsEditModalVisible(false)}
               record={selectedEditRecord}
               orderData={orderData}
-              onEdit={handleEditSuccess}
+              onEdit={handleSuccess}
             />
             <PopupModalDelete
               isVisible={isDeleteModalVisible}
               onClose={() => setIsDeleteModalVisible(false)}
               record={selectedDeleteRecord}
               orderData={orderData}
-              onDelete={() => {
-                fetchData(); // Refresh data sau khi xóa
-                setIsDeleteModalVisible(false);
-              }}
+              onDelete={handleSuccess}
             />
           </Card>
         </>

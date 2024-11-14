@@ -1,7 +1,8 @@
-import React from "react";
-import { Modal, Button, Row, Col, message } from "antd";
+import React, { useState } from "react";
+import { Modal, Button, Row, Col } from "antd";
 import "../../../StylePage/stylePopupModalDetail.css";
 import axios from "axios";
+import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 
 const PopupModalDelete = ({
   isVisible,
@@ -10,69 +11,78 @@ const PopupModalDelete = ({
   record,
   orderData,
 }) => {
+  const [showNotification, setShowNotification] = useState(false);
+
   const handleDelete = async () => {
     try {
-      // Hiển thị loading
-      message.loading({ content: "Đang xử lý...", key: "deleteHelper" });
-
-      // Chuẩn bị dữ liệu gửi đi
-      const payload = {
-        scheduleId: record.scheduleId,
-        mainOrderId: record.mainOrderId,
-      };
-
-      console.log("payload delete:", payload);
-      
+      let response = "";
       // Gọi API
-      const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}admin/requests/deleteSchedule`,
-        {
-          data: payload,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      if (record.isLongTerm) {
+        // Chuẩn bị dữ liệu gửi đi
+        const payload = {
+          requestId: record.mainOrderId,
+        };
+
+        console.log("payload delete:", payload);
+
+        response = await axios.delete(
+          `${process.env.REACT_APP_API_URL}admin/requests/delete/${record.mainOrderId}`,
+          payload
+        );
+      } else {
+        // Chuẩn bị dữ liệu gửi đi
+        const payload = {
+          requestDetailId: record.scheduleId,
+        };
+
+        console.log("payload delete:", payload);
+
+        response = await axios.patch(
+          `${process.env.REACT_APP_API_URL}admin/requests/detail/cancel/${record.scheduleId}`,
+          payload
+        );
+      }
 
       // Xử lý kết quả thành công
       if (response.status === 200) {
-        message.success({
-          content: "Xóa lịch làm việc thành công!",
-          key: "deleteHelper",
-          duration: 1000,
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Hủy thành công!",
         });
 
-        // Gọi callback để cập nhật UI
-        onDelete(response.data);
-
-        // Đóng modal
-        onClose();
+        if (onDelete) {
+          onDelete();
+        }
+        // Đóng modal sau 1.5s
+        setTimeout(() => {
+          setShowNotification(null);
+          onClose();
+        }, 0);
       }
     } catch (error) {
       // Xử lý lỗi
-      console.error("Error deleting schedule:", error);
-      message.error({
-        content:
-          error.response?.data?.message || "Có lỗi xảy ra khi xóa lịch làm việc!",
-        key: "deleteHelper",
-        duration: 2,
+      console.error("Error sending data to backend:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Không thể hủy. Vui lòng thử lại.",
       });
+      setTimeout(() => {
+        setShowNotification(null);
+        onClose();
+      }, 0);
     }
   };
 
   return (
     <Modal
-      title="Xác nhận xóa lịch làm việc"
+      title="Xác nhận hủy lịch làm việc"
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button
-          key="delete"
-          danger
-          type="primary"
-          onClick={handleDelete}
-        >
-          Xóa
+        <Button key="delete" danger type="primary" onClick={handleDelete}>
+          Đồng ý
         </Button>,
         <Button key="cancel" onClick={onClose}>
           Hủy
@@ -82,8 +92,8 @@ const PopupModalDelete = ({
     >
       <div className="popup-content">
         <div className="info-section">
-          <p style={{ marginBottom: 20, fontWeight: 'bold' }}>
-            Bạn có chắc chắn muốn xóa lịch làm việc này?
+          <p style={{ marginBottom: 20, fontWeight: "bold" }}>
+            Bạn có chắc chắn muốn hủy lịch làm việc này?
           </p>
           <Row gutter={[16, 16]}>
             <Col span={12}>
@@ -113,6 +123,13 @@ const PopupModalDelete = ({
           </Row>
         </div>
       </div>
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </Modal>
   );
 };

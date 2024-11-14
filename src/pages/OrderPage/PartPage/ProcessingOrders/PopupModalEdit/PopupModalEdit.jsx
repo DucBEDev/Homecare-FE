@@ -10,6 +10,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
+  const [timeList, setTimeList] = useState(null);
 
   useEffect(() => {
     if (record) {
@@ -37,8 +38,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
             .add(2, "hour")
             .format("HH:mm");
           updatedRecord.gioKetThucMoi = newEndTime;
-        }
-        else{
+        } else {
           setTimeErrors("");
         }
       }
@@ -51,12 +51,19 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
             .add(0, "hour")
             .format("HH:mm");
           updatedRecord.gioKetThucMoi = newEndTime;
-          setTimeErrors("Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút.");
-        }
-        else{
+          setTimeErrors(
+            "Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút."
+          );
+        } else {
           setTimeErrors("");
         }
-      }setIsFormValid(isValidTimeRange(updatedRecord.gioBatDauMoi, updatedRecord.gioKetThucMoi));
+      }
+      setIsFormValid(
+        isValidTimeRange(
+          updatedRecord.gioBatDauMoi,
+          updatedRecord.gioKetThucMoi
+        )
+      );
 
       return updatedRecord;
     });
@@ -75,31 +82,69 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
     return diffInHours >= 2 && diffInHours % 1 === 0;
   };
 
+  useEffect(() => {
+    const fetchTimeData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/create`
+        );
+        setTimeList(response.data.timeList);
+        console.log("timeList", timeList);
+      } catch (error) {
+        console.error("Error fetching time data:", error);
+      }
+    };
+    fetchTimeData();
+  }, []);
 
+  // Update the disabled hours function
+  const disabledHours = () => {
+    if (!timeList) return [];
+
+    const openHour = parseInt(timeList.openHour.split(":")[0], 10);
+    const closeHour = parseInt(timeList.closeHour.split(":")[0], 10);
+    const hours = [];
+
+    for (let i = 0; i < 24; i++) {
+      if (i < openHour || i  > closeHour) {
+        hours.push(i);
+      }
+    }
+    return hours;
+  };
+
+  // Update the disabled minutes function
+  const disabledMinutes = (selectedHour) => {
+    if (!timeList) return [];
+
+    const closeHour = parseInt(timeList.closeHour.split(":")[0], 10);
+    const minutes = [];
+
+    if (selectedHour === closeHour) {
+      for (let i = 1; i < 60; i++) {
+        minutes.push(i);
+      }
+    }
+    return minutes;
+  };
 
   if (!editedRecord) return null;
 
-
   const handleSave = async (editedRecord) => {
     try {
-      message.loading({ content: 'Đang xử lý...', key: 'editSchedule' });
-
       const payload = {
-        scheduleId: editedRecord.scheduleId,
-        mainOrderId: editedRecord.mainOrderId,
         startTime: editedRecord.gioBatDauMoi,
         endTime: editedRecord.gioKetThucMoi,
-        workingDate: editedRecord.ngayLam
       };
 
       console.log("payload edit:", payload);
 
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/edit/${record.scheduleId}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/detail/changeTime/${record.scheduleId}`,
         payload,
         {
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         }
       );
@@ -110,21 +155,30 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
           message: "Thành công",
           description: "Cập nhật thời gian thành công!",
         });
-        
-        onEdit(response.data);
 
+        if (onEdit) {
+          onEdit();
+        }
+
+        // Đóng modal 
         setTimeout(() => {
-          setShowNotification(null);
+          setShowNotification(false);
           onClose();
-        }, 1500);
+        }, 0);
       }
     } catch (error) {
-      console.error('Error editing schedule:', error);
-      message.error({
-        content: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật lịch làm việc!',
-        key: 'editSchedule',
-        duration: 2,
+      // Xử lý lỗi
+      console.error("Error sending data to backend:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Không thể sửa. Vui lòng thử lại.",
       });
+       // Đóng modal 
+       setTimeout(() => {
+        setShowNotification(false);
+        onClose();
+      }, 0);
     }
   };
 
@@ -134,7 +188,12 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button key="save" type="primary" onClick={() => handleSave(editedRecord)} disabled={!isFormValid}>
+        <Button
+          key="save"
+          type="primary"
+          onClick={() => handleSave(editedRecord)}
+          disabled={!isFormValid}
+        >
           Lưu lại
         </Button>,
         <Button key="cancel" onClick={onClose}>
@@ -198,6 +257,9 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
                 hourStep={1}
                 minuteStep={30}
                 allowClear={false}
+                disabledHours={disabledHours}
+                disabledMinutes={disabledMinutes}
+                hideDisabledOptions={true}
               />
             </div>
           </Col>
@@ -218,6 +280,9 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
                 hourStep={1}
                 minuteStep={30}
                 allowClear={false}
+                disabledHours={disabledHours}
+                disabledMinutes={disabledMinutes}
+                hideDisabledOptions={true}
               />
             </div>
           </Col>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Select, Button, Row, Col, message } from "antd";
+import { Modal, Select, Button, Row, Col } from "antd";
 import "../../../StylePage/stylePopupModalDetail.css";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 import axios from "axios";
@@ -68,24 +68,24 @@ const PopupModalDetail = ({
 
   const handleAssign = async () => {
     try {
-      // Chuẩn bị dữ liệu gửi đi
-      const payload = {
-        requestDetailId: record.scheduleId || record.mainOrderId,
-        helper_id: selectedHelperInfo?.id, // ID của helper được chọn
-        startTime: record.gioBatDau,
-        endTime: record.gioKetThuc,
-        helper_baseFactor: selectedHelperInfo.baseFactor,
-        coefficient_other: Math.max(
-          record.coefficientOtherList[1].value,
-          record.coefficientOtherList[1].value
-        ),
-        coefficient_ot: record.coefficientOtherList[0].value,
-      };
-
-      console.log("payload", payload);
       // Gọi API
       let response = "";
       if (record.isLongTerm) {
+        // Chuẩn bị dữ liệu gửi đi
+        const payload = {
+          scheduleIds: record.scheduleIds,
+          helper_id: selectedHelperInfo?.id, // ID của helper được chọn
+          startTime: record.gioBatDau,
+          endTime: record.gioKetThuc,
+          baseFactor: selectedHelperInfo.baseFactor,
+          coefficient_other: Math.max(
+            record.coefficientOtherList[1].value,
+            record.coefficientOtherList[1].value
+          ),
+          coefficient_OT: record.coefficientOtherList[0].value,
+        };
+
+        console.log("payload", payload);
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignFullRequest`,
 
@@ -97,6 +97,21 @@ const PopupModalDetail = ({
           }
         );
       } else {
+        // Chuẩn bị dữ liệu gửi đi
+        const payload = {
+          requestDetailId: record.scheduleId,
+          helper_id: selectedHelperInfo?.id, // ID của helper được chọn
+          startTime: record.gioBatDau,
+          endTime: record.gioKetThuc,
+          helper_baseFactor: selectedHelperInfo.baseFactor,
+          coefficient_other: Math.max(
+            record.coefficientOtherList[1].value,
+            record.coefficientOtherList[1].value
+          ),
+          coefficient_ot: record.coefficientOtherList[0].value,
+        };
+
+        console.log("payload", payload);
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignSubRequest/${record.scheduleId}`,
 
@@ -111,31 +126,42 @@ const PopupModalDetail = ({
 
       // Xử lý kết quả thành công
       if (response.status === 200) {
+        // Hiển thị notification thành công
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Giao việc thành công!",
         });
-        onAssign();
+
+        // Gọi callback để refresh data
+        if (onAssign) {
+          onAssign();
+        }
         // Đóng modal sau 1.5s
         setTimeout(() => {
           setShowNotification(null);
+          console.log("closeeeeeeeeeeeeeeeee", showNotification);
           onClose();
-        }, 1500);
+        }, 0);
       }
     } catch (error) {
-      // Xử lý lỗi
-      console.error("Error sending data to backend:", error);
+      console.error("Error assigning helper:", error);
       setShowNotification({
         status: "error",
         message: "Thất bại",
         description: "Không thể giao việc. Vui lòng thử lại.",
       });
+      // Xóa notification lỗi sau delay
       setTimeout(() => {
         setShowNotification(null);
-      }, 1500);
+      }, 0);
     }
   };
+
+// Thêm useEffect để theo dõi thay đổi của showNotification
+useEffect(() => {
+  console.log("showNotification changed:", showNotification);
+}, [showNotification]);
 
   const isButtonDisabled = () => {
     // Nếu đã chọn helper mới (selectedHelper không null và khác "Chưa có")
