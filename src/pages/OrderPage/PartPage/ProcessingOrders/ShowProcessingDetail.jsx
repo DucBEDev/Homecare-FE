@@ -35,12 +35,26 @@ const ShowProcessingDetail = () => {
     setIsModalVisible(true);
   };
 
+  const handleAssignSuccess = () => {
+    // Refresh lại data sau khi giao việc thành công
+    fetchData();
+    // Đóng modal
+    setIsModalVisible(false);
+  };
+
   const showEditModal = (record) => {
     setSelectedEditRecord({
       ...record,
       mainOrderId: id,
     });
     setIsEditModalVisible(true);
+  };
+
+  const handleEditSuccess = () => {
+    // Refresh lại data sau khi giao việc thành công
+    fetchData();
+    // Đóng modal
+    setIsEditModalVisible(false);
   };
 
   // Thêm hàm show modal xóa
@@ -61,7 +75,6 @@ const ShowProcessingDetail = () => {
       gioKetThuc: timeSlots[0]?.gioKetThuc, // Lấy giờ kết thúc từ slot đầu tiên
       nguoiGiupViec: "Chưa có",
       isLongTerm: true, // Thêm flag để đánh dấu là giao việc dài hạn cho nhiều đơn
-
     };
 
     setSelectedRecord(longTermRecord);
@@ -187,6 +200,10 @@ const ShowProcessingDetail = () => {
 
       setTimeSlots(
         data.scheduleRequest.map((schedule, index) => {
+          // Tìm helper info từ danh sách helpers
+          const currentHelper = data.helpers.find(
+            (h) => h._id === schedule.helper_id
+          );
           // Map helpers với key duy nhất
           const helpersList = data.helpers.map((helper) => ({
             key: `helper_${helper.id}`, // Sửa helper._id thành helper.id
@@ -195,10 +212,18 @@ const ShowProcessingDetail = () => {
             haveHelper: true,
           }));
 
-          const coefficientOtherList = data.coefficientOtherLists.map((item) => ({
-            value: item.value,
-            title: item.title,
-          }));
+          const coefficientOtherList = data.coefficientOtherLists.map(
+            (item) => ({
+              value: item.value,
+              title: item.title,
+            })
+          );
+
+          // Kiểm tra helper_id một cách chặt chẽ hơn
+          const helperName =
+            schedule.helper_id && schedule.helper_id !== "notAvailable"
+              ? data.helpers.find((h) => h.id === schedule.helper_id)?.fullName
+              : "Chưa có";
 
           return {
             key: `schedule_${schedule._id}`,
@@ -214,11 +239,7 @@ const ShowProcessingDetail = () => {
                 day: "numeric",
               }
             ),
-            nguoiGiupViec:
-              schedule.helper_id === "notAvailable"
-                ? "Chưa có"
-                : data.helpers.find((h) => h.id === schedule.helper_id)
-                    ?.fullName || "Chưa có",
+            nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
             trangThai:
               schedule.status === "notDone" ? "Chưa hoạt động" : "Hoạt động",
 
@@ -328,16 +349,14 @@ const ShowProcessingDetail = () => {
               record={selectedRecord}
               orderData={orderData}
               allHelpers={allHelpers}
+              onAssign={handleAssignSuccess}
             />
             <PopupModalEdit
               isVisible={isEditModalVisible}
               onClose={() => setIsEditModalVisible(false)}
               record={selectedEditRecord}
               orderData={orderData}
-              onEdit={() => {
-                fetchData(); // Refresh data sau khi edit
-                setIsEditModalVisible(false);
-              }}
+              onEdit={handleEditSuccess}
             />
             <PopupModalDelete
               isVisible={isDeleteModalVisible}

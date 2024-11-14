@@ -66,90 +66,20 @@ const PopupModalDetail = ({
     setSelectedHelper(value);
   };
 
-  // Hàm helper để chuyển đổi định dạng ngày
-const convertDateFormat = (dateStr) => {
-  // Tách lấy phần ngày tháng năm (bỏ qua phần thứ)
-  const datePart = dateStr.split(', ')[1];
-  const [day, month, year] = datePart.split('/');
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-};
-
-  // Thêm các hàm helper mới
-  const isWeekend = (dateStr) => {
-    const date = new Date(dateStr);
-    const day = date.getDay();
-    return day === 0 || day === 6; // 0 là Chủ nhật, 6 là thứ 7
-  };
-
-  const isHoliday = (dateStr) => {
-    // Danh sách ngày lễ (có thể lấy từ API hoặc config)
-    const holidays = [
-      "2024-01-01", // Năm mới
-      "2024-02-10", // Mùng 1 Tết
-      "2024-02-11", // Mùng 2 Tết
-      "2024-02-12", // Mùng 3 Tết
-      "2024-04-30", // Giải phóng miền Nam
-      "2024-05-01", // Quốc tế Lao động
-      "2024-09-02", // Quốc khánh
-      // Thêm các ngày lễ khác
-    ];
-    const formattedDate = convertDateFormat(dateStr);
-  return holidays.includes(formattedDate);
-  };
-
-  const isOvertime = (startTime, endTime) => {
-    // Giả sử giờ làm việc bình thường là 8:00 - 17:00
-    const normalStartHour = 8;
-    const normalEndHour = 17;
-
-    const startHour = parseInt(startTime.split(":")[0]);
-    const endHour = parseInt(endTime.split(":")[0]);
-
-    return startHour < normalStartHour || endHour > normalEndHour;
-  };
-
-  const getCoefficients = (dateStr, startTime, endTime) => {
-    // Hệ số cho ngày cuối tuần và ngày lễ
-    const weekendCoefficient = record.coefficientOtherList.find(item => item.title === "Hệ số cuối tuần")?.value || 1;
-    const holidayCoefficient = record.coefficientOtherList.find(item => item.title === "Hệ số ngày lễ")?.value || 1;
-    const overtimeCoefficient = record.coefficientOtherList.find(item => item.title === "Hệ số ngoài giờ")?.value || 1;
-
-    let coefficient_other = 1;
-    let coefficient_ot = 1;
-
-    // Kiểm tra và lấy hệ số cao nhất giữa cuối tuần và ngày lễ
-    if (isWeekend(dateStr)) {
-      coefficient_other = weekendCoefficient;
-    }
-    if (isHoliday(dateStr)) {
-      coefficient_other = Math.max(coefficient_other, holidayCoefficient);
-    }
-
-    // Kiểm tra overtime
-    if (isOvertime(startTime, endTime)) {
-      coefficient_ot = overtimeCoefficient;
-    }
-
-    return { coefficient_other, coefficient_ot };
-  };
-
   const handleAssign = async () => {
     try {
       // Chuẩn bị dữ liệu gửi đi
-      const { coefficient_other, coefficient_ot } = getCoefficients(
-        record.ngayLam,
-        record.gioBatDau,
-        record.gioKetThuc
-      );
-
       const payload = {
         requestDetailId: record.scheduleId || record.mainOrderId,
         helper_id: selectedHelperInfo?.id, // ID của helper được chọn
         startTime: record.gioBatDau,
         endTime: record.gioKetThuc,
         helper_baseFactor: selectedHelperInfo.baseFactor,
-        coefficient_other: coefficient_other,
-        coefficient_ot: coefficient_ot,
+        coefficient_other: Math.max(
+          record.coefficientOtherList[1].value,
+          record.coefficientOtherList[1].value
+        ),
+        coefficient_ot: record.coefficientOtherList[0].value,
       };
 
       console.log("payload", payload);
@@ -186,14 +116,12 @@ const convertDateFormat = (dateStr) => {
           message: "Thành công",
           description: "Giao việc thành công!",
         });
+        onAssign();
+        // Đóng modal sau 1.5s
         setTimeout(() => {
           setShowNotification(null);
+          onClose();
         }, 1500);
-
-        // Gọi callback để cập nhật UI
-        onAssign(response.data);
-        // Đóng modal
-        onClose();
       }
     } catch (error) {
       // Xử lý lỗi

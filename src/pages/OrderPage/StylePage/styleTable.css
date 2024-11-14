@@ -102,6 +102,14 @@
     font-size: 18px !important;
 }
 
+.ant-tooltip-inner{
+    display: none !important;
+}
+
+.ant-tooltip-arrow {
+    display: none !important;
+}
+
 @media (max-width: 992px) {
     .ant-table-container {
         margin-left: -30px;

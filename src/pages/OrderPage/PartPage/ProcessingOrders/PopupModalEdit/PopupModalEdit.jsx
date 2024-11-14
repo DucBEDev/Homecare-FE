@@ -3,10 +3,13 @@ import { Modal, Button, Row, Col, TimePicker, message } from "antd";
 import dayjs from "dayjs";
 import "../../../StylePage/stylePopupModalEdit.css";
 import axios from "axios";
+import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
+
 const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   const [editedRecord, setEditedRecord] = useState(null);
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
     if (record) {
@@ -16,6 +19,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
         gioKetThucMoi: record.gioKetThuc,
       });
       setIsFormValid(true);
+      setTimeErrors("");
     }
   }, [record]);
 
@@ -90,8 +94,8 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
 
       console.log("payload edit:", payload);
 
-      const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}admin/requests/updateSchedule`,
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/requests/edit/${record.scheduleId}`,
         payload,
         {
           headers: {
@@ -101,17 +105,18 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       );
 
       if (response.status === 200) {
-        message.success({
-          content: 'Cập nhật lịch làm việc thành công!',
-          key: 'editSchedule',
-          duration: 1000,
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Cập nhật thời gian thành công!",
         });
-
-        // Gọi callback để cập nhật UI
-        onEdit(response.data);
         
-        // Đóng modal
-        onClose();
+        onEdit(response.data);
+
+        setTimeout(() => {
+          setShowNotification(null);
+          onClose();
+        }, 1500);
       }
     } catch (error) {
       console.error('Error editing schedule:', error);
@@ -219,6 +224,13 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
           <div className="error-message">{timeErrors}</div>
         </Row>
       </div>
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </Modal>
   );
 };

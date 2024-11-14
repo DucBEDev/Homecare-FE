@@ -5,17 +5,24 @@ import axios from "axios";
 import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
 
 const ProcessingOrders = () => {
+  const navigate = useNavigate();
+
   const searchValue = useSelector((state) => state.search.value);
   const dateRange = useSelector((state) => state.dateRange);
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
   const pageSize = 5;
-  const navigate = useNavigate();
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
+
   const columns = [
     {
       title: "Số ĐT Khách Hàng",
@@ -161,12 +168,25 @@ const ProcessingOrders = () => {
     [navigate]
   );
 
-  const handleDeleteDetails = useCallback(
-    (recordId) => {
-      navigate(`/processing/showDetail`);
-    },
-    [navigate]
-  );
+  const handleDeleteDetails = useCallback((recordId) => {
+    const record = data.find(item => item.key === recordId);
+    setSelectedDeleteRecord({
+      ...record,
+      mainOrderId: recordId, // Thêm mainOrderId vào record
+      scheduleId: record.scheduleIds[0], // Lấy scheduleId đầu tiên
+      ngayLam: record.requestDate,
+      gioBatDau: record.startTime, 
+      gioKetThuc: record.endTime, 
+      nguoiGiupViec: record.helperName || "Chưa có"
+    });
+    setIsDeleteModalVisible(true);
+  }, [data]);
+
+  const handleDeleteSuccess = useCallback((deletedData) => {
+    // Cập nhật lại danh sách đơn hàng
+    setData(prevData => prevData.filter(item => item.key !== selectedDeleteRecord.mainOrderId));
+    setFilteredData(prevData => prevData.filter(item => item.key !== selectedDeleteRecord.mainOrderId));
+  }, [selectedDeleteRecord]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -201,6 +221,9 @@ const ProcessingOrders = () => {
               cost: `${record.totalCost}đ`,
               status: statusNow,
               scheduleIds: record.scheduleIds,
+              startTime: new Date(record.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
+              endTime: new Date(record.endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }),
+              helperName: record.helperName,
             };
           }
         );
@@ -264,6 +287,13 @@ const ProcessingOrders = () => {
           left: "50%",
           zIndex: 1000,
         }}
+      />
+      <PopupModalDelete
+        isVisible={isDeleteModalVisible}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onDelete={handleDeleteSuccess}
+        record={selectedDeleteRecord}
+        orderData={data}
       />
     </div>
   );

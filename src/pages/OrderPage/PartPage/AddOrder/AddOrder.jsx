@@ -232,7 +232,7 @@ const AddOrder = () => {
 
     const coefficientWeekend = dataFetch.coefficientOtherList[1].value;
     const coefficientOutside = dataFetch.coefficientOtherList[0].value;
-    const coefficientNormal = "0";
+    const coefficientNormal = "1";
 
     if (orderDay === saturday || orderDay === sunday) {
       return coefficientWeekend;
@@ -359,6 +359,11 @@ const AddOrder = () => {
         setIsFormValid(true);
       }
     }
+  };
+
+  const disabledDate = (current) => {
+    // Không cho phép chọn ngày trong quá khứ (trước ngày hôm nay)
+    return current && current < dayjs().startOf('day');
   };
 
   /*handle validate phone number*/
@@ -650,9 +655,9 @@ const AddOrder = () => {
               ]}
             >
               {requestType === "short" ? (
-                <DatePicker onChange={handleDateChange} />
+                <DatePicker onChange={handleDateChange} disabledDate={disabledDate}/>
               ) : (
-                <DatePicker.RangePicker onChange={handleDateChange} />
+                <DatePicker.RangePicker onChange={handleDateChange} disabledDate={disabledDate}/>
               )}
             </Form.Item>
           </Col>
