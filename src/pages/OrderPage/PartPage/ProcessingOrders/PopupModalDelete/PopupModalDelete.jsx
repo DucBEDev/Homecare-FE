@@ -21,6 +21,7 @@ const PopupModalDelete = ({
         // Chuẩn bị dữ liệu gửi đi
         const payload = {
           requestId: record.mainOrderId,
+          scheduleIds: record.scheduleIds,
         };
 
         console.log("payload delete:", payload);

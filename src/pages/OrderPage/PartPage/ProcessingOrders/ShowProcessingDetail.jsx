@@ -6,6 +6,7 @@ import axios from "axios";
 import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
 import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
 import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
+import PopupModalFinish from "./PopupModalFinish/PopupModalFinish";
 
 const { Title } = Typography;
 
@@ -27,6 +28,9 @@ const ShowProcessingDetail = () => {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
 
+  const [isFinishModalVisible, setIsFinishModalVisible] = useState(false);
+  const [selectedFinishRecord, setSelectedFinishRecord] = useState(null);
+
   const showModal = (record) => {
     setSelectedRecord({
       ...record,
@@ -35,7 +39,6 @@ const ShowProcessingDetail = () => {
     setIsModalVisible(true);
   };
 
-  
   const showEditModal = (record) => {
     setSelectedEditRecord({
       ...record,
@@ -43,7 +46,6 @@ const ShowProcessingDetail = () => {
     });
     setIsEditModalVisible(true);
   };
-
 
   // Thêm hàm show modal xóa
   const showDeleteModal = (record) => {
@@ -53,7 +55,15 @@ const ShowProcessingDetail = () => {
     });
     setIsDeleteModalVisible(true);
   };
-  
+
+  const showFinishModal = (record) => {
+    setSelectedFinishRecord({
+      ...record,
+      phoneNumberaaaaaaaa: orderData?.soDTKhachHang || "N/A",
+    });
+    setIsFinishModalVisible(true);
+  };
+
   const handleSuccess = () => {
     // Refresh lại data sau khi giao việc thành công
     fetchData();
@@ -77,7 +87,7 @@ const ShowProcessingDetail = () => {
       coefficient_other: timeSlots[0]?.coefficient_other,
       scheduleIds: timeSlots.map((slot) => slot.scheduleId),
     };
-  
+
     setSelectedRecord(longTermRecord);
     setIsModalVisible(true);
   };
@@ -131,7 +141,12 @@ const ShowProcessingDetail = () => {
               >
                 Đổi NGV
               </Button>
-              <Button type="primary" size="small" style={{ marginRight: 8 }}>
+              <Button
+                type="primary"
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => showFinishModal(record)}
+              >
                 Hoàn Thành
               </Button>
             </>
@@ -239,7 +254,8 @@ const ShowProcessingDetail = () => {
               if (schedule.status === "notDone") return "Chưa tiến hành";
               else if (schedule.status === "assigned") return "Đã giao việc";
               else if (schedule.status === "unconfirmed") return "Chờ xác nhận";
-              else if (schedule.status === "processing") return "Đang tiến hành";
+              else if (schedule.status === "processing")
+                return "Đang tiến hành";
               else if (schedule.status === "done") return "Đã hoàn thành";
               else if (schedule.status === "cancelled") return "Đã hủy";
               else return "Không xác định";
@@ -251,6 +267,7 @@ const ShowProcessingDetail = () => {
             coefficient_other: data.request.service.coefficient_other,
             isLongTerm: false,
             coefficientOtherList: coefficientOtherList,
+            scheduleIds: timeSlots.map((slot) => slot.scheduleId),
           };
         })
       );
@@ -366,6 +383,13 @@ const ShowProcessingDetail = () => {
               record={selectedDeleteRecord}
               orderData={orderData}
               onDelete={handleSuccess}
+            />
+            <PopupModalFinish
+              isVisible={isFinishModalVisible}
+              onClose={() => setIsFinishModalVisible(false)}
+              record={selectedFinishRecord}
+              orderData={orderData}
+              onFinish={handleSuccess}
             />
           </Card>
         </>

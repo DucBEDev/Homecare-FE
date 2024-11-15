@@ -83,6 +83,7 @@ const PopupModalDetail = ({
             record.coefficientOtherList[1].value
           ),
           coefficient_OT: record.coefficientOtherList[0].value,
+          coefficient_service: record.coefficient_service,
         };
 
         console.log("payload", payload);
@@ -109,6 +110,7 @@ const PopupModalDetail = ({
             record.coefficientOtherList[1].value
           ),
           coefficient_ot: record.coefficientOtherList[0].value,
+          coefficient_service: record.coefficient_service,
         };
 
         console.log("payload", payload);

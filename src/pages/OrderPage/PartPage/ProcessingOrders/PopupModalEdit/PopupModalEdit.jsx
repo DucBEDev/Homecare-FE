@@ -135,6 +135,10 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       const payload = {
         startTime: editedRecord.gioBatDauMoi,
         endTime: editedRecord.gioKetThucMoi,
+        baseFactor: record.baseFactor,
+        coefficient_other: record.coefficient_other,
+        coefficient_OT: record.coefficient_OT,
+        coefficient_service: record.coefficient_service,
       };
 
       console.log("payload edit:", payload);
