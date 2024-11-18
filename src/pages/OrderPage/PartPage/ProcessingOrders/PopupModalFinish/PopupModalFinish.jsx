@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Button, Row, Col, Radio, Rate } from "antd";
 import "../../../StylePage/stylePopupModalDetail.css"; // Sử dụng cùng file CSS với Detail
 import axios from "axios";
@@ -12,6 +12,29 @@ const PopupModalFinish = ({
   record,
   orderData,
 }) => {
+  console.log("orrderdatafinisn", orderData);
+  console.log("recrdatafinisn", record);
+  const [totalBill, setTotalBill] = useState(0);
+  console.log("totalbill", totalBill);
+
+  useEffect(() => {
+    const fetchTotalBill = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/detail/${record.scheduleId}`
+        );
+        setTotalBill(response.data.totalBill);
+        console.log("Total bill response:", response.data);
+      } catch (error) {
+        console.error("Error fetching total bill:", error);
+      }
+    };
+
+    if (record?.scheduleId) {
+      fetchTotalBill();
+    }
+  }, [record?.scheduleId]);
+
   const [showNotification, setShowNotification] = useState(null);
   const [formData, setFormData] = useState({
     rating: 3,
@@ -23,15 +46,13 @@ const PopupModalFinish = ({
   const handleFinish = async () => {
     try {
       const payload = {
-        requestDetailId: record.scheduleId,
-        rating: formData.rating,
-        contactCustomer: formData.contactCustomer,
-        lostAsset: formData.lostAsset,
-        damagedAsset: formData.damagedAsset,
+        review: formData.rating,
+        loseThings: formData.lostAsset,
+        breakThings: formData.damagedAsset,
       };
 
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/detail/finish/${record.scheduleId}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDetailDone/${record.scheduleId}`,
         payload
       );
 
@@ -121,13 +142,20 @@ const PopupModalFinish = ({
 
           <div className="evaluation-section">
             <Row gutter={[16, 16]}>
-            <Col span={12}>
+              <Col span={12}>
                 <div className="info-item">
                   <span>Người giúp việc:</span>
                   <span>{record?.nguoiGiupViec}</span>
                 </div>
               </Col>
               <Col span={12}>
+                <div className="info-item">
+                  <span>Số ĐT:</span>
+                  <span>{record?.phoneHelper}</span>
+                </div>
+              </Col>
+
+              <Col span={16}>
                 <div className="question-section">
                   <span>Có liên hệ được với khách hàng không?</span>
                   <Radio.Group
@@ -144,34 +172,39 @@ const PopupModalFinish = ({
                   </Radio.Group>
                 </div>
               </Col>
+              <Col span={8}>
+                <div className="info-item">
+                  <span>Tổng hóa đơn:</span>
+                  <span>{totalBill?.toLocaleString("vi-VN")} VNĐ</span>
+                </div>
+              </Col>
 
-
-              {/* <div className="rating-section">
+              <Col span={12}>
+                <div className="rating-section">
                   <span>Mức Đánh Giá:</span>
+                  {(() => {
+                    if (formData.rating === 1) {
+                      return <span>Rất kém</span>;
+                    } else if (formData.rating === 2) {
+                      return <span>Kém</span>;
+                    } else if (formData.rating === 3) {
+                      return <span>Trung bình</span>;
+                    } else if (formData.rating === 4) {
+                      return <span>Tốt</span>;
+                    } else {
+                      return <span>Rất tốt</span>;
+                    }
+                  })()}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="rating-section">
                   <Rate
                     value={formData.rating}
                     onChange={(value) =>
                       setFormData({ ...formData, rating: value })
                     }
                   />
- </div> */}
-
-
-              <Col span={24}>
-                <div className="question-section">
-                  <span>Có liên hệ được với khách hàng không?</span>
-                  <Radio.Group
-                    value={formData.contactCustomer}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contactCustomer: e.target.value,
-                      })
-                    }
-                  >
-                    <Radio value={true}>Có</Radio>
-                    <Radio value={false}>Không</Radio>
-                  </Radio.Group>
                 </div>
               </Col>
 

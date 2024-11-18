@@ -1,0 +1,9 @@
+.delete-button.ant-btn-primary.ant-btn-dangerous {
+    background: red !important;
+}
+
+.delete-button.ant-btn-primary.ant-btn-dangerous:hover {
+    background: #fff !important;
+    color: #ff4d4f !important;
+    border: 1px solid #ff4d4f !important;
+}

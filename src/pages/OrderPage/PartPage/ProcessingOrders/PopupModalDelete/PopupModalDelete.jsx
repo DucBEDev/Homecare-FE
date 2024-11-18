@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
-import "../../../StylePage/stylePopupModalDetail.css";
 import axios from "axios";
+import "../../../StylePage/stylePopupModalDelete.css"
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 
 const PopupModalDelete = ({
@@ -82,7 +82,7 @@ const PopupModalDelete = ({
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button key="delete" danger type="primary" onClick={handleDelete}>
+        <Button key="delete" danger type="primary" onClick={handleDelete} className="delete-button">
           Đồng ý
         </Button>,
         <Button key="cancel" onClick={onClose}>

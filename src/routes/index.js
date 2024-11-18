@@ -15,6 +15,7 @@ import OrderHistory from "../pages/OrderPage/PartPage/HistoryOrders/OrderHistory
 import ShowProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/ShowProcessingDetail";
 import ShowHistoryDetail from "../pages/OrderPage/PartPage/HistoryOrders/ShowHistoryDetail";
 import AddOrder from "../pages/OrderPage/PartPage/AddOrder/AddOrder";
+import EditProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/EditProcessingDetail";
 //import component con cua MaidPage
 import BodyMaidTable from "../pages/MaidPage/PartPage/BodyMaid/BodyMaidTable/BodyMaidTable"
 //import component con cua StaffPage
@@ -56,7 +57,7 @@ export const routes = [{
     },
     { //option procesing
         path: '/order/processing/editDetail',
-        page: ShowProcessingDetail,
+        page: EditProcessingDetail,
         isShowHeader: true,
     },
     { //option history

@@ -4,6 +4,26 @@
     font-style: oblique;
 }
 
+.cancel-button.ant-btn {
+    background: #ff4d4f !important;
+    color: #fff !important;
+}
+
+.cancel-button.ant-btn:hover {
+    color: #ff4d4f !important;
+    border-color: #ff4d4f !important;
+}
+
+.done-button.ant-btn-primary {
+    background: #4096FF !important;
+}
+
+.done-button.ant-btn-primary:hover {
+    background: #fff !important;
+    color: #4096FF !important;
+    border: 1px solid #4096FF !important;
+}
+
 .ant-card-head {
     min-height: 40px !important;
 }
@@ -45,4 +65,3 @@
 .ant-table-tbody .ant-table-cell {
     font-size: 14px !important;
 }
-

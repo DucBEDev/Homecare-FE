@@ -7,6 +7,8 @@ import PopupModalDetail from "./PopupModalDetail/PopupModalDetail";
 import PopupModalEdit from "./PopupModalEdit/PopupModalEdit";
 import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
 import PopupModalFinish from "./PopupModalFinish/PopupModalFinish";
+import { CheckCircleOutlined } from "@ant-design/icons";
+import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
 
 const { Title } = Typography;
 
@@ -30,6 +32,10 @@ const ShowProcessingDetail = () => {
 
   const [isFinishModalVisible, setIsFinishModalVisible] = useState(false);
   const [selectedFinishRecord, setSelectedFinishRecord] = useState(null);
+
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
+
+  const [showNotification, setShowNotification] = useState(null);
 
   const showModal = (record) => {
     setSelectedRecord({
@@ -57,10 +63,12 @@ const ShowProcessingDetail = () => {
   };
 
   const showFinishModal = (record) => {
-    setSelectedFinishRecord({
+    const helper = allHelpers.find((h) => h.id === record.currentHelperId);
+    const updatedRecord = {
       ...record,
-      phoneNumberaaaaaaaa: orderData?.soDTKhachHang || "N/A",
-    });
+      phoneHelper: helper?.phone || "",
+    };
+    setSelectedFinishRecord(updatedRecord);
     setIsFinishModalVisible(true);
   };
 
@@ -90,6 +98,40 @@ const ShowProcessingDetail = () => {
 
     setSelectedRecord(longTermRecord);
     setIsModalVisible(true);
+  };
+
+  const handleCompleteClick = () => {
+    setIsConfirmModalVisible(true);
+  };
+
+  const handleCompleteConfirm = async () => {
+    try {
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDone/${id}`
+      );
+
+      if (response.status === 200) {
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Hoàn thành đơn hàng thành công!",
+        });
+
+        fetchData();
+
+        setTimeout(() => {
+          setIsConfirmModalVisible(false);
+          setShowNotification(null);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Không thể hoàn thành đơn hàng. Vui lòng thử lại.",
+      });
+    }
   };
 
   const columns = [
@@ -123,47 +165,55 @@ const ShowProcessingDetail = () => {
       key: "xuLy",
       render: (_, record) => (
         <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
-          <Button
-            type="primary"
-            size="small"
-            style={{ marginRight: 8 }}
-            onClick={() => showEditModal(record)}
-          >
-            Sửa
-          </Button>
-
-          {record.nguoiGiupViec !== "Chưa có" ? (
+          {record.trangThai !== "Đã hoàn thành" ? (
             <>
-              <Button
-                size="small"
-                style={{ marginRight: 8 }}
-                onClick={() => showModal(record)}
-              >
-                Đổi NGV
-              </Button>
               <Button
                 type="primary"
                 size="small"
                 style={{ marginRight: 8 }}
-                onClick={() => showFinishModal(record)}
+                onClick={() => showEditModal(record)}
               >
-                Hoàn Thành
+                Sửa
+              </Button>
+
+              {record.nguoiGiupViec !== "Chưa có" ? (
+                <>
+                  <Button
+                    size="small"
+                    style={{ marginRight: 8 }}
+                    onClick={() => showModal(record)}
+                  >
+                    Đổi NGV
+                  </Button>
+                  <Button
+                    type="primary"
+                    size="small"
+                    style={{ marginRight: 8 }}
+                    onClick={() => showFinishModal(record)}
+                  >
+                    Hoàn Thành
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="primary"
+                  size="small"
+                  style={{ marginRight: 8, background: "#10ce80" }}
+                  onClick={() => showModal(record)}
+                >
+                  Giao việc
+                </Button>
+              )}
+
+              <Button
+                danger
+                size="small"
+                onClick={() => showDeleteModal(record)}
+              >
+                Hủy
               </Button>
             </>
-          ) : (
-            <Button
-              type="primary"
-              size="small"
-              style={{ marginRight: 8, background: "#10ce80" }}
-              onClick={() => showModal(record)}
-            >
-              Giao việc
-            </Button>
-          )}
-
-          <Button danger size="small" onClick={() => showDeleteModal(record)}>
-            Hủy
-          </Button>
+          ) : null}
         </div>
       ),
     },
@@ -341,8 +391,9 @@ const ShowProcessingDetail = () => {
               style={{
                 position: "absolute",
                 top: "2px",
-                left: "75%",
+                left: "62%",
                 background: "#10ce80",
+                maxWidth: "90px",
               }}
               type="primary"
               size="normal"
@@ -351,6 +402,22 @@ const ShowProcessingDetail = () => {
             >
               Giao việc dài hạn
             </Button>
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "70%",
+                background: "#4096FF",
+                minWidth: "90px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleCompleteClick}
+              onAssignLong={handleSuccess}
+            >
+              Hoàn thành
+            </Button>
+
             <Table
               columns={columns}
               dataSource={timeSlots}
@@ -391,7 +458,72 @@ const ShowProcessingDetail = () => {
               orderData={orderData}
               onFinish={handleSuccess}
             />
+            <Modal
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "24px",
+                  }}
+                >
+                  <CheckCircleOutlined
+                    style={{ color: "#4096FF", fontSize: "24px" }}
+                  />
+                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
+                </div>
+              }
+              open={isConfirmModalVisible}
+              onOk={handleCompleteConfirm}
+              onCancel={() => setIsConfirmModalVisible(false)}
+              okText="Xóa"
+              cancelText="Hủy"
+              className="custom-modal"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+              wrapClassName="custom-modal-wrap"
+              footer={[
+                <Button
+                  key="ok"
+                  type="primary"
+                  className="done-button"
+                  onClick={handleCompleteConfirm}
+                  style={{ background: "#4096FF" }}
+                >
+                  Hoàn thành
+                </Button>,
+                <Button
+                  key="cancel"
+                  danger
+                  className="cancel-button"
+                  onClick={() => setIsConfirmModalVisible(false)}
+                  style={{ backgound: "#ff4d4f", color: "#ff4d4f" }}
+                >
+                  Hủy
+                </Button>,
+              ]}
+            >
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginTop: "20px",
+                }}
+              >
+                Bạn có chắc chắn muốn hoàn thành đơn hàng này?
+              </p>
+            </Modal>
           </Card>
+          {showNotification && (
+            <NotificationComponent
+              status={showNotification.status}
+              message={showNotification.message}
+              description={showNotification.description}
+            />
+          )}
         </>
       )}
     </div>

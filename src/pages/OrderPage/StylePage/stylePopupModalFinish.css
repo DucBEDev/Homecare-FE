@@ -6,3 +6,24 @@
 .ant-radio-wrapper span {
     color: #000 !important;
 }
+
+.rating-section > span:nth-child(2) {
+   margin-left: 20px;
+   color: #000;
+   font-size: 14px;
+}
+
+.rating-section > span:first-child {
+    font-size: 14px !important;
+    color: #10ce70;
+}
+
+.rating-section ul span {
+    margin-left: 10px;
+    font-size: 24px !important;
+    transform: translateY(-4px);
+}
+
+.question-section div {
+    margin-left: 14px;
+}
