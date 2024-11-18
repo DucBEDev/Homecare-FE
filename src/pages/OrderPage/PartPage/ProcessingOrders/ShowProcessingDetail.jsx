@@ -106,31 +106,40 @@ const ShowProcessingDetail = () => {
 
   const handleCompleteConfirm = async () => {
     try {
-      const response = await axios.patch(
+      await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDone/${id}`
       );
-
-      if (response.status === 200) {
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Hoàn thành đơn hàng thành công!",
-        });
-
-        fetchData();
-
-        setTimeout(() => {
-          setIsConfirmModalVisible(false);
-          setShowNotification(null);
-        }, 2000);
-      }
+  
+      // Nếu thành công
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: "Hoàn thành đơn hàng thành công!",
+      });
+  
+      fetchData();
+  
+      setTimeout(() => {
+        setIsConfirmModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+  
     } catch (error) {
       console.error("Error:", error);
+      
+      // Kiểm tra error response
+      const errorMessage = error.response?.data?.message || "Không thể hoàn thành đơn hàng. Vui lòng thử lại.";
+      
       setShowNotification({
         status: "error",
         message: "Thất bại",
-        description: "Không thể hoàn thành đơn hàng. Vui lòng thử lại.",
+        description: errorMessage
       });
+  
+      setTimeout(() => {
+        setIsConfirmModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
     }
   };
 

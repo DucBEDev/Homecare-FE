@@ -14,19 +14,19 @@ const PopupModalFinish = ({
 }) => {
   console.log("orrderdatafinisn", orderData);
   console.log("recrdatafinisn", record);
-  const [totalBill, setTotalBill] = useState(0);
-  console.log("totalbill", totalBill);
+  const [costHelper, setCostHelper] = useState(0);
+  console.log("costhekper", costHelper);
 
   useEffect(() => {
     const fetchTotalBill = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/detail/${record.scheduleId}`
+          `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDetailDone/${record.scheduleId}`
         );
-        setTotalBill(response.data.totalBill);
-        console.log("Total bill response:", response.data);
+        setCostHelper(response.data.helper_cost);
+        console.log("Cost for helper response:", response.data);
       } catch (error) {
-        console.error("Error fetching total bill:", error);
+        console.error("Error fetching cost for helper:", error);
       }
     };
 
@@ -174,8 +174,8 @@ const PopupModalFinish = ({
               </Col>
               <Col span={8}>
                 <div className="info-item">
-                  <span>Tổng hóa đơn:</span>
-                  <span>{totalBill?.toLocaleString("vi-VN")} VNĐ</span>
+                  <span>Lương NGV:</span>
+                  <span>{costHelper?.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
               </Col>
 

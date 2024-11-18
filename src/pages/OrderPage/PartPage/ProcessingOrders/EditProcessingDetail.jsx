@@ -49,7 +49,7 @@ const EditProcessingOrder = () => {
         form.setFieldsValue({
           phone: orderData.request.customerInfo.phone,
           fullName: orderData.request.customerInfo.fullName,
-          address: orderData.request.customerInfo.address,
+          address: orderData.request.customerInfo.address.split(',')[0],
           location: [
             orderData.request.location.province,
             orderData.request.location.district, 
@@ -492,9 +492,11 @@ const EditProcessingOrder = () => {
       totalCost: totalCost,
     };
 
+    console.log("dava", dataForBackend);
+
     try {
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/update/${id}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/edit/${id}`,
         dataForBackend
       );
 
