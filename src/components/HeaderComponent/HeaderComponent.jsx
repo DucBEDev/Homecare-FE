@@ -10,7 +10,7 @@ import {
     WrapperHeaderTextSub,
     WrapperLogo
  } from "./style"
-import Logo from '../../assets/images/logo512.png'
+import Logo from '../../assets/images/onlyLogo.svg'
 
 const HeaderComponent = () => {
     return (

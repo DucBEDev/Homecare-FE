@@ -20,8 +20,8 @@ export const WrapperHeaderCol = styled(Col)`
 `
 
 export const WrapperLogo = styled.img`
-    width: 70px;
-    height: 70px;
+    width: 50px;
+    height: 50px;
     padding: 0;
     margin: 0;
 `
@@ -46,7 +46,7 @@ export const WrapperHeaderTextSmall = styled.span`
     color: #eeeeee;
     position: absolute;
     top: 2px;
-    left: 224px;
+    left: 216px;
 
     @media (max-width: 1200px) {
         font-size: 8px;

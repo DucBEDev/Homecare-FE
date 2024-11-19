@@ -15,17 +15,16 @@ import { Table } from "antd";
 import dayjs from "dayjs";
 import "../../StylePage/styleAdd.css";
 import axios from "axios";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
 
 const EditProcessingOrder = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [dataFetch, setDataFetch] = useState([]);
 
   const location = useLocation();
-  const orderId = location.state?.id
+  const orderId = location.state?.id;
 
   const [locations, setLocations] = useState([]);
   const [coefficient, setCoefficient] = useState("0");
@@ -34,43 +33,48 @@ const EditProcessingOrder = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
-
- // Fetch dữ liệu đơn hàng cụ thể
- useEffect(() => {
+  // Fetch dữ liệu đơn hàng cụ thể
+  useEffect(() => {
     const fetchOrderDetail = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/detail/${orderId}`
+          `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`
         );
         const orderData = response.data;
         console.log("Order data:", orderData);
-  
+
         // Set giá trị vào form dựa trên cấu trúc data mới
         form.setFieldsValue({
           phone: orderData.request.customerInfo.phone,
           fullName: orderData.request.customerInfo.fullName,
-          address: orderData.request.customerInfo.address.split(',')[0],
+          address: orderData.request.customerInfo.address.split(",")[0],
           location: [
             orderData.request.location.province,
-            orderData.request.location.district, 
-            orderData.request.location.ward
+            orderData.request.location.district,
+            orderData.request.location.ward,
           ],
           serviceTitle: orderData.request.service.title,
-          requestType: orderData.request.requestType === "Dài hạn" ? "long" : "short",
-          workDate: orderData.request.requestType === "Dài hạn"
-            ? [dayjs(orderData.request.startTime), dayjs(orderData.request.endTime)]
-            : dayjs(orderData.request.startTime),
-          startTime: "",
-          endTime: "",
+          requestType:
+            orderData.request.requestType === "Dài hạn" ? "long" : "short",
+          workDate:
+            orderData.request.requestType === "Dài hạn"
+              ? [
+                  dayjs(orderData.request.startTime),
+                  dayjs(orderData.request.endTime),
+                ]
+              : dayjs(orderData.request.startTime),
+          startTime: dayjs(orderData.request.formatStartTime, "HH:mm"), // Convert to dayjs
+          endTime: dayjs(orderData.request.formatEndTime, "HH:mm"),
           coefficient_other: orderData.request.service.coefficient_other,
         });
-  
+
         // Set các state khác
-        setRequestType(orderData.request.requestType === "Dài hạn" ? "long" : "short");
+        setRequestType(
+          orderData.request.requestType === "Dài hạn" ? "long" : "short"
+        );
         setCoefficient(orderData.request.service.coefficient_other);
         setTotalCost(orderData.request.totalCost);
         setIsFormValid(true);
-  
       } catch (error) {
         console.error("Error fetching order detail:", error);
         setShowNotification({
@@ -80,7 +84,7 @@ const EditProcessingOrder = () => {
         });
       }
     };
-  
+
     if (orderId) {
       fetchOrderDetail();
     }
@@ -496,7 +500,7 @@ const EditProcessingOrder = () => {
 
     try {
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/edit/${id}`,
+        `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`,
         dataForBackend
       );
 
@@ -630,9 +634,15 @@ const EditProcessingOrder = () => {
               ]}
             >
               {requestType === "short" ? (
-                <DatePicker onChange={handleDateChange} disabledDate={disabledDate} />
+                <DatePicker
+                  onChange={handleDateChange}
+                  disabledDate={disabledDate}
+                />
               ) : (
-                <DatePicker.RangePicker onChange={handleDateChange} disabledDate={disabledDate} />
+                <DatePicker.RangePicker
+                  onChange={handleDateChange}
+                  disabledDate={disabledDate}
+                />
               )}
             </Form.Item>
           </Col>

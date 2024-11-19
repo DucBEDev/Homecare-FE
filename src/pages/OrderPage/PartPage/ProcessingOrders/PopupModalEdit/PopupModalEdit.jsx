@@ -131,14 +131,16 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   if (!editedRecord) return null;
 
   const handleSave = async (editedRecord) => {
+    console.log("ca", editedRecord);
+    console.log("cab", record);
     try {
       const payload = {
         startTime: editedRecord.gioBatDauMoi,
         endTime: editedRecord.gioKetThucMoi,
-        baseFactor: record.baseFactor,
-        coefficient_other: record.coefficient_other,
-        coefficient_OT: record.coefficient_OT,
-        coefficient_service: record.coefficient_service,
+        helper_baseFactor: editedRecord.helpers.find((helper) => (editedRecord.currentHelperId === helper.helperId))?.baseFactor,
+        coefficient_other: editedRecord.coefficient_other,
+        coefficient_OT: editedRecord.coefficientOtherList[0].value,
+        coefficient_service: editedRecord.coefficient_service,
       };
 
       console.log("payload edit:", payload);

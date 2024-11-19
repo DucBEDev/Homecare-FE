@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card, Descriptions, Table, Button, Typography, Modal } from "antd";
 import "../../StylePage/styleProcessingDetail.css";
 import axios from "axios";
@@ -15,6 +15,7 @@ const { Title } = Typography;
 const ShowProcessingDetail = () => {
   const location = useLocation();
   const { id } = location.state || {};
+  const navigate = useNavigate();
   const [orderData, setOrderData] = useState();
   const [timeSlots, setTimeSlots] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,33 +110,38 @@ const ShowProcessingDetail = () => {
       await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDone/${id}`
       );
-  
+
       // Nếu thành công
       setShowNotification({
         status: "success",
         message: "Thành công",
         description: "Hoàn thành đơn hàng thành công!",
       });
-  
+
       fetchData();
-  
+
       setTimeout(() => {
         setIsConfirmModalVisible(false);
         setShowNotification(null);
+      }, 700);
+
+      setTimeout(() => {
+        navigate("/order");
       }, 1500);
-  
     } catch (error) {
       console.error("Error:", error);
-      
+
       // Kiểm tra error response
-      const errorMessage = error.response?.data?.message || "Không thể hoàn thành đơn hàng. Vui lòng thử lại.";
-      
+      const errorMessage =
+        error.response?.data?.message ||
+        "Không thể hoàn thành đơn hàng. Vui lòng thử lại.";
+
       setShowNotification({
         status: "error",
         message: "Thất bại",
-        description: errorMessage
+        description: errorMessage,
       });
-  
+
       setTimeout(() => {
         setIsConfirmModalVisible(false);
         setShowNotification(null);
@@ -281,10 +287,11 @@ const ShowProcessingDetail = () => {
           );
           // Map helpers với key duy nhất
           const helpersList = data.helpers.map((helper) => ({
-            key: `helper_${helper.id}`, // Sửa helper._id thành helper.id
-            helperId: helper.id,
+            key: helper._id, // Sửa helper._id thành helper.id
+            helperId: helper._id,
             helperName: helper.fullName,
             haveHelper: true,
+            baseFactor: helper.baseFactor,
           }));
 
           const coefficientOtherList = data.coefficientOtherLists.map(

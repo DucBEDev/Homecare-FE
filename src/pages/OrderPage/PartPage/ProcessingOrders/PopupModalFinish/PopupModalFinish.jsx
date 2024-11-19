@@ -70,7 +70,7 @@ const PopupModalFinish = ({
         setTimeout(() => {
           onClose();
           setShowNotification(null);
-        }, 2000);
+        }, 200);
       }
     } catch (error) {
       console.error("Error:", error);
