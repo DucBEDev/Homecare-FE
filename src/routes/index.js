@@ -1,7 +1,7 @@
 import DashBoard from "../pages/DashBoard/DashBoard"
 import OrderPage from "../pages/OrderPage/PartPage/MainOrder/OrderPage"
 import AccountPage from "../pages/AccountPage/AccountPage"
-import CustomerPage from "../pages/CustomerPage/CustomerPage"
+import CustomerPage from "../pages/CustomerPage/PartPage/CustomerPage/CustomerPage"
 import FinancePage from "../pages/FinancePage/FinancePage"
 import LocationPage from "../pages/LocationPage/LocationPage"
 import MaidPage from "../pages/MaidPage/PartPage/MaidPage/MaidPage"
@@ -20,6 +20,8 @@ import EditProcessingDetail from "../pages/OrderPage/PartPage/ProcessingOrders/E
 import BodyMaidTable from "../pages/MaidPage/PartPage/BodyMaid/BodyMaidTable/BodyMaidTable"
 //import component con cua StaffPage
 import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable/BodyStaffTable"
+//import component con cua CustomerPage
+import BodyCustomerTable from "../pages/CustomerPage/PartPage/BodyCustomer/BodyCustomerTable/BodyCustomerTable"
 
 
 export const routes = [{
@@ -47,7 +49,7 @@ export const routes = [{
                 page: OrderHistory,
                 isShowHeader: true,
             },
-            
+
         ],
     },
     { //option procesing
@@ -78,7 +80,13 @@ export const routes = [{
     {
         path: '/customer',
         page: CustomerPage,
-        isShowHeader: true
+        isShowHeader: true,
+        children: [{
+            path: 'processing', // Route con cho đơn hàng cần xử lý
+            page: BodyCustomerTable,
+            isShowHeader: true,
+
+        }, ]
     },
     {
         path: '/finance',
@@ -99,8 +107,7 @@ export const routes = [{
             page: BodyMaidTable,
             isShowHeader: true,
 
-        },
-    ]
+        }, ]
     },
     {
         path: '/staff',
