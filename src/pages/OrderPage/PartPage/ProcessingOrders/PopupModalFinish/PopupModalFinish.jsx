@@ -155,29 +155,13 @@ const PopupModalFinish = ({
                 </div>
               </Col>
 
-              <Col span={16}>
-                <div className="question-section">
-                  <span>Có liên hệ được với khách hàng không?</span>
-                  <Radio.Group
-                    value={formData.contactCustomer}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contactCustomer: e.target.value,
-                      })
-                    }
-                  >
-                    <Radio value={true}>Có</Radio>
-                    <Radio value={false}>Không</Radio>
-                  </Radio.Group>
-                </div>
-              </Col>
               <Col span={8}>
                 <div className="info-item">
                   <span>Lương NGV:</span>
                   <span>{costHelper?.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
               </Col>
+              <Col span={16}/>
 
               <Col span={12}>
                 <div className="rating-section">

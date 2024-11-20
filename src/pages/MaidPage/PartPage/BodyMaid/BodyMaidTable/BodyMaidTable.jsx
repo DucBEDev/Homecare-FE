@@ -3,13 +3,17 @@ import { Pagination, Table } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
+import axios from "axios";
 
 const BodyMaidTable = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const searchValue = useSelector((state) => state.search.value);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
+
+  const [helpers, setHelpers] = useState([]);
 
   const columns = [
     {
@@ -114,63 +118,35 @@ const BodyMaidTable = () => {
     [navigate]
   );
 
-  // Mock data - sau này sẽ được thay thế bằng dữ liệu thật từ API
-  const data = [
-    {
-      id: 1,
-      phoneNumber: "0986735232",
-      idCard: "123456789",
-      fullName: "Nguyễn Văn A",
-      birthDate: "1990-03-15",
-      address: "Quận 2, TP.HCM",
-    },
-    {
-      id: 2,
-      phoneNumber: "0986351731",
-      idCard: "987654321",
-      fullName: "Trần Thị B",
-      birthDate: "1992-07-20",
-      address: "Quận Bình Thạnh, TP.HCM",
-    },
-    {
-      id: 3,
-      phoneNumber: "0986351732",
-      idCard: "987654322",
-      fullName: "Lê Văn C",
-      birthDate: "1993-08-21",
-      address: "Quận 1, TP.HCM",
-    },
-    {
-      id: 4,
-      phoneNumber: "0986351733",
-      idCard: "987654323",
-      fullName: "Phạm Thị D",
-      birthDate: "1994-09-22",
-      address: "Quận 3, TP.HCM",
-    },
-    {
-      id: 5,
-      phoneNumber: "0986351734",
-      idCard: "987654324",
-      fullName: "Hoàng Văn E",
-      birthDate: "1995-10-23",
-      address: "Quận 4, TP.HCM",
-    },
-    {
-      id: 6,
-      phoneNumber: "0986351735",
-      idCard: "987654325",
-      fullName: "Ngô Thị F",
-      birthDate: "1996-11-24",
-      address: "Quận 5, TP.HCM",
-    },
-    // Thêm dữ liệu mẫu khác...
-  ];
-
-  const [filteredData, setFilteredData] = useState(data);
+  const fetchHelpers = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}admin/helpers`
+      );
+      console.log(response)
+      const transformedData = response.data.helpers.map(helper => ({
+        key: helper._id,
+        phoneNumber: helper.phone,
+        idCard: helper.helper_id,
+        fullName: helper.fullName,
+        birthDate: new Date(helper.birthDate).toLocaleDateString('vi-VN'),
+        address: helper.address,
+      }));
+      setHelpers(transformedData);
+      setFilteredData(transformedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching helpers:", error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let filtered = data;
+    fetchHelpers();
+  }, []);
+
+  useEffect(() => {
+    let filtered = helpers;
 
     if (searchValue) {
       filtered = filtered.filter((item) =>
@@ -179,17 +155,13 @@ const BodyMaidTable = () => {
     }
 
     setFilteredData(filtered);
-  }, [searchValue]);
+  }, [searchValue, helpers]);
 
   const getCurrentPageData = useCallback(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
 
-  const handleDelete = (id) => {
-    // Xử lý xóa người giúp việc
-    console.log("Delete maid with id:", id);
-  };
 
   return (
     <div className="processing-maids-container">

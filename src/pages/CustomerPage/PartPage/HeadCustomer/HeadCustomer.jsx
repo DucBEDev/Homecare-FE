@@ -26,7 +26,7 @@ const HeadCustomer = () => {
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
-      <h1 span={24}>Quản lý người giúp việc</h1>
+      <h1 span={24}>Quản lý khách hàng</h1>
       <Row style={{ marginTop: "-30px", padding: "20px" }}>
         <Col span={24}>
           <div
@@ -43,7 +43,7 @@ const HeadCustomer = () => {
           xs={24}
           style={{ marginRight: "20px" }}
         >
-          <DropdownSortComponent defaultLabel="Số ĐT người giúp việc"/>
+          <DropdownSortComponent defaultLabel="Số ĐT khách hàng"/>
         </Col>
         <Col xl={6} lg={8} md={12} sm={24} xs={24}>
           <InputComponent

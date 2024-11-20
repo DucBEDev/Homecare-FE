@@ -12,7 +12,10 @@ const PopupModalDetail = ({
   orderData,
 }) => {
   const [costHelper, setCostHelper] = useState(0);
+  const [customerRateHistory, setCustomerRateHistory] = useState([]);
   console.log("re2", record)
+  console.log("re455", customerRateHistory)
+
 
   useEffect(() => {
     const fetchHelperCost = async () => {
@@ -27,8 +30,21 @@ const PopupModalDetail = ({
       }
     };
 
+    const fetchCustomerRateHistory = async (requestDetailId) => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/detail/history/${record.scheduleId}`
+        );
+        setCustomerRateHistory(response.data.comment);
+      } catch (error) {
+        console.error("Error fetching customer history:", error);
+        return null;
+      }
+    };
+
     if (record?.scheduleId) {
       fetchHelperCost();
+      fetchCustomerRateHistory();
     }
   }, [record?.scheduleId]);
 
@@ -109,40 +125,24 @@ const PopupModalDetail = ({
                 </div>
               </Col>
 
-              <Col span={16}>
-                <div className="question-section">
-                  <span>Có liên hệ được với khách hàng không?</span>
-                  <Radio.Group
-                    value={formData.contactCustomer}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contactCustomer: e.target.value,
-                      })
-                    }
-                  >
-                    <Radio value={true}>Có</Radio>
-                    <Radio value={false}>Không</Radio>
-                  </Radio.Group>
-                </div>
-              </Col>
               <Col span={8}>
                 <div className="info-item">
                   <span>Lương NGV:</span>
                   <span>{costHelper?.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
               </Col>
+              <Col span={16}/>
 
               <Col span={12}>
                 <div className="rating-section">
                   <span>Mức Đánh Giá:</span>
-                  <span >3 sao</span>
+                  <span>{customerRateHistory.review}</span>
                 </div>
               </Col>
               <Col span={12}>
                 <div className="rating-section">
                   <Rate
-                    value={formData.rating}
+                    value={customerRateHistory.review}
                     disabled
                   />
                 </div>
@@ -151,14 +151,14 @@ const PopupModalDetail = ({
               <Col span={24}>
                 <div className="question-section">
                   <span>Quý khách có bị thất lạc tài sản không?</span>
-                  <span style={{color: '#000', marginLeft: '10px'}}>Có</span>
+                  <span style={{color: '#000', marginLeft: '10px'}}>{customerRateHistory.loseThings === true ? "Có" : "Không"}</span>
                 </div>
               </Col>
 
               <Col span={24}>
                 <div className="question-section">
                   <span>Quý khách có tài sản bị hư hỏng không?</span>
-                  <span style={{color: '#000', marginLeft: '10px'}}>Có</span>
+                  <span style={{color: '#000', marginLeft: '10px'}}>{customerRateHistory.breakThings === true ? "Có" : "Không"}</span>
                 </div>
               </Col>
             </Row>

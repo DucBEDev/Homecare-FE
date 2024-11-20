@@ -3,13 +3,17 @@ import { Pagination, Table } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
+import axios from "axios";
 
 const BodyStaffTable = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const searchValue = useSelector((state) => state.search.value);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
+
+  const [staffs, setStaffs] = useState([]);
 
   const columns = [
     {
@@ -60,7 +64,7 @@ const BodyStaffTable = () => {
             }}
             styleButtonText={{ color: "#fff" }}
             onClick={() => handleViewDetails(record.key)}
-          ></ButtonComponent>
+          />
           <ButtonComponent
             size="large"
             textButton="Lịch"
@@ -74,7 +78,7 @@ const BodyStaffTable = () => {
             }}
             styleButtonText={{ color: "#fff" }}
             onClick={() => handleEditDetails(record.key)}
-          ></ButtonComponent>
+          />
           <ButtonComponent
             size="large"
             textButton="Xóa"
@@ -87,11 +91,57 @@ const BodyStaffTable = () => {
             }}
             styleButtonText={{ color: "#fff" }}
             onClick={() => handleDeleteDetails(record.key)}
-          ></ButtonComponent>
+          />
         </span>
       ),
     },
   ];
+
+  const fetchStaffs = async () => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}admin/staffs`
+      );
+      console.log(response)
+      const transformedData = response.data.staffs.map(staff => ({
+        key: staff._id,
+        phoneNumber: staff.phone,
+        idCard: staff.staff_id,
+        fullName: staff.fullName,
+        birthDate: new Date(staff.birthDate).toLocaleDateString('vi-VN'),
+        address: staff.address || "Mốt sửa api mới có",
+      }));
+      setStaffs(transformedData);
+      setFilteredData(transformedData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching staffs:", error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStaffs();
+  }, []);
+
+  useEffect(() => {
+    let filtered = staffs;
+
+    if (searchValue) {
+      filtered = filtered.filter((item) =>
+        item.phoneNumber.includes(searchValue)
+      );
+    }
+
+    setFilteredData(filtered);
+  }, [searchValue, staffs]);
+
+  const getCurrentPageData = useCallback(() => {
+    if (!filteredData) return [];
+    
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredData.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, filteredData]);
 
   const handleViewDetails = useCallback(
     (recordId) => {
@@ -114,97 +164,20 @@ const BodyStaffTable = () => {
     [navigate]
   );
 
-  // Mock data - sau này sẽ được thay thế bằng dữ liệu thật từ API
-  const data = [
-    {
-      id: 1,
-      phoneNumber: "0986735232",
-      idCard: "123456789",
-      fullName: "Ngễn Vă",
-      birthDate: "1990-03-15",
-      address: "Quận 2, TP.HCM",
-    },
-    {
-      id: 2,
-      phoneNumber: "0986351731",
-      idCard: "987654321",
-      fullName: "TrầB",
-      birthDate: "1992-07-20",
-      address: "Quận Bình Thạnh, TP.HCM",
-    },
-    {
-      id: 3,
-      phoneNumber: "0986351732",
-      idCard: "987654322",
-      fullName: "Ln C",
-      birthDate: "1993-08-21",
-      address: "Quận 1, TP.HCM",
-    },
-    {
-      id: 4,
-      phoneNumber: "0986351733",
-      idCard: "987654323",
-      fullName: "PhạD",
-      birthDate: "1994-09-22",
-      address: "Quận 3, TP.HCM",
-    },
-    {
-      id: 5,
-      phoneNumber: "0986351734",
-      idCard: "987654324",
-      fullName: "Hoàn E",
-      birthDate: "1995-10-23",
-      address: "Quận 4, TP.HCM",
-    },
-    {
-      id: 6,
-      phoneNumber: "0986351735",
-      idCard: "987654325",
-      fullName: "Ngô T",
-      birthDate: "1996-11-24",
-      address: "Quận 5, TP.HCM",
-    },
-    // Thêm dữ liệu mẫu khác...
-  ];
-
-  const [filteredData, setFilteredData] = useState(data);
-
-  useEffect(() => {
-    let filtered = data;
-
-    if (searchValue) {
-      filtered = filtered.filter((item) =>
-        item.phoneNumber.includes(searchValue)
-      );
-    }
-
-    setFilteredData(filtered);
-  }, [searchValue]);
-
-  const getCurrentPageData = useCallback(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, filteredData]);
-
-  const handleDelete = (id) => {
-    // Xử lý xóa người giúp việc
-    console.log("Delete maid with id:", id);
-  };
-
   return (
     <div className="processing-maids-container">
       <Table
         columns={columns}
         dataSource={getCurrentPageData()}
         loading={loading}
-        rowKey="id"
+        rowKey="key"
         scroll={{ x: 1000 }}
         pagination={false}
       />
       <Pagination
         align="center"
         current={currentPage}
-        total={filteredData.length}
+        total={filteredData?.length || 0}
         pageSize={pageSize}
         onChange={setCurrentPage}
         hideOnSinglePage={true}

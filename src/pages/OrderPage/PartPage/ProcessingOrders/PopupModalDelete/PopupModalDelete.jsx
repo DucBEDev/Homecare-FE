@@ -20,15 +20,15 @@ const PopupModalDelete = ({
       if (record.isLongTerm) {
         // Chuẩn bị dữ liệu gửi đi
         const payload = {
-          requestid: record.mainOrderId,
-          scheduleids: record.scheduleIds,
+          requestId: record.mainOrderId,
+          scheduleIds: record.scheduleIds,
         };
 
         console.log("payload delete:", payload);
 
         response = await axios.delete(
           `${process.env.REACT_APP_API_URL}admin/requests/delete/${record.mainOrderId}`,
-          payload
+          {data: payload}
         );
       } else {
         // Chuẩn bị dữ liệu gửi đi
