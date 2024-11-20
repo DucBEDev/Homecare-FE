@@ -6,15 +6,12 @@ import ButtonComponent from "../../../../components/ButtonComponent/ButtonCompon
 import { useNavigate } from "react-router-dom";
 
 
-
-
-
 const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
-  const pageSize = 6;
+  const pageSize = 5;
   const navigate = useNavigate();
 
   const columns = [
@@ -35,10 +32,23 @@ const OrderHistory = () => {
         <span className="column-with-icon request-icon">{text}</span>
       ),
       filters: [
-        { text: "Yêu cầu mới", value: "Yêu cầu mới" },
-        { text: "Đang xử lý", value: "Đang xử lý" },
+        { text: "Ngắn hạn", value: "Ngắn hạn" },
+        { text: "Dài hạn", value: "Dài hạn" },
       ],
       onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+    },
+    {
+      title: "Địa chỉ",
+      dataIndex: "address",
+      key: "address",
+      render: (text) => (
+        <span className="column-with-icon request-icon">{text}</span>
+      ),
+      filters: [
+        { text: "Quận 1", value: "Quận 1" },
+        // ... keep other district options ...
+      ],
+      onFilter: (value, record) => record.address.indexOf(value) === 0,
     },
     {
       title: "Loại Dịch Vụ",
@@ -47,11 +57,6 @@ const OrderHistory = () => {
       render: (text) => (
         <span className="column-with-icon service-icon">{text}</span>
       ),
-      filters: [
-        { text: "Dịch vụ A", value: "Dịch vụ A" },
-        { text: "Dịch vụ B", value: "Dịch vụ B" },
-      ],
-      onFilter: (value, record) => record.serviceType.indexOf(value) === 0,
     },
     {
       title: "Ngày Đặt Yêu Cầu",
@@ -63,14 +68,12 @@ const OrderHistory = () => {
       sorter: (a, b) => new Date(a.requestDate) - new Date(b.requestDate),
     },
     {
-      title: "Trạng thái đơn hàng",
+      title: "Trạng thái",
       dataIndex: "status",
       key: "status",
       render: (text) => (
         <span className="column-with-icon cost-icon">{text}</span>
       ),
-      sorter: (a, b) =>
-        a.cost.replace(/[^\d]/g, "") - b.cost.replace(/[^\d]/g, ""),
     },
     {
       title: "Lựa Chọn",
@@ -78,49 +81,19 @@ const OrderHistory = () => {
       render: (_, record) => (
         <span className="column-with-icon action-icon">
           <ButtonComponent
-              size="large"
-              textButton="Chi tiết"
-              styleButton={{
-                backgroundColor: "#3cbe5d",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-                marginRight: "2px",
-              }}
-              styleButtonText={{ color: "#fff" }} 
-              onClick={() => handleViewDetails(record.key)}
-            >
-            </ButtonComponent>
-            <ButtonComponent
-              size="large"
-              textButton="Sửa"
-              styleButton={{
-                backgroundColor: "#3ebedd",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-                marginRight: "2px",
-              }}
-              styleButtonText={{ color: "#fff" }} 
-              onClick={() => handleEditDetails(record.key)}
-            >
-            </ButtonComponent>
-            <ButtonComponent
-              size="large"
-              textButton="Xóa"
-              styleButton={{
-                backgroundColor: "#d22d2d",
-                width: "40px",
-                height: "40px",
-                border: "1px",
-                borderRadius: "12px",
-              }} 
-              styleButtonText={{ color: "#fff" }}
-              onClick={() => handleDeleteDetails(record.key)}  
-            >
-            </ButtonComponent>
+            size="large"
+            textButton="Chi tiết"
+            styleButton={{
+              backgroundColor: "#3cbe5d",
+              marginLeft: "6px",
+              width: "54px",
+              height: "40px",
+              border: "1px",
+              borderRadius: "12px",
+            }}
+            styleButtonText={{ color: "#fff" }}
+            onClick={() => handleViewDetails(record.key)}
+          />
         </span>
       ),
     },
@@ -128,17 +101,8 @@ const OrderHistory = () => {
   
   const handleViewDetails = useCallback((recordId) => {
     console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/history/showHistoryDetail`, { state: { id: recordId }  });
+    navigate(`/order/history/showDetail`, { state: { id: recordId }  });
   }, [navigate]);
-  
-  const handleEditDetails = useCallback((recordId) => {
-    console.log("Xem chi tiết đơn hàng có ID:", recordId);
-    navigate(`/order/history/editHistoryDetail`, { state: { id: recordId}  });
-  }, [navigate]);
-  
-  const handleDeleteDetails = (recordId) => {
-    console.log("Deleting details for order with ID:", recordId); 
-  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -146,7 +110,8 @@ const OrderHistory = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}admin/requests?status=done`
         );
-        const transformedData = response.data.updatedRecords.map(
+        console.log("re", response);
+        const transformedData = response.data.requestList.map(
           (record, index) => {
             let requestName = record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
             let statusNow = ""
@@ -164,8 +129,9 @@ const OrderHistory = () => {
             return {
               key: record._id,
               phoneNumber: record.customerInfo.phone,
+              address: record.customerInfo.address,
               requestType: requestName,
-              serviceType: record.serviceTitle,
+              serviceType: record.service.title,
               requestDate: new Date(record.createdAt).toLocaleDateString(),
               status: statusNow,
             };
@@ -197,15 +163,21 @@ const OrderHistory = () => {
         pagination={false}
       />
       <Pagination
+        align="center"
         current={currentPage}
         total={filteredData.length}
         pageSize={pageSize}
         onChange={setCurrentPage}
+        hideOnSinglePage={true}
+        showLessItems={true}
         style={{
-          marginTop: "16px",
+          fontSize: "26px",
+          transform: "translateX(-20px)",
+          marginTop: "10px",
           position: "fixed",
-          bottom: "10px",
-          right: "600px",
+          bottom: "20px",
+          left: "50%",
+          zIndex: 1000,
         }}
       />
     </div>

@@ -20,8 +20,8 @@ const PopupModalDelete = ({
       if (record.isLongTerm) {
         // Chuẩn bị dữ liệu gửi đi
         const payload = {
-          requestId: record.mainOrderId,
-          scheduleIds: record.scheduleIds,
+          requestid: record.mainOrderId,
+          scheduleids: record.scheduleIds,
         };
 
         console.log("payload delete:", payload);

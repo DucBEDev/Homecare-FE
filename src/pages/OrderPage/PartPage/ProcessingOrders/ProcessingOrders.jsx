@@ -218,7 +218,7 @@ const ProcessingOrders = () => {
               requestType: requestName,
               serviceType: record.service.title,
               requestDate: new Date(record.createdAt).toLocaleDateString(),
-              address: record.location.district,
+              address: record.customerInfo.address,
               cost: `${record.totalCost}đ`,
               status: statusNow,
               scheduleIds: record.scheduleIds,

@@ -536,7 +536,7 @@ const AddOrder = () => {
         setTimeout(() => {
           navigate("/order");
           setShowNotification(null);
-        }, 1500);
+        }, 600);
       })
       .catch((error) => {
         console.error("Error sending data to backend:", error);

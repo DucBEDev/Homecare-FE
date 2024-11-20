@@ -2,20 +2,17 @@ import React, { useEffect, useState } from "react";
 import { Modal, Button, Row, Col, Radio, Rate } from "antd";
 import "../../../StylePage/stylePopupModalDetail.css"; // Sử dụng cùng file CSS với Detail
 import axios from "axios";
-import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 import "../../../StylePage/stylePopupModalFinish.css";
 
-const PopupModalFinish = ({
+const PopupModalDetail = ({
   isVisible,
   onClose,
   onFinish,
   record,
   orderData,
 }) => {
-  console.log("orrderdatafinisn", orderData);
-  console.log("recrdatafinisn", record);
   const [costHelper, setCostHelper] = useState(0);
-  console.log("costhekper", costHelper);
+  console.log("re2", record)
 
   useEffect(() => {
     const fetchHelperCost = async () => {
@@ -35,52 +32,12 @@ const PopupModalFinish = ({
     }
   }, [record?.scheduleId]);
 
-  const [showNotification, setShowNotification] = useState(null);
   const [formData, setFormData] = useState({
     rating: 3,
     contactCustomer: true,
     lostAsset: false,
     damagedAsset: false,
   });
-
-  const handleFinish = async () => {
-    try {
-      const payload = {
-        review: formData.rating,
-        loseThings: formData.lostAsset,
-        breakThings: formData.damagedAsset,
-      };
-
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDetailDone/${record.scheduleId}`,
-        payload
-      );
-
-      if (response.status === 200) {
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Hoàn thành công việc thành công!",
-        });
-
-        if (onFinish) {
-          onFinish();
-        }
-
-        setTimeout(() => {
-          onClose();
-          setShowNotification(null);
-        }, 200);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: "Không thể hoàn thành. Vui lòng thử lại.",
-      });
-    }
-  };
 
   return (
     <>
@@ -89,9 +46,6 @@ const PopupModalFinish = ({
         visible={isVisible}
         onCancel={onClose}
         footer={[
-          <Button key="finish" type="primary" onClick={handleFinish}>
-            Hoàn thành
-          </Button>,
           <Button key="cancel" onClick={onClose}>
             Đóng
           </Button>,
@@ -182,28 +136,14 @@ const PopupModalFinish = ({
               <Col span={12}>
                 <div className="rating-section">
                   <span>Mức Đánh Giá:</span>
-                  {(() => {
-                    if (formData.rating === 1) {
-                      return <span>Rất kém</span>;
-                    } else if (formData.rating === 2) {
-                      return <span>Kém</span>;
-                    } else if (formData.rating === 3) {
-                      return <span>Trung bình</span>;
-                    } else if (formData.rating === 4) {
-                      return <span>Tốt</span>;
-                    } else {
-                      return <span>Rất tốt</span>;
-                    }
-                  })()}
+                  <span >3 sao</span>
                 </div>
               </Col>
               <Col span={12}>
                 <div className="rating-section">
                   <Rate
                     value={formData.rating}
-                    onChange={(value) =>
-                      setFormData({ ...formData, rating: value })
-                    }
+                    disabled
                   />
                 </div>
               </Col>
@@ -211,46 +151,22 @@ const PopupModalFinish = ({
               <Col span={24}>
                 <div className="question-section">
                   <span>Quý khách có bị thất lạc tài sản không?</span>
-                  <Radio.Group
-                    value={formData.lostAsset}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lostAsset: e.target.value })
-                    }
-                  >
-                    <Radio value={false}>Không</Radio>
-                    <Radio value={true}>Có</Radio>
-                  </Radio.Group>
+                  <span style={{color: '#000', marginLeft: '10px'}}>Có</span>
                 </div>
               </Col>
 
               <Col span={24}>
                 <div className="question-section">
                   <span>Quý khách có tài sản bị hư hỏng không?</span>
-                  <Radio.Group
-                    value={formData.damagedAsset}
-                    onChange={(e) =>
-                      setFormData({ ...formData, damagedAsset: e.target.value })
-                    }
-                  >
-                    <Radio value={false}>Không</Radio>
-                    <Radio value={true}>Có</Radio>
-                  </Radio.Group>
+                  <span style={{color: '#000', marginLeft: '10px'}}>Có</span>
                 </div>
               </Col>
             </Row>
           </div>
         </div>
       </Modal>
-
-      {showNotification && (
-        <NotificationComponent
-          status={showNotification.status}
-          message={showNotification.message}
-          description={showNotification.description}
-        />
-      )}
     </>
   );
 };
 
-export default PopupModalFinish;
+export default PopupModalDetail;
