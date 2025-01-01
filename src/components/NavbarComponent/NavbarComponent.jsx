@@ -45,9 +45,9 @@ const NavbarComponent = () => {
                 {
                     label:'Nhân viên', key:"/staff", icon: <TeamOutlined />
                 },
-                {
-                    label:'Địa điểm', key:"/location", icon: <EnvironmentOutlined />
-                },
+                // {
+                //     label:'Địa điểm', key:"/location", icon: <EnvironmentOutlined />
+                // },
                 {
                     label:'Khách hàng', key:"/customer", icon: <TeamOutlined />
                 },
