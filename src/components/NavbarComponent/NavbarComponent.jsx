@@ -9,8 +9,7 @@ import {
     UserOutlined,
     ProfileOutlined,
     AppstoreOutlined,
-    BankOutlined,
-    EnvironmentOutlined,
+    ToolOutlined,
     PoweroffOutlined
 } from '@ant-design/icons'
 
@@ -52,7 +51,7 @@ const NavbarComponent = () => {
                     label:'Khách hàng', key:"/customer", icon: <TeamOutlined />
                 },
                 {
-                    label:'Tài chính', key:"/finance", icon: <BankOutlined />
+                    label:'Hệ số chi phí', key:"/finance", icon: <ToolOutlined />
                 },
                 {
                     label:'Hệ thống', key:"/system", icon: <AppstoreOutlined />

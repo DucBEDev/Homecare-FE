@@ -1,0 +1,189 @@
+.system-page-wrapper {
+    padding: 20px;
+    margin-top: 70px;
+  }
+  
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .green-header {
+    background-color: #48b775;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    width: 100%;
+  }
+  
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .system-page-card {
+    margin: 20px 0;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .system-page-form .ant-form-item-label {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .system-page-form .ant-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .system-page-divider {
+    margin-top: -50px;
+    margin-bottom: 30px;
+    border-top: 1px solid #d9d9d9;
+  }
+  
+  .system-page-section-title {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #3498db;
+    margin-top: 20px;
+    margin-bottom: 15px;
+  }
+  #companyName, #companyEmail {
+    padding: 6px 12px !important;
+  }
+  
+  .system-page-input,
+  .system-page-select,
+  .system-page-input-number,
+  .system-page-datepicker .ant-picker-input > input {
+    border-radius: 8px !important;
+    width: 100%;
+    padding: 2px 12px;
+    border: 1px solid #ced4da;
+  }
+  
+  .system-page-form .ant-input:focus,
+  .system-page-form .ant-select:focus,
+  .system-page-form .ant-input-number:focus,
+  .system-page-form .ant-picker-focused .ant-picker-input > input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    outline: none;
+  }
+  
+  .system-page-datepicker .ant-picker-input > input {
+    border-radius: 8px !important;
+  }
+  
+  .system-page-form .ant-form-item-control-input-content {
+    display: flex;
+  }
+  
+  .system-page-form .ant-form-item-control-input-content .ant-picker {
+    flex: 1;
+  }
+  
+  .system-page-button {
+    background-color: #3498db;
+    border-color: #3498db;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+
+  .system-page-button span {
+    font-size: 12px;
+  }
+  
+  .system-page-button:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+  }
+  
+  .ant-select-selection-overflow {
+    width: 100% !important;
+  }
+  
+  .working-days-item {
+    border: none !important;
+  }
+
+  /* Custom CSS to remove border */
+.system-page-datepicker .ant-picker {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ant-picker-input input {
+  border: none !important;
+  padding: 4px 12px !important;
+}
+
+.system-page-select .ant-select-selector {
+  min-height: 40px; 
+  border: none !important; /* Xóa border */
+  width: 100% !important;
+}
+
+.ant-select-selection-overflow-item {
+  margin-left: 12px;
+  margin-bottom: 0px;
+}
+
+.ant-select-selection-item-content {
+  text-align: center !important;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.ant-select-selection-item-remove svg{
+  font-size: 6px  !important;
+}
+
+@media (max-width: 1200px) {
+  .ant-select-selection-overflow-item {
+    margin-left: 12px;
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 968px) {
+  .ant-select-selection-overflow-item {
+    margin-left: 12px;
+    margin-bottom: 2px;
+  }
+}
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .system-page-section-title {
+      font-size: 1.2rem;
+    }
+  
+    .system-page-input,
+    .system-page-select,
+    .system-page-input-number,
+    .system-page-datepicker .ant-picker-input > input {
+      padding: 6px 10px;
+    }
+  
+    .system-page-button {
+      padding: 6px 15px;
+    }
+  
+    .green-header {
+      padding: 8px 15px;
+    }
+  
+    .header-title {
+      font-size: 18px;
+    }
+    .ant-select-selection-overflow-item {
+      margin-left: 12px;
+      margin-bottom: 4px;
+    }
+  }
