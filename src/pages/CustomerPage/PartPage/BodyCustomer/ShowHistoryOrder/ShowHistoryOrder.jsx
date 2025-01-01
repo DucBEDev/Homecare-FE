@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import { Button, Card, Descriptions, Table, Typography } from "antd";
 import "../../StylePage/styleProcessingDetail.css";
 import PopupModalDetail from "../HistoryOrders/PopupModalDetail/PopupModalDetail";
@@ -7,7 +7,7 @@ import axios from "axios";
 
 const { Title } = Typography;
 
-const ShowHistoryDetail = () => {
+const ShowHistoryOrder = () => {
   const location = useLocation();
   const { id } = location.state || {};
   const [orderData, setOrderData] = useState();
@@ -94,7 +94,7 @@ const ShowHistoryDetail = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
-      console.log("cafas", id)
+      
       console.log("re1", response);
       const { data } = response;
       const helperData = data.helpers.map((helper) => ({
@@ -283,4 +283,4 @@ const ShowHistoryDetail = () => {
   );
 };
 
-export default ShowHistoryDetail;
+export default ShowHistoryOrder;

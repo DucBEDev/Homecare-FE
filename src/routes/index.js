@@ -22,6 +22,7 @@ import BodyMaidTable from "../pages/MaidPage/PartPage/BodyMaid/BodyMaidTable/Bod
 import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable/BodyStaffTable"
 //import component con cua CustomerPage
 import BodyCustomerTable from "../pages/CustomerPage/PartPage/BodyCustomer/BodyCustomerTable/BodyCustomerTable"
+import ListOrderCustomer from "../pages/CustomerPage/PartPage/BodyCustomer/ListOrderCustomer/ListOrderCustomer"
 
 
 export const routes = [{
@@ -87,6 +88,11 @@ export const routes = [{
             isShowHeader: true,
 
         }, ]
+    },
+    { //option customer history
+        path: '/customer/history',
+        page: ListOrderCustomer,
+        isShowHeader: true,
     },
     {
         path: '/finance',

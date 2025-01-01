@@ -53,7 +53,7 @@ const BodyMaidTable = () => {
         <span className="column-with-icon action-icon">
           <ButtonComponent
             size="large"
-            textButton="Chi tiết"
+            textButton="Sửa"
             styleButton={{
               backgroundColor: "#3cbe5d",
               width: "40px",

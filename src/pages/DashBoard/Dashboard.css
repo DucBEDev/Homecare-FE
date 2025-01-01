@@ -1,0 +1,98 @@
+/* Dashboard.css */
+.dashboard-container {
+  padding: 20px;
+  margin-top: 40px;
+}
+
+.dashboard-title {
+    margin-top: 28px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.dashboard-card {
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ant-card-body div {
+    font-size: 12px;
+}
+
+.dashboard-card .ant-card-head {
+  background-color: #f0f2f5;
+  border-bottom: none;
+  padding: 16px 24px;
+}
+
+.dashboard-card .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.dashboard-card .ant-card-body {
+  padding: 20px;
+}
+
+/* Table styling */
+.dashboard-card .ant-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dashboard-card .ant-table-thead > tr > th {
+  background-color: #e9e9e9;
+  color: #333;
+  font-weight: 600;
+}
+
+.dashboard-card .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Custom column styling */
+.column-code {
+  width: 10%; /* Adjust width as needed */
+}
+
+.column-name {
+  width: 25%; /* Adjust width as needed */
+}
+
+.column-target {
+  width: 15%; /* Adjust width as needed */
+}
+
+.column-actual {
+  width: 15%; /* Adjust width as needed */
+}
+
+.column-graph {
+  width: 25%; /* Adjust width as needed */
+}
+
+.column-performance {
+  width: 15%; /* Adjust width as needed */
+  text-align: right; /* Align text to the right */
+  padding-right: 20px; /* Add right padding */
+}
+
+/* Responsive chart container */
+.recharts-responsive-container {
+  margin-bottom: 20px;
+}
+
+/* Pie chart tooltip */
+.recharts-tooltip-wrapper {
+  background-color: #8884d8;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  padding: 10px;
+}
+
+.card-title {
+  font-weight: bold;
+  color: #28a745;
+}

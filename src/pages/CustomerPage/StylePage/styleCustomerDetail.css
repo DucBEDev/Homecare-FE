@@ -1,0 +1,67 @@
+.title-processing-detail {
+    margin-top: 64px;
+    font-weight: 600 !important;
+    font-style: oblique;
+}
+
+.cancel-button.ant-btn {
+    background: #ff4d4f !important;
+    color: #fff !important;
+}
+
+.cancel-button.ant-btn:hover {
+    color: #ff4d4f !important;
+    border-color: #ff4d4f !important;
+}
+
+.done-button.ant-btn-primary {
+    background: #4096FF !important;
+}
+
+.done-button.ant-btn-primary:hover {
+    background: #fff !important;
+    color: #4096FF !important;
+    border: 1px solid #4096FF !important;
+}
+
+.ant-card-head {
+    min-height: 40px !important;
+}
+
+.ant-descriptions-item-label span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ant-descriptions-item-content span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ant-card-head-title {
+    font-size: 14px;
+    color: #41A767;
+    font-weight: 600;
+}
+
+.ant-card-body {
+    padding: 0 !important;
+}
+
+.info-section p {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #000;
+    margin: 2px 0 28px 0 !important;
+    text-align: center;
+}
+
+/* banghai */
+
+.ant-table-thead .ant-table-cell {
+    font-size: 14px !important;
+}
+
+.ant-table-tbody .ant-table-cell {
+    font-size: 14px !important;
+}

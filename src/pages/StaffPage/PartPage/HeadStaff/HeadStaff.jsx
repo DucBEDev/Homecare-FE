@@ -6,6 +6,7 @@ import { setSearchValue } from "../../../../redux/slides/searchSlice";
 import "../../StylePage/HeadStaff.css";
 import { useNavigate } from "react-router-dom";
 import DropdownSortComponent from "../../../../components/DropdownComponent/DropdownSortComponent";
+import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
 
 const HeadStaff = () => {
   const dispatch = useDispatch();
@@ -21,7 +22,7 @@ const HeadStaff = () => {
 
   useEffect(() => {
     navigate("processing");
-  }, [])
+  }, []);
 
   return (
     <>
@@ -43,9 +44,9 @@ const HeadStaff = () => {
           xs={24}
           style={{ marginRight: "20px" }}
         >
-          <DropdownSortComponent defaultLabel="Số ĐT nhân viên"/>
+          <DropdownSortComponent defaultLabel="Số ĐT nhân viên" />
         </Col>
-        <Col xl={6} lg={8} md={12} sm={24} xs={24}>
+        <Col xl={6} lg={8} md={12} sm={24} xs={24} style={{marginLeft:"-50px"}}>
           <InputComponent
             size="large"
             placeholder="Tìm kiếm"
@@ -53,6 +54,19 @@ const HeadStaff = () => {
             onChange={handleInputChange}
             value={searchValue}
           />
+        </Col>
+        <Col>
+          <ButtonComponent
+            size="large"
+            textButton="Thêm nhân viên"
+            onClick={() => navigate("/order/add")}
+            styleButton={{
+              backgroundColor: "#3cbe5d",
+              width: "120px",
+              marginLeft: "70px",
+            }} // Prop styleButton
+            styleButtonText={{ color: "#fff" }}
+          ></ButtonComponent>
         </Col>
       </Row>
     </>

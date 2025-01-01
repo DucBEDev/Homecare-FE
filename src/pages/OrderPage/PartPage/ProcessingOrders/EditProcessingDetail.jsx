@@ -349,6 +349,9 @@ const EditProcessingOrder = () => {
   };
 
   const disabledHours = () => {
+    if (!dataFetch.timeList) {
+      return []; // Return an empty array if timeList is not available
+    }
     const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];

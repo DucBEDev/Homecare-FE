@@ -6,6 +6,7 @@ import { setSearchValue } from "../../../../redux/slides/searchSlice";
 import "../../StylePage/HeadMaid.css";
 import { useNavigate } from "react-router-dom";
 import DropdownSortComponent from "../../../../components/DropdownComponent/DropdownSortComponent";
+import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
 
 const HeadMaid = () => {
   const dispatch = useDispatch();
@@ -45,7 +46,7 @@ const HeadMaid = () => {
         >
           <DropdownSortComponent defaultLabel="Số ĐT người giúp việc"/>
         </Col>
-        <Col xl={6} lg={8} md={12} sm={24} xs={24}>
+        <Col xl={6} lg={8} md={12} sm={24} xs={24} style={{marginLeft:"-50px"}}>
           <InputComponent
             size="large"
             placeholder="Tìm kiếm"
@@ -53,6 +54,19 @@ const HeadMaid = () => {
             onChange={handleInputChange}
             value={searchValue}
           />
+        </Col>
+        <Col>
+          <ButtonComponent
+            size="large"
+            textButton="Thêm NGV"
+            onClick={() => navigate("/order/add")}
+            styleButton={{
+              backgroundColor: "#3cbe5d",
+              width: "120px",
+              marginLeft: "70px",
+            }} // Prop styleButton
+            styleButtonText={{ color: "#fff" }}
+          ></ButtonComponent>
         </Col>
       </Row>
     </>

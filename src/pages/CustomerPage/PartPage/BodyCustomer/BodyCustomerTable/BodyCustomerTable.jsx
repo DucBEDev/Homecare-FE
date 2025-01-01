@@ -51,28 +51,14 @@ const BodyCustomerTable = () => {
         <span className="column-with-icon action-icon">
           <ButtonComponent
             size="large"
-            textButton="Chi tiết"
-            styleButton={{
-              backgroundColor: "#3cbe5d",
-              width: "40px",
-              height: "40px",
-              border: "1px",
-              borderRadius: "12px",
-              marginRight: "2px",
-            }}
-            styleButtonText={{ color: "#fff" }}
-            onClick={() => handleViewDetails(record.key)}
-          />
-          <ButtonComponent
-            size="large"
             textButton="Lịch sử"
             styleButton={{
               backgroundColor: "#3ebedd",
-              width: "40px",
+              width: "48px",
               height: "40px",
               border: "1px",
               borderRadius: "12px",
-              marginRight: "2px",
+              marginLeft: "8px",
             }}
             styleButtonText={{ color: "#fff" }}
             onClick={() => handleViewHistory(record.phoneNumber)}
@@ -126,13 +112,6 @@ const BodyCustomerTable = () => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
-
-  const handleViewDetails = useCallback(
-    (recordId) => {
-      navigate(`/customer/detail`, { state: { id: recordId } });
-    },
-    [navigate]
-  );
 
   const handleViewHistory = useCallback(
     (phone) => {

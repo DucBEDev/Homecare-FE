@@ -361,7 +361,7 @@ const ShowProcessingDetail = () => {
           <Card
             style={{
               position: "relative",
-              height: "calc(100vh - 460px)", // Chiều cao động dựa theo viewport
+              height: "calc(32vh)", // Chiều cao động dựa theo viewport
               display: "flex",
               flexDirection: "column",
             }}
