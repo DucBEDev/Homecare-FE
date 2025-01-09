@@ -49,7 +49,7 @@ const HeadOrderPage = () => {
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
-      <WrapperHeaderText span={24}>Quản lý đơn hàng</WrapperHeaderText>
+      <WrapperHeaderText span={24} style={{ backgroundColor: "#48b775"}}>Quản lý đơn hàng</WrapperHeaderText>
 
       <WrapperActionRow
         style={{

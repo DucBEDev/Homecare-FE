@@ -1,0 +1,113 @@
+.financial-page-wrapper {
+    padding: 20px;
+    margin-top: 70px;
+  }
+  
+  .header-container {
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  .green-header {
+    background-color: #48c775 !important;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    width: 100%;
+    text-align: left !important;
+  }
+  
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  
+  .financial-page-card {
+    margin: -10px 0 0 0 !important;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .financial-page-form .ant-form-item-label {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .financial-page-form .ant-form-item {
+    margin-bottom: 20px;
+  }
+  
+  .financial-page-form .ant-divider {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    border-top: 1px solid #d9d9d9;
+  }
+  
+  .financial-page-section-title {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #3498db; /* Giữ màu xanh như system page */
+    margin-top: 20px;
+    margin-bottom: 15px;
+  }
+  /* Loại bỏ margin thừa, dùng Divider để ngăn cách */
+  .financial-page-section-title {
+    margin-top: 0;
+  }
+  
+  .financial-page-input-number,
+  .financial-page-input-number .ant-input-number-input {
+    border-radius: 8px !important;
+    width: 100%;
+    padding: 2px 12px;
+    border: 1px solid #ced4da;
+  }
+  
+  .financial-page-form .ant-input-number:focus,
+  .financial-page-form .ant-input-number-focused {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    outline: none;
+  }
+  
+  .financial-page-button {
+    background-color: #3498db;
+    border-color: #3498db;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+  
+  .financial-page-button span {
+    font-size: 12px;
+  }
+  
+  .financial-page-button:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .financial-page-section-title {
+      font-size: 1.2rem;
+    }
+  
+    .financial-page-input-number,
+    .financial-page-input-number .ant-input-number-input {
+      padding: 6px 10px;
+    }
+  
+    .financial-page-button {
+      padding: 6px 15px;
+    }
+  
+    .green-header {
+      padding: 8px 15px;
+    }
+  
+    .header-title {
+      font-size: 18px;
+    }
+  }

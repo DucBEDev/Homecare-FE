@@ -5,6 +5,7 @@
 }
 
 .dashboard-title {
+  background-color: #48c775 !important;
     margin-top: 28px;
   font-size: 16px;
   font-weight: 600;
@@ -94,5 +95,5 @@
 
 .card-title {
   font-weight: bold;
-  color: #28a745;
+  color: #48c775 !important;
 }
