@@ -3,10 +3,10 @@ import OrderPage from "../pages/OrderPage/PartPage/MainOrder/OrderPage";
 import AccountPage from "../pages/AccountPage/AccountPage";
 import CustomerPage from "../pages/CustomerPage/PartPage/CustomerPage/CustomerPage";
 import FinancePage from "../pages/FinancePage/FinancePage";
-import LocationPage from "../pages/LocationPage/LocationPage";
 import MaidPage from "../pages/MaidPage/PartPage/MaidPage/MaidPage";
 import StaffPage from "../pages/StaffPage/PartPage/StaffPage/StaffPage";
 import SystemPage from "../pages/SystemPage/SystemPage";
+import PermissionPage from "../pages/PermissionPage/PermissionPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 
 // Import các component con của OrderPage
@@ -106,8 +106,8 @@ export const routes = [
     isShowHeader: true,
   },
   {
-    path: "/location",
-    page: LocationPage,
+    path: "/permission",
+    page: PermissionPage,
     isShowHeader: true,
   },
   {

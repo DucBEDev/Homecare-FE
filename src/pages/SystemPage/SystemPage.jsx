@@ -18,6 +18,7 @@ import {
 } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 import "./SystemPage.css";
 import NotificationComponent from "../../components/NotificationComponent/NotificationComponent";
 
@@ -29,6 +30,7 @@ const SystemPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSystemSettings = async () => {
@@ -39,17 +41,20 @@ const SystemPage = () => {
         );
         const settings = response.data.generalSetting;
         console.log("settings", settings);
-  
+
         // Fix lỗi map of undefined ở đây
         form.setFieldsValue({
           companyName: "Công ty TNHH HomeKare",
           companyEmail: "ptitABC@gmail.com",
           companyAddress: "97 Đa Kao Quận 1 TpHCM",
           companyNumberPhone: "0912345678",
-          openHour: dayjs(settings.openHour/60 + ":00", "HH:mm"),
-          closeHour: dayjs(settings.closeHour/60 + ":00", "HH:mm"),
-          officeStartTime: dayjs(settings.officeStartTime/60 + ":00", "HH:mm"),
-          officeEndTime: dayjs(settings.officeEndTime/60 + ":00", "HH:mm"),
+          openHour: dayjs(settings.openHour / 60 + ":00", "HH:mm"),
+          closeHour: dayjs(settings.closeHour / 60 + ":00", "HH:mm"),
+          officeStartTime: dayjs(
+            settings.officeStartTime / 60 + ":00",
+            "HH:mm"
+          ),
+          officeEndTime: dayjs(settings.officeEndTime / 60 + ":00", "HH:mm"),
           workingDays: settings.workingDays,
           holidays: settings.holidays?.map((date) => dayjs(date)) ?? [], // Sửa ở đây
           basicSalary: settings.baseSalary,
@@ -61,7 +66,7 @@ const SystemPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchSystemSettings();
   }, []);
 
@@ -82,7 +87,6 @@ const SystemPage = () => {
 
       console.log("c", dataToSend);
 
-
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/generalSettings/update`,
         dataToSend,
@@ -92,7 +96,6 @@ const SystemPage = () => {
           },
         }
       );
-
 
       if (response.status === 200) {
         // Hiển thị thông báo thành công
@@ -298,13 +301,27 @@ const SystemPage = () => {
               </Col>
             </Row>
 
-            <Form.Item style={{ marginTop: "20px" }}>
+            <Form.Item style={{ marginTop: "10px" }}>
               <Button
                 type="primary"
                 htmlType="submit"
                 className="system-page-button"
+                style={{ height: "40px" }}
               >
                 Lưu thay đổi
+              </Button>
+              <Button
+                type="primary"
+                className="system-page-button"
+                style={{
+                  marginLeft: "auto",
+                  marginRight: "10px",
+                  height: "40px",
+                  backgroundColor: "#3CBE5D",
+                  border: "none",
+                }}
+              >
+                Tạo tài khoản
               </Button>
             </Form.Item>
           </Form>
