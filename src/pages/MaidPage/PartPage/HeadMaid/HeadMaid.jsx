@@ -22,7 +22,7 @@ const HeadMaid = () => {
 
   useEffect(() => {
     navigate("processing");
-  }, [])
+  }, []);
 
   return (
     <>
@@ -44,9 +44,16 @@ const HeadMaid = () => {
           xs={24}
           style={{ marginRight: "20px" }}
         >
-          <DropdownSortComponent defaultLabel="Số ĐT người giúp việc"/>
+          <DropdownSortComponent defaultLabel="Số ĐT người giúp việc" />
         </Col>
-        <Col xl={6} lg={8} md={12} sm={24} xs={24} style={{marginLeft:"-50px"}}>
+        <Col
+          xl={6}
+          lg={8}
+          md={12}
+          sm={24}
+          xs={24}
+          style={{ marginLeft: "-50px" }}
+        >
           <InputComponent
             size="large"
             placeholder="Tìm kiếm"
@@ -59,7 +66,7 @@ const HeadMaid = () => {
           <ButtonComponent
             size="large"
             textButton="Thêm NGV"
-            onClick={() => navigate("/order/add")}
+            onClick={() => navigate("/maid/add")}
             styleButton={{
               backgroundColor: "#3cbe5d",
               width: "120px",
