@@ -252,9 +252,9 @@ const SystemPage = () => {
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={12}>
+              {/* <Col span={12}>
                 <Form.Item name="workingDays" label="Ngày làm việc trong tuần">
-                  {/* **Cần xử lý component chọn multiple days** */}
+                
                   <Select
                     mode="multiple"
                     placeholder="Chọn ngày"
@@ -269,7 +269,7 @@ const SystemPage = () => {
                     <Option value="Sunday">Chủ Nhật</Option>
                   </Select>
                 </Form.Item>
-              </Col>
+              </Col> */}
               <Col span={12}>
                 <Form.Item
                   name="holidays"
@@ -284,20 +284,26 @@ const SystemPage = () => {
                   />
                 </Form.Item>
               </Col>
-            </Row>
-
-            <div className="system-page-section-title">Cài đặt khác</div>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="basicSalary"
-                  label="Lương cơ bản (VND)"
-                  rules={[
-                    { required: true, message: "Vui lòng nhập lương cơ bản" },
-                  ]}
-                >
-                  <InputNumber min={0} className="system-page-input-number" />
-                </Form.Item>
+              <Col span={12}>
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Form.Item
+                      name="basicSalary"
+                      label="Lương cơ bản (VND)"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Vui lòng nhập lương cơ bản",
+                        },
+                      ]}
+                    >
+                      <InputNumber
+                        min={0}
+                        className="system-page-input-number"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
               </Col>
             </Row>
 
