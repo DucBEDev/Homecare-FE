@@ -42,6 +42,12 @@ const SystemPage = () => {
         const settings = response.data.generalSetting;
         console.log("settings", settings);
 
+        const holidays = [];
+        if (settings.holidayStartDate && settings.holidayEndDate) {
+          holidays.push(dayjs(settings.holidayStartDate));
+          holidays.push(dayjs(settings.holidayEndDate));
+        }
+
         // Fix lỗi map of undefined ở đây
         form.setFieldsValue({
           companyName: "Công ty TNHH HomeKare",
@@ -56,7 +62,7 @@ const SystemPage = () => {
           ),
           officeEndTime: dayjs(settings.officeEndTime / 60 + ":00", "HH:mm"),
           workingDays: settings.workingDays,
-          holidays: settings.holidays?.map((date) => dayjs(date)) ?? [], // Sửa ở đây
+          holidays: holidays,
           basicSalary: settings.baseSalary,
         });
       } catch (error) {
@@ -73,6 +79,17 @@ const SystemPage = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
+      let holidayStartDate = null;
+      let holidayEndDate = null;
+      if (values.holidays && values.holidays.length === 2) {
+        // Kiểm tra đủ 2 phần tử
+        holidayStartDate = values.holidays[0].format("YYYY-MM-DD"); // Sử dụng trực tiếp values.holidays[0]
+        holidayEndDate = values.holidays[1].format("YYYY-MM-DD"); // Sử dụng trực tiếp values.holidays[1]
+      } else {
+        console.error("RangePicker trả về không đủ 2 giá trị");
+        // Xử lý lỗi, có thể gán giá trị mặc định hoặc hiển thị thông báo lỗi
+      }
+
       const dataToSend = {
         baseSalary: values.basicSalary,
         openHour: values.openHour.format("HH:mm"),
@@ -83,6 +100,8 @@ const SystemPage = () => {
         companyEmail: values.companyEmail,
         companyAddress: values.companyAddress,
         companyPhone: values.companyNumberPhone,
+        holidayStartDate: holidayStartDate,
+        holidayEndDate: holidayEndDate,
       };
 
       console.log("c", dataToSend);
