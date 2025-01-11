@@ -147,16 +147,14 @@ const PermissionPage = () => {
           permissions: updatedPermissions, // mảng permissions đã cập nhật
         });
       }
-      const payload = {
-        permissions: updatedPermissionsData,
-      };
+      // const payload = permissions: updatedPermissionsData;
 
-      console.log("aass", payload);
+      // console.log("aass", payload);
 
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/roles/permissions`,
         {
-          payload,
+          permissions: updatedPermissionsData,
         },
         {
           headers: {
