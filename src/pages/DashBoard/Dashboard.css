@@ -1,44 +1,46 @@
 /* Dashboard.css */
 .dashboard-container {
-  padding: 20px;
+  padding: 10px; /* Even smaller padding for phones */
   margin-top: 40px;
 }
 
 .dashboard-title {
   background-color: #48c775 !important;
   margin-top: 32px;
-  font-size: 16px;
+  font-size: 14px; /* Smaller font size for phones */
   font-weight: 600;
   height: 12px;
   border-radius: 12px;
+  padding: 10px;
 }
 
 .dashboard-card {
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
 }
 
 .ant-card-body div {
-  font-size: 12px;
+  font-size: 11px; /* Smaller font size for phones */
 }
 
 .dashboard-card .ant-card-head {
   background-color: #f0f2f5;
   border-bottom: none;
-  padding: 16px 24px;
+  padding: 10px 12px; /* Smaller padding */
 }
 
 .dashboard-card .ant-card-head-title {
-  font-size: 18px;
+  font-size: 14px; /* Smaller font size for phones */
   font-weight: 600;
   color: #333;
 }
 
 .dashboard-card .ant-card-body {
-  padding: 20px;
+  padding: 12px; /* Smaller padding */
 }
 
-/* Table styling */
+/* Table Styling */
 .dashboard-card .ant-table {
   border-radius: 8px;
   overflow: hidden;
@@ -48,37 +50,97 @@
   background-color: #e9e9e9;
   color: #333;
   font-weight: 600;
+  font-size: 12px; /* Smaller font size for phones */
 }
 
 .dashboard-card .ant-table-tbody > tr > td {
   border-bottom: 1px solid #f0f0f0;
+  font-size: 12px; /* Smaller font size for phones */
 }
 
-/* Custom column styling */
-.column-code {
-  width: 10%; /* Adjust width as needed */
+/* Responsive Table */
+@media (max-width: 575px) {
+  /* Extra small screens (phones) */
+  .dashboard-card .ant-table-content {
+    overflow-x: auto;
+  }
+
+  /* Stack table cells vertically */
+  .column-code,
+  .column-name,
+  .column-target,
+  .column-actual,
+  .column-graph,
+  .column-performance {
+    width: 100%;
+    display: block;
+    text-align: left;
+    padding-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .column-graph .recharts-responsive-container {
+    width: 100% !important;
+    height: 200px !important; /* Smaller chart height */
+  }
 }
 
-.column-name {
-  width: 25%; /* Adjust width as needed */
+@media (min-width: 576px) and (max-width: 767px) {
+  /* Small screens (tablets) */
+  .dashboard-card .ant-table-content {
+    overflow-x: auto;
+  }
 }
 
-.column-target {
-  width: 15%; /* Adjust width as needed */
+/* Larger screen adjustments */
+@media (min-width: 768px) {
+  /* Medium screens and above */
+  .column-code {
+    width: 10%;
+  }
+
+  .column-name {
+    width: 25%;
+  }
+
+  .column-target {
+    width: 15%;
+  }
+
+  .column-actual {
+    width: 15%;
+  }
+
+  .column-graph {
+    width: 25%;
+  }
+
+  .column-performance {
+    width: 15%;
+    text-align: right;
+    padding-right: 20px;
+  }
 }
 
-.column-actual {
-  width: 15%; /* Adjust width as needed */
-}
+/* Font Size Adjustments */
+@media (min-width: 992px) {
+  /* Large screens */
+  .dashboard-title {
+    font-size: 20px;
+  }
 
-.column-graph {
-  width: 25%; /* Adjust width as needed */
-}
+  .dashboard-card .ant-card-head-title {
+    font-size: 18px;
+  }
 
-.column-performance {
-  width: 15%; /* Adjust width as needed */
-  text-align: right; /* Align text to the right */
-  padding-right: 20px; /* Add right padding */
+  .ant-card-body div {
+    font-size: 14px;
+  }
+
+  .dashboard-card .ant-table-thead > tr > th,
+  .dashboard-card .ant-table-tbody > tr > td {
+    font-size: 14px;
+  }
 }
 
 /* Responsive chart container */

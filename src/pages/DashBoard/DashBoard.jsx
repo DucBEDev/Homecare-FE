@@ -19,7 +19,7 @@ const Dashboard = () => {
   // State lưu trữ dữ liệu dashboard
   const [dashboardData, setDashboardData] = useState({
     kpiDashboard: [], // Dữ liệu cho các biểu đồ KPI chính
-    kpiList: [],     // Dữ liệu cho bảng danh sách KPI
+    kpiList: [], // Dữ liệu cho bảng danh sách KPI
   });
 
   // **GHI NHỚ: useEffect này sẽ fetch API để lấy dữ liệu cho dashboard khi component được mount (render lần đầu)**
@@ -101,9 +101,16 @@ const Dashboard = () => {
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" stroke="#8884d8"/>
-          <YAxis stroke="#8884d8"/>
-          <Tooltip wrapperStyle={{ backgroundColor: '#8884d8', border: 'none', borderRadius: '5px', color: '#fff' }}/>
+          <XAxis dataKey="name" stroke="#8884d8" />
+          <YAxis stroke="#8884d8" />
+          <Tooltip
+            wrapperStyle={{
+              backgroundColor: "#8884d8",
+              border: "none",
+              borderRadius: "5px",
+              color: "#fff",
+            }}
+          />
           <Area
             type="monotone"
             dataKey="uv"
@@ -151,7 +158,14 @@ const Dashboard = () => {
               />
             ))}
           </Pie>
-          <Tooltip wrapperStyle={{ backgroundColor: '#8884d8', border: 'none', borderRadius: '5px', color: '#fff' }}/>
+          <Tooltip
+            wrapperStyle={{
+              backgroundColor: "#8884d8",
+              border: "none",
+              borderRadius: "5px",
+              color: "#fff",
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     );
@@ -163,38 +177,38 @@ const Dashboard = () => {
       title: "Mã",
       dataIndex: "code",
       key: "code",
-      className: 'column-code',
+      className: "column-code",
     },
     {
       title: "Tên KPI",
       dataIndex: "name",
       key: "name",
-      className: 'column-name',
+      className: "column-name",
     },
     {
       title: "Mục tiêu",
       dataIndex: "target",
       key: "target",
-      className: 'column-target',
+      className: "column-target",
     },
     {
       title: "Thực tế",
       dataIndex: "actual",
       key: "actual",
-      className: 'column-actual',
+      className: "column-actual",
     },
     {
       title: "Biểu đồ",
       dataIndex: "graph",
       key: "graph",
-      className: 'column-graph',
+      className: "column-graph",
       render: (graphData) => renderBarChart(graphData),
     },
     {
       title: "Hiệu suất",
       dataIndex: "performance",
       key: "performance",
-      className: 'column-performance',
+      className: "column-performance",
       render: (value) => `${value}%`,
     },
   ];
@@ -247,32 +261,30 @@ const Dashboard = () => {
           { name: "Trang C", uv: 20, pv: 98, amt: 22 },
           { name: "Trang D", uv: 27, pv: 39, amt: 20 },
         ],
-        performance: 84.00,
+        performance: 84.0,
       },
     ],
   };
 
   return (
     <div className="dashboard-container">
-      <h1 className="dashboard-title">
-        Các Chỉ Số Hiệu Suất Chính (KPIs)
-      </h1>
+      <h1 className="dashboard-title">Các Chỉ Số Hiệu Suất Chính (KPIs)</h1>
       <Row gutter={[16, 16]}>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={12} lg={8} xl={8}>
           <Card className="dashboard-card">
             {/* **GHI NHỚ: Kiểm tra xem có dữ liệu cho biểu đồ gauge đầu tiên không trước khi render** */}
             {dashboardData.kpiDashboard[0] &&
               renderGaugeChart(dashboardData.kpiDashboard[0].value)}
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={12} lg={8} xl={8}>
           <Card className="dashboard-card">
             {/* **GHI NHỚ: Kiểm tra xem có dữ liệu cho biểu đồ cột không trước khi render** */}
             {dashboardData.kpiDashboard[1] &&
               renderBarChart(dashboardData.kpiDashboard[1].data)}
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={12} lg={8} xl={8}>
           <Card className="dashboard-card">
             {/* **GHI NHỚ: Kiểm tra xem có dữ liệu cho biểu đồ gauge thứ hai không trước khi render** */}
             {dashboardData.kpiDashboard[2] &&
@@ -281,8 +293,11 @@ const Dashboard = () => {
         </Col>
       </Row>
       <Row gutter={[16, 16]} style={{ marginTop: "20px" }}>
-        <Col span={16}>
-          <Card title={<span className="card-title">Danh sách KPIs</span>} className="dashboard-card">
+        <Col xs={24} sm={24} md={24} lg={16} xl={16}>
+          <Card
+            title={<span className="card-title">Danh sách KPIs</span>}
+            className="dashboard-card"
+          >
             <Table
               columns={kpiColumns}
               dataSource={dashboardData.kpiList}
@@ -291,7 +306,7 @@ const Dashboard = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={12} lg={8} xl={8}>
           <Card className="dashboard-card">
             {/* **GHI NHỚ: Kiểm tra xem có dữ liệu cho biểu đồ tròn không trước khi render** */}
             {dashboardData.kpiDashboard[3] &&
