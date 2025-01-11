@@ -24,3 +24,16 @@
 .button-update span {
   font-size: 14px !important;
 }
+
+.liLabelDelete {
+  border-bottom: 1px solid #ccc; /* Thêm border-bottom */
+  padding-bottom: 8px;
+}
+
+.liLabelDelete .spanTitleDelete {
+  font-size: 12px;
+}
+
+.liLabelDelete .spanDescriptionDelete {
+  font-size: 10px;
+}

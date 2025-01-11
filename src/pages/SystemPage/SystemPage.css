@@ -60,7 +60,7 @@
 #companyEmail,
 #companyNumberPhone,
 #companyAddress {
-  padding: 6px 12px !important;
+  padding: 6px 20px !important;
 }
 
 .system-page-input,
@@ -149,6 +149,10 @@
 
 .ant-select-selection-item-remove svg {
   font-size: 6px !important;
+}
+
+.custom-input-number .ant-input-number-input {
+  font-size: 14px;
 }
 
 @media (max-width: 1200px) {

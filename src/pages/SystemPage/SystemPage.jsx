@@ -17,9 +17,9 @@ import {
   Tag,
 } from "antd";
 import axios from "axios";
-import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import "./SystemPage.css";
+import moment from "moment";
 import NotificationComponent from "../../components/NotificationComponent/NotificationComponent";
 
 const { Option } = Select;
@@ -42,11 +42,12 @@ const SystemPage = () => {
         const settings = response.data.generalSetting;
         console.log("settings", settings);
 
-        const holidays = [];
-        if (settings.holidayStartDate && settings.holidayEndDate) {
-          holidays.push(dayjs(settings.holidayStartDate));
-          holidays.push(dayjs(settings.holidayEndDate));
-        }
+        const holidayStartDay = settings.holidayStartDate
+          ? moment(settings.holidayStartDate)
+          : null;
+        const holidayEndDate = settings.holidayEndDate
+          ? moment(settings.holidayEndDate)
+          : null;
 
         // Fix lỗi map of undefined ở đây
         form.setFieldsValue({
@@ -54,15 +55,12 @@ const SystemPage = () => {
           companyEmail: "ptitABC@gmail.com",
           companyAddress: "97 Đa Kao Quận 1 TpHCM",
           companyNumberPhone: "0912345678",
-          openHour: dayjs(settings.openHour / 60 + ":00", "HH:mm"),
-          closeHour: dayjs(settings.closeHour / 60 + ":00", "HH:mm"),
-          officeStartTime: dayjs(
-            settings.officeStartTime / 60 + ":00",
-            "HH:mm"
-          ),
-          officeEndTime: dayjs(settings.officeEndTime / 60 + ":00", "HH:mm"),
+          openHour: moment(settings.openHour, "HH:mm"),
+          closeHour: moment(settings.closeHour, "HH:mm"),
+          officeStartTime: moment(settings.officeStartTime, "HH:mm"),
+          officeEndTime: moment(settings.officeEndTime, "HH:mm"),
           workingDays: settings.workingDays,
-          holidays: holidays,
+          holidays: [holidayStartDay, holidayEndDate],
           basicSalary: settings.baseSalary,
         });
       } catch (error) {
@@ -231,7 +229,11 @@ const SystemPage = () => {
                     { required: true, message: "Vui lòng nhập giờ mở cửa" },
                   ]}
                 >
-                  <TimePicker format="HH:mm" className="system-page-input" />
+                  <TimePicker
+                    format="HH:mm"
+                    minuteStep={30}
+                    className="system-page-input"
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -242,7 +244,11 @@ const SystemPage = () => {
                     { required: true, message: "Vui lòng nhập giờ đóng cửa" },
                   ]}
                 >
-                  <TimePicker format="HH:mm" className="system-page-input" />
+                  <TimePicker
+                    format="HH:mm"
+                    minuteStep={30}
+                    className="system-page-input"
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -255,7 +261,11 @@ const SystemPage = () => {
                     { required: true, message: "Vui lòng nhập giờ mở cửa" },
                   ]}
                 >
-                  <TimePicker format="HH:mm" className="system-page-input" />
+                  <TimePicker
+                    format="HH:mm"
+                    minuteStep={30}
+                    className="system-page-input"
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -266,7 +276,11 @@ const SystemPage = () => {
                     { required: true, message: "Vui lòng nhập giờ đóng cửa" },
                   ]}
                 >
-                  <TimePicker format="HH:mm" className="system-page-input" />
+                  <TimePicker
+                    format="HH:mm"
+                    minuteStep={30}
+                    className="system-page-input"
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -304,25 +318,30 @@ const SystemPage = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Row gutter={16}>
-                  <Col span={8}>
-                    <Form.Item
-                      name="basicSalary"
-                      label="Lương cơ bản (VND)"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Vui lòng nhập lương cơ bản",
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        min={0}
-                        className="system-page-input-number"
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                <Form.Item
+                  name="basicSalary"
+                  label="Lương cơ bản (VND)"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập lương cơ bản",
+                    },
+                  ]}
+                >
+                  <InputNumber
+                    min={0}
+                    className="system-page-input-number custom-input-number"
+                    formatter={(value) =>
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                    }
+                    parser={(value) => value.replace(/\./g, "")}
+                    style={{
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  />
+                </Form.Item>
               </Col>
             </Row>
 
@@ -353,7 +372,6 @@ const SystemPage = () => {
         </Card>
       </div>
       <div className="system-page-wrapper">
-        {/* ... other code ... */}
         {showNotification && (
           <NotificationComponent
             status={showNotification.status}
