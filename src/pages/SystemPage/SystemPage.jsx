@@ -77,16 +77,10 @@ const SystemPage = () => {
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      let holidayStartDate = null;
-      let holidayEndDate = null;
-      if (values.holidays && values.holidays.length === 2) {
-        // Kiểm tra đủ 2 phần tử
-        holidayStartDate = values.holidays[0].format("YYYY-MM-DD"); // Sử dụng trực tiếp values.holidays[0]
-        holidayEndDate = values.holidays[1].format("YYYY-MM-DD"); // Sử dụng trực tiếp values.holidays[1]
-      } else {
-        console.error("RangePicker trả về không đủ 2 giá trị");
-        // Xử lý lỗi, có thể gán giá trị mặc định hoặc hiển thị thông báo lỗi
-      }
+      let holidayStartDate =
+        values.holidays === null ? "" : values.holidays[0].format("YYYY-MM-DD");
+      let holidayEndDate =
+        values.holidays === null ? "" : values.holidays[1].format("YYYY-MM-DD");
 
       const dataToSend = {
         baseSalary: values.basicSalary,

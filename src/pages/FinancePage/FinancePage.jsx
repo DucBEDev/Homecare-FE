@@ -8,10 +8,10 @@ import {
   Col,
   Typography,
   message,
-  Divider
+  Divider,
 } from "antd";
 import axios from "axios";
-import "./FinancePage.css"; // Bạn nên tạo file CSS riêng cho trang này
+import "./FinancePage.css";
 import NotificationComponent from "../../components/NotificationComponent/NotificationComponent";
 
 const { Title } = Typography;
@@ -20,52 +20,70 @@ const FinancialPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
-  const [financialSettings, setFinancialSettings] = useState({}); // Thêm state để lưu trữ financialSettings
+  const [serviceCoefficients, setServiceCoefficients] = useState([]);
+  const [maidCoefficients, setMaidCoefficients] = useState([]);
+  const [otherCoefficients, setOtherCoefficients] = useState([]);
 
   useEffect(() => {
-    const fetchFinancialSettings = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/financialSettings` // Giả sử API endpoint là như này
+        // Lấy hệ số dịch vụ
+        const serviceResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/serviceCoefficients`
         );
-        const settings = response.data.financialSetting;
-        setFinancialSettings(settings); // Lưu financialSettings vào state
-        console.log("settings", settings);
+        setServiceCoefficients(serviceResponse.data.serviceCoefficients);
 
-        form.setFieldsValue({
-          tipRate: settings.tipRate,
-          holidayMultiplier: settings.holidayMultiplier,
-          nightShiftMultiplier: settings.nightShiftMultiplier,
-          cleaningFee: settings.cleaningFee,
-          movingFee: settings.movingFee,
-          disinfectingFee: settings.disinfectingFee,
-          ironingFee: settings.ironingFee,
-          cookingFee: settings.cookingFee,
-          officeCleaningFee: settings.officeCleaningFee,
-        });
+        // Lấy hệ số người giúp việc
+        const maidResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/maidCoefficients`
+        );
+        setMaidCoefficients(maidResponse.data.maidCoefficients);
+
+        // Lấy hệ số khác
+        const otherResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/otherCoefficients`
+        );
+        setOtherCoefficients(otherResponse.data.otherCoefficients);
+
+        // Set giá trị mặc định cho form (nếu cần)
+        // form.setFieldsValue({
+        //   serviceCoefficients: {
+        //     ...
+        //   },
+        //   maidCoefficients: {
+        //     ...
+        //   },
+        //   otherCoefficients: {
+        //      ...
+        //   }
+        // });
       } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu hệ số tài chính:", error);
-        message.error("Lỗi khi lấy dữ liệu hệ số tài chính");
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        message.error("Lỗi khi lấy dữ liệu");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchFinancialSettings();
+    fetchData();
   }, []);
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       const dataToSend = {
-        ...values,
+        serviceCoefficients: values.serviceCoefficients,
+        maidCoefficients: values.maidCoefficients,
+        otherCoefficients: values.otherCoefficients,
       };
+
       console.log("dataToSend", dataToSend);
 
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/financialSettings/update`, // Giả sử API endpoint là như này
-        dataToSend,
+      // Cập nhật hệ số dịch vụ
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/serviceCoefficients/update`,
+        dataToSend.serviceCoefficients,
         {
           headers: {
             "Content-Type": "application/json",
@@ -73,25 +91,32 @@ const FinancialPage = () => {
         }
       );
 
-      if (response.status === 200) {
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Cập nhật thông tin hệ số tài chính thành công",
-        });
-        setTimeout(() => {
-          setShowNotification(null);
-        }, 3000);
-      } else {
-        setShowNotification({
-          status: "error",
-          message: "Thất bại",
-          description: "Cập nhật thông tin hệ số tài chính thất bại",
-        });
-        setTimeout(() => {
-          setShowNotification(null);
-        }, 3000);
-      }
+      // Cập nhật hệ số người giúp việc
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/maidCoefficients/update`,
+        dataToSend.maidCoefficients,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      // Cập nhật hệ số khác
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/otherCoefficients/update`,
+        dataToSend.otherCoefficients,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: "Cập nhật thông tin hệ số tài chính thành công",
+      });
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin hệ số tài chính:", error);
       setShowNotification({
@@ -100,11 +125,9 @@ const FinancialPage = () => {
         description:
           "Lỗi khi cập nhật thông tin hệ số tài chính: " + error.message,
       });
-      setTimeout(() => {
-        setShowNotification(null);
-      }, 3000);
     } finally {
       setLoading(false);
+      setTimeout(() => setShowNotification(null), 3000);
     }
   };
 
@@ -122,154 +145,138 @@ const FinancialPage = () => {
             layout="vertical"
             onFinish={onFinish}
             className="financial-page-form"
+            initialValues={{
+              serviceCoefficients: serviceCoefficients.reduce((acc, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+              }, {}),
+              maidCoefficients: maidCoefficients.reduce((acc, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+              }, {}),
+              otherCoefficients: otherCoefficients.reduce((acc, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+              }, {}),
+            }}
           >
-            <Title level={5}>Hệ số phụ cấp</Title>
             <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="tipRate"
-                  label="Tỉ lệ tiền tip (%)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập tỉ lệ tiền tip",
-                    },
-                  ]}
-                >
-                  <InputNumber
-                    min={0}
-                    max={100}
-                    formatter={(value) => `${value}%`}
-                    parser={(value) => value.replace("%", "")}
-                    className="financial-page-input-number"
-                  />
-                </Form.Item>
+              <Col span={8} className="scrollable-column">
+                <Divider orientation="left">
+                  <Title level={5}>Hệ số dịch vụ</Title>
+                </Divider>
+                {serviceCoefficients.map((coefficient) => (
+                  <Row gutter={16} key={coefficient._id}>
+                    <Col span={24}>
+                      <Form.Item
+                        name={["serviceCoefficients", coefficient.key]}
+                        label={coefficient.label}
+                        rules={[
+                          {
+                            required: true,
+                            message: `Vui lòng nhập ${coefficient.label}`,
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          min={0}
+                          className="financial-page-input-number custom-input-number"
+                          formatter={(value) =>
+                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                          }
+                          parser={(value) => value.replace(/\./g, "")}
+                          style={{
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                ))}
               </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="holidayMultiplier"
-                  label="Hệ số lương ngày lễ"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập hệ số lương ngày lễ",
-                    },
-                  ]}
-                >
-                  <InputNumber
-                    min={1}
-                    className="financial-page-input-number"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="nightShiftMultiplier"
-                  label="Hệ số lương ca đêm"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập hệ số lương ca đêm",
-                    },
-                  ]}
-                >
-                  <InputNumber
-                    min={1}
-                    className="financial-page-input-number"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+              <Divider type="vertical" style={{ height: "auto" }} />
 
-            <Divider />
+              <Col span={8} className="scrollable-column">
+                <Divider orientation="left">
+                  <Title level={5}>Hệ số người giúp việc</Title>
+                </Divider>
+                {maidCoefficients.map((coefficient) => (
+                  <Row gutter={16} key={coefficient._id}>
+                    <Col span={24}>
+                      <Form.Item
+                        name={["maidCoefficients", coefficient.key]}
+                        label={coefficient.label}
+                        rules={[
+                          {
+                            required: true,
+                            message: `Vui lòng nhập ${coefficient.label}`,
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          min={0}
+                          className="financial-page-input-number custom-input-number"
+                          formatter={(value) =>
+                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                          }
+                          parser={(value) => value.replace(/\./g, "")}
+                          style={{
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                ))}
+              </Col>
 
-            <Title level={5}>Chi phí dịch vụ</Title>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="cleaningFee"
-                  label="Dọn dẹp nhà (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí dọn dẹp nhà",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="movingFee"
-                  label="Dọn nhà (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí dọn nhà",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="disinfectingFee"
-                  label="Khử khuẩn (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí khử khuẩn",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={8}>
-                <Form.Item
-                  name="ironingFee"
-                  label="Là quần áo (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí là quần áo",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="cookingFee"
-                  label="Nấu ăn (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí nấu ăn",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  name="officeCleaningFee"
-                  label="Dọn dẹp văn phòng (VND/giờ)"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập chi phí dọn dẹp văn phòng",
-                    },
-                  ]}
-                >
-                  <InputNumber min={0} className="financial-page-input-number" />
-                </Form.Item>
+              <Divider type="vertical" style={{ height: "auto" }} />
+
+              <Col span={7} className="scrollable-column">
+                <Divider orientation="left">
+                  <Title level={5}>Hệ số khác</Title>
+                </Divider>
+                {otherCoefficients.map((coefficient) => (
+                  <Row gutter={16} key={coefficient._id}>
+                    <Col span={24}>
+                      <Form.Item
+                        name={["otherCoefficients", coefficient.key]}
+                        label={coefficient.label}
+                        rules={[
+                          {
+                            required: true,
+                            message: `Vui lòng nhập ${coefficient.label}`,
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          min={coefficient.min}
+                          max={coefficient.max}
+                          className="financial-page-input-number custom-input-number"
+                          formatter={(value) =>
+                            coefficient.key === "tipRate"
+                              ? `${value}%`
+                              : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                          }
+                          parser={(value) =>
+                            coefficient.key === "tipRate"
+                              ? value.replace("%", "")
+                              : value.replace(/\./g, "")
+                          }
+                          style={{
+                            height: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                ))}
               </Col>
             </Row>
 
@@ -278,6 +285,7 @@ const FinancialPage = () => {
                 type="primary"
                 htmlType="submit"
                 className="financial-page-button"
+                loading={loading}
               >
                 Lưu thay đổi
               </Button>
@@ -286,6 +294,7 @@ const FinancialPage = () => {
         </Card>
       </div>
 
+      {/* Notification */}
       <div className="financial-page-wrapper">
         {showNotification && (
           <NotificationComponent
