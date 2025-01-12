@@ -7,7 +7,7 @@ import {
   UnorderedListOutlined,
   TeamOutlined,
   UserOutlined,
-  ProfileOutlined,
+  ProductOutlined,
   AppstoreOutlined,
   ToolOutlined,
   PoweroffOutlined,
@@ -61,6 +61,11 @@ const NavbarComponent = () => {
             label: "Khách hàng",
             key: "/customer",
             icon: <TeamOutlined />,
+          },
+          {
+            label: "Quản lý dịch vụ",
+            key: "/service",
+            icon: <ProductOutlined />,
           },
           {
             label: "Hệ số chi phí",

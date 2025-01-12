@@ -31,9 +31,13 @@
 .financial-page-input-number,
 .financial-page-input-number .ant-input-number-input {
   border-radius: 8px !important;
-  width: 100%;
+  width: 100%; /* Giữ nguyên width 100% để fill đầy container cha */
   padding: 2px 12px;
-  border: 1px solid #ced4da;
+  min-width: 65px; /* Thêm min-width để đảm bảo đủ không gian hiển thị */
+}
+
+.financial-page-input-number .ant-input-number-input {
+  text-overflow: ellipsis; /* Thêm dấu ba chấm (...) khi nội dung bị cắt */
 }
 
 .financial-page-form .ant-input-number:focus,
@@ -60,26 +64,163 @@
   border-color: #2980b9;
 }
 
+.ant-divider-title {
+  margin-top: 10px !important;
+}
+
+.custom-input-number .ant-input-number-input {
+  font-size: 12px;
+}
+
 /* Responsive */
-@media (max-width: 768px) {
-  .financial-page-section-title {
-    font-size: 1.2rem;
+
+/* max-width: 320px (điện thoại di động, hiển thị chiều dọc) */
+@media (max-width: 320px) {
+  .financial-page-wrapper {
+    padding: 5px;
+    margin-top: 10px;
+  }
+
+  .financial-page-card {
+    padding: 0 5px;
+  }
+
+  .header-title {
+    font-size: 12px;
+  }
+
+  .financial-page-button {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
+  .scrollable-column {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  .title-col,
+  .header-col {
+    font-size: 10px;
+    padding-left: 10px; /* Thêm padding-left cho các cột */
   }
 
   .financial-page-input-number,
   .financial-page-input-number .ant-input-number-input {
-    padding: 6px 10px;
+    min-width: 45px;
+  }
+}
+
+/* max-width: 480px (điện thoại di động, hiển thị chiều ngang) */
+@media (max-width: 480px) {
+  .financial-page-wrapper {
+    padding: 8px;
+    margin-top: 15px;
   }
 
-  .financial-page-button {
-    padding: 6px 15px;
-  }
-
-  .green-header {
-    padding: 8px 15px;
+  .financial-page-card {
+    padding: 0 8px;
   }
 
   .header-title {
-    font-size: 18px;
+    font-size: 13px;
   }
+
+  .financial-page-button {
+    padding: 7px 11px;
+  }
+  .title-col,
+  .header-col {
+    padding-left: 10px; /* Thêm padding-left cho các cột */
+  }
+
+  .financial-page-input-number,
+  .financial-page-input-number .ant-input-number-input {
+    min-width: 55px;
+  }
+}
+
+/* max-width: 600px (máy tính bảng, hiển thị chiều dọc) */
+@media (max-width: 600px) {
+  .financial-page-wrapper {
+    padding: 10px;
+    margin-top: 15px;
+  }
+
+  .header-title {
+    font-size: 14px;
+  }
+
+  .title-col,
+  .header-col {
+    padding-left: 12px; /* Thêm padding-left cho các cột */
+  }
+}
+
+/* max-width: 800px (máy tính bảng, hiển thị chiều ngang) */
+@media (max-width: 800px) {
+  .financial-page-wrapper {
+    padding: 15px;
+    margin-top: 20px;
+  }
+
+  .header-title {
+    font-size: 15px;
+  }
+}
+
+/* max-width: 768px (máy tính bảng loại to, hiển thị chiều dọc) */
+@media (max-width: 768px) {
+  .financial-page-wrapper {
+    padding: 10px;
+    margin-top: 20px;
+  }
+
+  .financial-page-card {
+    padding: 0 10px;
+  }
+
+  .header-title {
+    font-size: 14px;
+  }
+
+  .financial-page-button {
+    padding: 8px 12px;
+  }
+
+  .scrollable-column {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  .title-col,
+  .header-col {
+    font-size: 12px;
+    padding-left: 15px; /* Thêm padding-left cho các cột */
+  }
+}
+
+/* max-width: 1024px (máy tính bảng loại to, hiển thị chiều ngang) */
+@media (max-width: 1024px) {
+  .financial-page-wrapper {
+    padding: 18px;
+    margin-top: 40px;
+  }
+
+  .header-title {
+    font-size: 15px;
+  }
+}
+
+/* min-width: 1025px (từ size này trở lên là dành cho desktop thông thường) */
+@media (min-width: 1025px) {
+  /* Các styles mặc định đã được định nghĩa ở đầu file CSS */
 }
