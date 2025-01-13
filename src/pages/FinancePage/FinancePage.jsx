@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Form,
   InputNumber,
@@ -7,7 +7,6 @@ import {
   Row,
   Col,
   Typography,
-  message,
   Divider,
   Modal,
   Input,
@@ -24,6 +23,7 @@ const { Option } = Select;
 const FinancialPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
   const [serviceCoefficients, setServiceCoefficients] = useState(null);
   const [maidCoefficients, setMaidCoefficients] = useState(null);
@@ -31,112 +31,55 @@ const FinancialPage = () => {
   const [dataFetched, setDataFetched] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCoefficient, setSelectedCoefficient] = useState(null);
+  const [costFactorLists, setCostFactorLists] = useState(null);
 
   const [modalForm] = Form.useForm();
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [addModalForm] = Form.useForm();
+  const [selectedCoefficientType, setSelectedCoefficientType] = useState(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/costFactors`
       );
-      const costFactorLists = response.data.costFactorLists;
-      console.log(costFactorLists);
+      setCostFactorLists(response.data.costFactorLists);
+      console.log(response.data.costFactorLists);
 
       setServiceCoefficients(
-        costFactorLists.find((e) => e.title === "Hệ số lương cho dịch vụ")
+        response.data.costFactorLists.find(
+          (e) => e.title === "Hệ số lương cho dịch vụ"
+        )
       );
       setMaidCoefficients(
-        costFactorLists.find(
+        response.data.costFactorLists.find(
           (e) => e.title === "Hệ số lương cho người giúp việc"
         )
       );
       setOtherCoefficients(
-        costFactorLists.find((e) => e.title === "Hệ số khác")
+        response.data.costFactorLists.find((e) => e.title === "Hệ số khác")
       );
 
       setDataFetched(true);
     } catch (error) {
-      console.error("Lỗi khi lấy dữ liệu:", error);
-      message.error("Lỗi khi lấy dữ liệu");
+      setShowNotification({
+        status: "error",
+        message: "Lỗi",
+        description: "Có lỗi xảy ra khi lấy dữ liệu: " + error.message,
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
-
-  const onFinish = async (values) => {
-    setLoading(true);
-    try {
-      const serviceCoefficientsToSend =
-        serviceCoefficients.newCoefficientList.map((item) => ({
-          title: item.title,
-          value: values[item.title],
-        }));
-      const maidCoefficientsToSend = maidCoefficients.newCoefficientList.map(
-        (item) => ({
-          title: item.title,
-          value: values[item.title],
-        })
-      );
-      const otherCoefficientsToSend = otherCoefficients.newCoefficientList.map(
-        (item) => ({
-          title: item.title,
-          value: values[item.title],
-        })
-      );
-
-      const dataToSend = {
-        costFactorLists: [
-          {
-            title: "Hệ số lương cho dịch vụ",
-            newCoefficientList: serviceCoefficientsToSend,
-          },
-          {
-            title: "Hệ số lương cho người giúp việc",
-            newCoefficientList: maidCoefficientsToSend,
-          },
-          { title: "Hệ số khác", newCoefficientList: otherCoefficientsToSend },
-        ],
-      };
-
-      console.log("dataToSend", dataToSend);
-
-      await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/costFactors/update`,
-        dataToSend,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setShowNotification({
-        status: "success",
-        message: "Thành công",
-        description: "Cập nhật thông tin hệ số tài chính thành công",
-      });
-    } catch (error) {
-      console.error("Lỗi khi cập nhật thông tin hệ số tài chính:", error);
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description:
-          "Lỗi khi cập nhật thông tin hệ số tài chính: " + error.message,
-      });
-    } finally {
-      setLoading(false);
-      setTimeout(() => setShowNotification(null), 3000);
-    }
-  };
+  }, [fetchData]);
 
   useEffect(() => {
-    if (dataFetched) {
+    if (dataFetched && costFactorLists) {
       const formValues = {};
       if (serviceCoefficients?.newCoefficientList) {
         serviceCoefficients.newCoefficientList.forEach((item) => {
@@ -161,6 +104,7 @@ const FinancialPage = () => {
     serviceCoefficients,
     maidCoefficients,
     otherCoefficients,
+    costFactorLists,
   ]);
 
   const showModal = (coefficient, type) => {
@@ -182,23 +126,40 @@ const FinancialPage = () => {
     setModalVisible(false);
   };
 
-  const handleUpdateInfo = async (coefficient) => {
-    setUpdateLoading(true);
-    // Lấy type và costFactorListTitle từ coefficient truyền vào
-    const type = coefficient.type;
-    const costFactorListTitle = coefficient.costFactorListTitle;
+  const showAddModal = (type) => {
+    setSelectedCoefficientType(type);
+    setAddModalVisible(true);
+    addModalForm.resetFields();
+  };
+
+  const handleAddModalCancel = () => {
+    setAddModalVisible(false);
+  };
+
+  const handleAddCoefficient = async () => {
     try {
-      const values = await modalForm.validateFields();
+      setAddLoading(true);
+      const values = await addModalForm.validateFields();
+      let dataApplyTo = "";
+      if (selectedCoefficientType === "serviceCoefficients") {
+        dataApplyTo = "service";
+      } else if (selectedCoefficientType === "maidCoefficients") {
+        dataApplyTo = "maid";
+      } else if (selectedCoefficientType === "otherCoefficients") {
+        dataApplyTo = "other";
+      }
 
       const dataToSend = {
         title: values.modalTitle,
         description: values.modalDescription,
         value: values.modalValue,
         status: values.modalStatus,
+        applyTo: dataApplyTo,
       };
-      console.log(dataToSend);
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/costFactors/edit/${coefficient._id}`,
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}admin/costFactors/create`,
+        dataToSend,
         {
           headers: {
             "Content-Type": "application/json",
@@ -206,7 +167,67 @@ const FinancialPage = () => {
         }
       );
 
-      if (response.status === 200) {
+      if (response.data.success) {
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Thêm mới hệ số thành công",
+        });
+        fetchData();
+        setAddModalVisible(false);
+      } else {
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description:
+            "Thêm mới hệ số thất bại: " +
+            (response.data.message || "Lỗi không xác định"),
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi thêm mới:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Lỗi khi thêm mới hệ số: " + error.message,
+      });
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleUpdateInfo = async (coefficient) => {
+    setUpdateLoading(true);
+
+    try {
+      const values = await modalForm.validateFields();
+      const foundCostFactorList = costFactorLists?.find((list) => {
+        return list.newCoefficientList.some(
+          (item) => item.title === values.modalTitle
+        );
+      });
+
+      const dataApplyTo = foundCostFactorList
+        ? foundCostFactorList.applyTo
+        : "";
+      const dataToSend = {
+        title: values.modalTitle,
+        description: values.modalDescription,
+        value: values.modalValue,
+        status: values.modalStatus,
+        applyTo: dataApplyTo,
+      };
+
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/costFactors/edit/${coefficient._id}`,
+        dataToSend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.data.success) {
         setShowNotification({
           status: "success",
           message: "Thành công",
@@ -217,7 +238,9 @@ const FinancialPage = () => {
         setShowNotification({
           status: "error",
           message: "Thất bại",
-          description: "Cập nhật thông tin hệ số thất bại",
+          description:
+            "Cập nhật thông tin hệ số thất bại" +
+            (response.data.message || "Lỗi không xác định"),
         });
       }
     } catch (error) {
@@ -235,7 +258,6 @@ const FinancialPage = () => {
   };
 
   const handleDeleteCoefficient = async (coefficient) => {
-    const type = coefficient.type;
     try {
       Modal.confirm({
         title: "Xác nhận xóa",
@@ -248,7 +270,7 @@ const FinancialPage = () => {
             `${process.env.REACT_APP_API_URL}admin/costFactors/delete/${coefficient._id}`
           );
 
-          if (response.status === 200) {
+          if (response.data.success) {
             setShowNotification({
               status: "success",
               message: "Thành công",
@@ -286,12 +308,7 @@ const FinancialPage = () => {
           </div>
         </div>
         <Card className="financial-page-card">
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            className="financial-page-form"
-          >
+          <Form form={form} layout="vertical" className="financial-page-form">
             <Row
               gutter={24}
               style={{ display: "flex", justifyContent: "space-around" }}
@@ -304,7 +321,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px", overflowY: "auto" }}
+                style={{ maxHeight: "400px", marginLeft: "20px" }}
               >
                 <Title
                   style={{
@@ -323,6 +340,7 @@ const FinancialPage = () => {
                 >
                   <button
                     style={{ width: "40px", height: "20px", fontSize: "10px" }}
+                    onClick={() => showAddModal("serviceCoefficients")}
                   >
                     +
                   </button>
@@ -332,16 +350,10 @@ const FinancialPage = () => {
                   <Col className="header-col" style={{ flex: 3 }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
-                    Trạng thái
-                  </Col>
-                  <Col
-                    className="header-col"
-                    style={{ flex: 3, marginRight: "-18px" }}
-                  >
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Chức năng
                   </Col>
                 </Row>
@@ -354,9 +366,10 @@ const FinancialPage = () => {
                       >
                         {coefficient.title}
                       </Col>
-                      <Col style={{ flex: 2 }}>
+                      <Col style={{ flex: 4 }}>
                         <Form.Item
                           name={coefficient.title}
+                          validateTrigger={["onBlur", "onChange"]}
                           rules={[
                             {
                               required: true,
@@ -366,14 +379,12 @@ const FinancialPage = () => {
                         >
                           <InputNumber
                             min={0}
-                            controls={false}
+                            style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
                           />
                         </Form.Item>
                       </Col>
-                      <Col style={{ flex: 2, wordWrap: "break-word" }}>
-                        {coefficient.status}
-                      </Col>
+
                       <Col style={{ flex: 3 }}>
                         <Button
                           type="primary"
@@ -394,6 +405,17 @@ const FinancialPage = () => {
                           Xóa
                         </Button>
                       </Col>
+                      <Col style={{ flex: 1, wordWrap: "break-word" }}>
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor:
+                              coefficient.status === "active"
+                                ? "#53d768"
+                                : "#ee4352",
+                          }}
+                        />
+                      </Col>
                     </Row>
                   ))}
               </Col>
@@ -407,7 +429,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px", overflowY: "auto" }}
+                style={{ maxHeight: "400px" }}
               >
                 <Title
                   style={{
@@ -426,6 +448,7 @@ const FinancialPage = () => {
                 >
                   <button
                     style={{ width: "40px", height: "20px", fontSize: "10px" }}
+                    onClick={() => showAddModal("maidCoefficients")}
                   >
                     +
                   </button>
@@ -435,16 +458,10 @@ const FinancialPage = () => {
                   <Col className="header-col" style={{ flex: 3 }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
-                    Trạng thái
-                  </Col>
-                  <Col
-                    className="header-col"
-                    style={{ flex: 3, marginRight: "-18px" }}
-                  >
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Chức năng
                   </Col>
                 </Row>
@@ -457,9 +474,10 @@ const FinancialPage = () => {
                       >
                         {coefficient.title}
                       </Col>
-                      <Col style={{ flex: 2 }}>
+                      <Col style={{ flex: 4 }}>
                         <Form.Item
                           name={coefficient.title}
+                          validateTrigger={["onBlur", "onChange"]}
                           rules={[
                             {
                               required: true,
@@ -469,14 +487,12 @@ const FinancialPage = () => {
                         >
                           <InputNumber
                             min={0}
+                            style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
-                            controls={false}
                           />
                         </Form.Item>
                       </Col>
-                      <Col style={{ flex: 2, wordWrap: "break-word" }}>
-                        {coefficient.status}
-                      </Col>
+
                       <Col style={{ flex: 3 }}>
                         <Button
                           type="primary"
@@ -498,6 +514,17 @@ const FinancialPage = () => {
                           Xóa
                         </Button>
                       </Col>
+                      <Col style={{ flex: 1, wordWrap: "break-word" }}>
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor:
+                              coefficient.status === "active"
+                                ? "#53d768"
+                                : "#ee4352",
+                          }}
+                        />
+                      </Col>
                     </Row>
                   ))}
               </Col>
@@ -512,7 +539,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px", overflowY: "auto" }}
+                style={{ maxHeight: "400px" }}
               >
                 <Title
                   style={{
@@ -531,6 +558,7 @@ const FinancialPage = () => {
                 >
                   <button
                     style={{ width: "40px", height: "20px", fontSize: "10px" }}
+                    onClick={() => showAddModal("otherCoefficients")}
                   >
                     +
                   </button>
@@ -540,16 +568,10 @@ const FinancialPage = () => {
                   <Col className="header-col" style={{ flex: 3 }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 2 }}>
-                    Trạng thái
-                  </Col>
-                  <Col
-                    className="header-col"
-                    style={{ flex: 3, marginRight: "-18px" }}
-                  >
+                  <Col className="header-col" style={{ flex: 4 }}>
                     Chức năng
                   </Col>
                 </Row>
@@ -562,9 +584,10 @@ const FinancialPage = () => {
                       >
                         {coefficient.title}
                       </Col>
-                      <Col style={{ flex: 2 }}>
+                      <Col style={{ flex: 4 }}>
                         <Form.Item
                           name={coefficient.title}
+                          validateTrigger={["onBlur", "onChange"]}
                           rules={[
                             {
                               required: true,
@@ -574,13 +597,10 @@ const FinancialPage = () => {
                         >
                           <InputNumber
                             min={coefficient.min || 0}
-                            controls={false}
+                            style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
                           />
                         </Form.Item>
-                      </Col>
-                      <Col style={{ flex: 2, wordWrap: "break-word" }}>
-                        {coefficient.status}
                       </Col>
                       <Col style={{ flex: 3 }}>
                         <Button
@@ -602,25 +622,26 @@ const FinancialPage = () => {
                           Xóa
                         </Button>
                       </Col>
+                      <Col style={{ flex: 1, wordWrap: "break-word" }}>
+                        <span
+                          className="status-dot"
+                          style={{
+                            backgroundColor:
+                              coefficient.status === "active"
+                                ? "#53d768"
+                                : "#ee4352",
+                          }}
+                        />
+                      </Col>
                     </Row>
                   ))}
               </Col>
             </Row>
-
-            <Form.Item style={{ marginTop: "20px" }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="financial-page-button"
-                loading={loading}
-              >
-                Lưu thay đổi
-              </Button>
-            </Form.Item>
           </Form>
         </Card>
       </div>
 
+      {/* Modal */}
       <Modal
         className="custom-modal"
         title={selectedCoefficient?.title || "Chi tiết"}
@@ -676,7 +697,79 @@ const FinancialPage = () => {
                   <Select placeholder="Chọn trạng thái">
                     <Option value="active">Hoạt động</Option>
                     <Option value="inactive">Không hoạt động</Option>
-                    {/* Thêm các option khác nếu cần */}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  name="modalDescription"
+                  label="Mô tả"
+                  rules={[{ required: true, message: "Vui lòng nhập mô tả" }]}
+                >
+                  <TextArea rows={4} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+        </Form>
+      </Modal>
+
+      <Modal
+        className="custom-modal"
+        title="Thêm mới hệ số"
+        open={addModalVisible}
+        onOk={handleAddCoefficient}
+        onCancel={handleAddModalCancel}
+        okButtonProps={{ loading: addLoading }}
+        footer={[
+          <Button key="cancel" onClick={handleAddModalCancel}>
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={addLoading}
+            onClick={handleAddCoefficient}
+          >
+            Thêm mới
+          </Button>,
+        ]}
+      >
+        <Form form={addModalForm} layout="vertical">
+          <div className="popup-content">
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  name="modalTitle"
+                  label="Tiêu đề"
+                  rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="modalValue"
+                  label="Giá trị"
+                  rules={[{ required: true, message: "Vui lòng nhập giá trị" }]}
+                >
+                  <InputNumber
+                    style={{ width: "100%", height: "32px" }}
+                    className="custom-input-number"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="modalStatus"
+                  label="Trạng thái"
+                  rules={[
+                    { required: true, message: "Vui lòng chọn trạng thái" },
+                  ]}
+                >
+                  <Select placeholder="Chọn trạng thái">
+                    <Option value="active">Hoạt động</Option>
+                    <Option value="inactive">Không hoạt động</Option>
                   </Select>
                 </Form.Item>
               </Col>
