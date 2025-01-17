@@ -22,17 +22,16 @@ const EditProcessingOrder = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [dataFetch, setDataFetch] = useState([]);
-
   const location = useLocation();
   const orderId = location.state?.id;
-
   const [locations, setLocations] = useState([]);
-  const [coefficient, setCoefficient] = useState("0");
+  const [appliedCoefficient, setAppliedCoefficient] = useState("0");
   const [requestType, setRequestType] = useState("short");
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
+
   // Fetch dữ liệu đơn hàng cụ thể
   useEffect(() => {
     const fetchOrderDetail = async () => {
@@ -43,17 +42,15 @@ const EditProcessingOrder = () => {
         const orderData = response.data;
         console.log("Order data:", orderData);
 
-        // Set giá trị vào form dựa trên cấu trúc data mới
         form.setFieldsValue({
           phone: orderData.request.customerInfo.phone,
           fullName: orderData.request.customerInfo.fullName,
           address: orderData.request.customerInfo.address.split(",")[0],
-          location: [
-            orderData.request.location.province,
-            orderData.request.location.district,
-            orderData.request.location.ward,
-          ],
           serviceTitle: orderData.request.service.title,
+          location: orderData.request.customerInfo.address
+            .split(",")
+            .slice(1)
+            .join(","),
           requestType:
             orderData.request.requestType === "Dài hạn" ? "long" : "short",
           workDate:
@@ -63,16 +60,15 @@ const EditProcessingOrder = () => {
                   dayjs(orderData.request.endTime),
                 ]
               : dayjs(orderData.request.startTime),
-          startTime: dayjs(orderData.request.formatStartTime, "HH:mm"), // Convert to dayjs
+          startTime: dayjs(orderData.request.formatStartTime, "HH:mm"),
           endTime: dayjs(orderData.request.formatEndTime, "HH:mm"),
-          coefficient_other: orderData.request.service.coefficient_other,
+          coefficientOther: orderData.request.service.coefficient_other,
         });
 
-        // Set các state khác
         setRequestType(
           orderData.request.requestType === "Dài hạn" ? "long" : "short"
         );
-        setCoefficient(orderData.request.service.coefficient_other);
+        setAppliedCoefficient(orderData.request.service.coefficient_other);
         setTotalCost(orderData.request.totalCost);
         setIsFormValid(true);
       } catch (error) {
@@ -105,6 +101,10 @@ const EditProcessingOrder = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setLocations(locationsData);
+  }, []);
+
   //TOTAL COST
   const updateTotalCost = () => {
     const newTotalCost = calculateTotalCost();
@@ -118,7 +118,7 @@ const EditProcessingOrder = () => {
       startTime,
       endTime,
       workDate,
-      coefficient_other,
+      coefficientOther,
       requestType,
     } = formValues;
 
@@ -127,7 +127,7 @@ const EditProcessingOrder = () => {
       !startTime ||
       !endTime ||
       !workDate ||
-      !coefficient_other
+      !coefficientOther
     ) {
       return 0;
     }
@@ -140,19 +140,19 @@ const EditProcessingOrder = () => {
       return 0;
     }
 
-    const { basicPrice, coefficient: coefficient_service } = selectedService;
+    const { basicPrice, coefficient: coefficientService } = selectedService;
     const coefficientWeekend = parseFloat(
-      dataFetch.coefficientOtherList[1].value
+      dataFetch.coefficientOtherList?.[1]?.value || 1
     );
     const coefficientOvertime = parseFloat(
-      dataFetch.coefficientOtherList[0].value
+      dataFetch.coefficientOtherList?.[0]?.value || 1
     );
 
     const start = dayjs(startTime);
     const end = dayjs(endTime);
 
-    const officeStartTime = dayjs(dataFetch.timeList.officeStartTime, "HH:mm");
-    const officeEndTime = dayjs(dataFetch.timeList.officeEndTime, "HH:mm");
+    const officeStartTime = dayjs(dataFetch.timeList?.officeStartTime, "HH:mm");
+    const officeEndTime = dayjs(dataFetch.timeList?.officeEndTime, "HH:mm");
 
     let totalCost = 0;
 
@@ -166,46 +166,57 @@ const EditProcessingOrder = () => {
         currentDate.isSame(endDate, "day")
       ) {
         const dayOfWeek = currentDate.day();
-        const dailyHours = end.diff(start, "hour");
+        let dailyHours = end.diff(start, "hour");
+        // Handle cases where endTime is earlier than startTime (working overnight)
+        if (dailyHours < 0) {
+          dailyHours += 24;
+        }
+
+        let normalHours = 0;
+        let overtimeHours = 0;
+
+        if (start.isBefore(officeStartTime) && end.isAfter(officeStartTime)) {
+          overtimeHours += officeStartTime.diff(start, "hour");
+        }
+
+        if (end.isAfter(officeEndTime) && start.isBefore(officeEndTime)) {
+          overtimeHours += end.diff(officeEndTime, "hour");
+        }
+
+        // Handle cases where work time spans across office hours
+        if (
+          start.isBefore(officeStartTime) &&
+          end.isBefore(officeStartTime) &&
+          end.isAfter(start)
+        ) {
+          overtimeHours += end.diff(start, "hour");
+        }
+        if (
+          start.isAfter(officeEndTime) &&
+          end.isAfter(officeEndTime) &&
+          end.isAfter(start)
+        ) {
+          overtimeHours += end.diff(start, "hour");
+        }
+
+        normalHours = Math.max(0, dailyHours - overtimeHours);
 
         if (dayOfWeek === 0 || dayOfWeek === 6) {
-          let normalHours = 0;
-          let overtimeHours = 0;
-
-          if (start.isBefore(officeStartTime)) {
-            overtimeHours += officeStartTime.diff(start, "hour");
-          }
-          if (end.isAfter(officeEndTime)) {
-            overtimeHours += end.diff(officeEndTime, "hour");
-          }
-          normalHours = dailyHours - overtimeHours;
-
           const weekendCost =
-            basicPrice * normalHours * coefficient_service * coefficientWeekend;
+            basicPrice * normalHours * coefficientService * coefficientWeekend;
           const overtimeCost =
             basicPrice *
             overtimeHours *
-            coefficient_service *
+            coefficientService *
             coefficientWeekend *
             coefficientOvertime;
           totalCost += weekendCost + overtimeCost;
         } else {
-          let normalHours = 0;
-          let overtimeHours = 0;
-
-          if (start.isBefore(officeStartTime)) {
-            overtimeHours += officeStartTime.diff(start, "hour");
-          }
-          if (end.isAfter(officeEndTime)) {
-            overtimeHours += end.diff(officeEndTime, "hour");
-          }
-          normalHours = dailyHours - overtimeHours;
-
-          const normalCost = basicPrice * normalHours * coefficient_service;
+          const normalCost = basicPrice * normalHours * coefficientService;
           const overtimeCost =
             basicPrice *
             overtimeHours *
-            coefficient_service *
+            coefficientService *
             coefficientOvertime;
           totalCost += normalCost + overtimeCost;
         }
@@ -214,47 +225,55 @@ const EditProcessingOrder = () => {
       }
     } else {
       const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = end.diff(start, "hour");
+      let dailyHours = end.diff(start, "hour");
+      // Handle cases where endTime is earlier than startTime (working overnight)
+      if (dailyHours < 0) {
+        dailyHours += 24;
+      }
+
+      let normalHours = 0;
+      let overtimeHours = 0;
+
+      if (start.isBefore(officeStartTime) && end.isAfter(officeStartTime)) {
+        overtimeHours += officeStartTime.diff(start, "hour");
+      }
+
+      if (end.isAfter(officeEndTime) && start.isBefore(officeEndTime)) {
+        overtimeHours += end.diff(officeEndTime, "hour");
+      }
+
+      // Handle cases where work time spans across office hours
+      if (
+        start.isBefore(officeStartTime) &&
+        end.isBefore(officeStartTime) &&
+        end.isAfter(start)
+      ) {
+        overtimeHours += end.diff(start, "hour");
+      }
+      if (
+        start.isAfter(officeEndTime) &&
+        end.isAfter(officeEndTime) &&
+        end.isAfter(start)
+      ) {
+        overtimeHours += end.diff(start, "hour");
+      }
+
+      normalHours = Math.max(0, dailyHours - overtimeHours);
 
       if (dayOfWeek === 0 || dayOfWeek === 6) {
-        let normalHours = 0;
-        let overtimeHours = 0;
-
-        if (start.isBefore(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, "hour");
-        }
-        if (end.isAfter(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, "hour");
-        }
-        normalHours = dailyHours - overtimeHours;
-
         const weekendCost =
-          basicPrice * normalHours * coefficient_service * coefficientWeekend;
+          basicPrice * normalHours * coefficientService * coefficientWeekend;
         const overtimeCost =
           basicPrice *
           overtimeHours *
-          coefficient_service *
+          coefficientService *
           coefficientWeekend *
           coefficientOvertime;
         totalCost = weekendCost + overtimeCost;
       } else {
-        let normalHours = 0;
-        let overtimeHours = 0;
-
-        if (start.isBefore(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, "hour");
-        }
-        if (end.isAfter(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, "hour");
-        }
-        normalHours = dailyHours - overtimeHours;
-
-        const normalCost = basicPrice * normalHours * coefficient_service;
+        const normalCost = basicPrice * normalHours * coefficientService;
         const overtimeCost =
-          basicPrice *
-          overtimeHours *
-          coefficient_service *
-          coefficientOvertime;
+          basicPrice * overtimeHours * coefficientService * coefficientOvertime;
         totalCost = normalCost + overtimeCost;
       }
     }
@@ -273,51 +292,47 @@ const EditProcessingOrder = () => {
 
     if (!orderDate || !startTime || !endTime || !timeList) return "0";
 
-    const orderDay = orderDate.day();
-    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
-    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
-
-    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
-    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
-    const dayStartMinutes = timeToMinutes(timeList.openHour);
-    const dayEndMinutes = timeToMinutes(timeList.closeHour);
-
-    const coefficientWeekend = dataFetch.coefficientOtherList[1].value;
-    const coefficientOutside = dataFetch.coefficientOtherList[0].value;
+    const coefficientWeekend =
+      dataFetch.coefficientOtherList?.[1]?.value || "1";
+    const coefficientOutside =
+      dataFetch.coefficientOtherList?.[0]?.value || "1";
     const coefficientNormal = "1";
-
-    if (orderDay === saturday || orderDay === sunday) {
-      return coefficientWeekend;
-    }
 
     if (Array.isArray(orderDate)) {
       const startDate = orderDate[0];
       const endDate = orderDate[1];
 
-      let currentDate = startDate;
-      while (currentDate.isSameOrBefore(endDate)) {
+      for (
+        let currentDate = startDate;
+        currentDate.isSameOrBefore(endDate);
+        currentDate = currentDate.add(1, "day")
+      ) {
         const currentDay = currentDate.day();
         if (currentDay === saturday || currentDay === sunday) {
           return coefficientWeekend;
         }
-        currentDate = currentDate.add(1, "day");
       }
-
-      if (
-        (orderStartMinutes >= dayStartMinutes &&
-          orderStartMinutes < officeStartMinutes) ||
-        (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
-      ) {
-        return coefficientOutside;
+    } else {
+      const orderDay = orderDate.day();
+      if (orderDay === saturday || orderDay === sunday) {
+        return coefficientWeekend;
       }
-
-      return coefficientNormal;
     }
+
+    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
+    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
+    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
+    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
+    const dayStartMinutes = timeToMinutes(timeList.openHour);
+    const dayEndMinutes = timeToMinutes(timeList.closeHour);
 
     if (
       (orderStartMinutes >= dayStartMinutes &&
         orderStartMinutes < officeStartMinutes) ||
-      (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+      orderStartMinutes === dayStartMinutes ||
+      (orderEndMinutes > officeEndMinutes &&
+        orderEndMinutes <= dayEndMinutes) ||
+      orderEndMinutes === dayEndMinutes
     ) {
       return coefficientOutside;
     }
@@ -337,8 +352,8 @@ const EditProcessingOrder = () => {
         dayjs(endTime),
         dataFetch.timeList
       );
-      setCoefficient(newCoefficient);
-      form.setFieldsValue({ coefficient_other: newCoefficient });
+      setAppliedCoefficient(newCoefficient);
+      form.setFieldsValue({ coefficientOther: newCoefficient });
     }
   };
 
@@ -350,13 +365,13 @@ const EditProcessingOrder = () => {
 
   const disabledHours = () => {
     if (!dataFetch.timeList) {
-      return []; // Return an empty array if timeList is not available
+      return [];
     }
     const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
     for (let i = 0; i < 24; i++) {
-      if (i < openHour || i - 1 > closeHour) {
+      if (i < openHour || i > closeHour) {
         hours.push(i);
       }
     }
@@ -364,6 +379,9 @@ const EditProcessingOrder = () => {
   };
 
   const disabledMinutes = (selectedHour) => {
+    if (!dataFetch.timeList) {
+      return [];
+    }
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const minutes = [];
     if (selectedHour === closeHour) {
@@ -381,6 +399,11 @@ const EditProcessingOrder = () => {
     const end = dayjs(endTime);
 
     const diffInHours = end.diff(start, "hour", true);
+
+    // Handle cases where endTime is earlier than startTime (working overnight)
+    if (diffInHours < 0) {
+      return diffInHours + 24 >= 2 && (diffInHours + 24) % 1 === 0;
+    }
 
     return diffInHours >= 2 && diffInHours % 1 === 0;
   };
@@ -457,10 +480,6 @@ const EditProcessingOrder = () => {
     // ... other locations
   ];
 
-  useEffect(() => {
-    setLocations(locationsData);
-  }, []);
-
   const onFinish = async (values) => {
     const {
       startTime,
@@ -480,7 +499,7 @@ const EditProcessingOrder = () => {
       serviceBasePrice: dataFetch?.serviceList?.find(
         (item) => item.title === values.serviceTitle
       )?.basicPrice,
-      coefficient_service: dataFetch?.serviceList?.find(
+      coefficientService: dataFetch?.serviceList?.find(
         (item) => item.title === values.serviceTitle
       )?.coefficient,
       startDate:
@@ -494,12 +513,12 @@ const EditProcessingOrder = () => {
       province: values.location?.[0],
       district: values.location?.[1],
       ward: values.location?.[2],
-      coefficient_other: values.coefficient_other,
+      coefficientOther: values.coefficientOther,
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
     };
 
-    console.log("dava", dataForBackend);
+    console.log("data", dataForBackend);
 
     try {
       const response = await axios.patch(
@@ -595,10 +614,7 @@ const EditProcessingOrder = () => {
               label="Loại Dịch Vụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
-              <Radio.Group
-                className="service-radio-group"
-                onChange={updateTotalCost}
-              >
+              <Radio.Group className="service-radio-group">
                 {dataFetch &&
                 dataFetch.serviceList &&
                 dataFetch.serviceList.length > 0 ? (
@@ -694,11 +710,11 @@ const EditProcessingOrder = () => {
           </Col>
           <Col span={3}>
             <Form.Item
-              name="coefficient_other"
+              name="coefficientOther"
               label="Hệ số"
               rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
             >
-              <Input disabled value={coefficient} />
+              <Input disabled value={appliedCoefficient} />
             </Form.Item>
           </Col>
         </Row>

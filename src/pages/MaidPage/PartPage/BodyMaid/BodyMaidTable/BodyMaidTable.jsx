@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pagination, Table, Modal } from "antd";
+import { Pagination, Table, Modal, Form, Input, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
+import dayjs from "dayjs";
 
 const { confirm } = Modal;
 
@@ -17,8 +18,10 @@ const BodyMaidTable = () => {
   const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
   const [showNotification, setShowNotification] = useState(null);
-
   const [helpers, setHelpers] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedHelper, setSelectedHelper] = useState(null);
+  const [form] = Form.useForm();
 
   const columns = [
     {
@@ -68,8 +71,8 @@ const BodyMaidTable = () => {
               marginRight: "2px",
             }}
             styleButtonText={{ color: "#fff" }}
-            onClick={() => handleViewDetails(record.key)}
-          ></ButtonComponent>
+            onClick={() => handleEdit(record.key)}
+          />
           <ButtonComponent
             size="large"
             textButton="Lịch"
@@ -82,8 +85,8 @@ const BodyMaidTable = () => {
               marginRight: "2px",
             }}
             styleButtonText={{ color: "#fff" }}
-            onClick={() => handleEditDetails(record.key)}
-          ></ButtonComponent>
+            onClick={() => handleSchedule(record.key)}
+          />
           <ButtonComponent
             size="large"
             textButton="Xóa"
@@ -96,25 +99,28 @@ const BodyMaidTable = () => {
             }}
             styleButtonText={{ color: "#fff" }}
             onClick={() => showDeleteConfirm(record.key)}
-          ></ButtonComponent>
+          />
         </span>
       ),
     },
   ];
 
-  const handleViewDetails = useCallback(
+  const handleSchedule = useCallback(
     (recordId) => {
-      navigate(`/order/processing/showDetail`, { state: { id: recordId } });
+      navigate(`/helpers/schedule`, { state: { id: recordId } }); // Thay đổi route
     },
     [navigate]
   );
 
-  const handleEditDetails = useCallback(
-    (recordId) => {
-      navigate(`/order/processing/editDetail`, { state: { id: recordId } });
-    },
-    [navigate]
-  );
+  const handleEdit = (recordId) => {
+    const selected = helpers.find((helper) => helper.key === recordId);
+    setSelectedHelper(selected);
+    form.setFieldsValue({
+      ...selected,
+      birthDate: dayjs(selected.birthDate, "DD/MM/YYYY"),
+    });
+    setIsModalVisible(true);
+  };
 
   const showDeleteConfirm = (recordId) => {
     confirm({
@@ -140,21 +146,18 @@ const BodyMaidTable = () => {
         `${process.env.REACT_APP_API_URL}admin/helpers/delete/${recordId}`
       );
       if (response.status === 200) {
-        // Update state to remove deleted item
         setHelpers((prevHelpers) =>
           prevHelpers.filter((helper) => helper.key !== recordId)
         );
         setFilteredData((prevFilteredData) =>
           prevFilteredData.filter((helper) => helper.key !== recordId)
         );
-        // Optionally show a success message
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Xóa người giúp việc thành công",
         });
 
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
@@ -174,7 +177,6 @@ const BodyMaidTable = () => {
         description: `Lỗi khi xóa người giúp việc: ${error.message}`,
       });
       console.error("Error deleting helper:", error);
-      // Optionally show an error message
     } finally {
       setLoading(false);
     }
@@ -185,13 +187,14 @@ const BodyMaidTable = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/helpers`
       );
-      console.log(response);
       const transformedData = response.data.helpers.map((helper) => ({
         key: helper._id,
         phoneNumber: helper.phone,
         idCard: helper.helper_id,
         fullName: helper.fullName,
-        birthDate: new Date(helper.birthDate).toLocaleDateString("vi-VN"),
+        birthDate: helper.birthDate
+          ? dayjs(helper.birthDate).format("DD/MM/YYYY")
+          : "",
         address: helper.address,
       }));
       setHelpers(transformedData);
@@ -224,13 +227,73 @@ const BodyMaidTable = () => {
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
 
+  const handleOk = () => {
+    form.submit();
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const onFinish = async (values) => {
+    try {
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/helpers/edit/${selectedHelper.key}`,
+        {
+          ...values,
+          birthDate: values.birthDate.format("YYYY-MM-DD"),
+        }
+      );
+
+      if (response.data.success) {
+        const updatedHelpers = helpers.map((helper) =>
+          helper.key === selectedHelper.key
+            ? {
+                ...helper,
+                ...values,
+                birthDate: values.birthDate.format("DD/MM/YYYY"),
+              }
+            : helper
+        );
+        setHelpers(updatedHelpers);
+        setFilteredData(updatedHelpers);
+        setIsModalVisible(false);
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Cập nhật thông tin người giúp việc thành công!",
+        });
+      } else {
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: response.data.msg,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating helper:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Cập nhật thông tin người giúp việc thất bại!",
+      });
+    }
+    setTimeout(() => {
+      setShowNotification(null);
+    }, 3000);
+  };
+
+  const disabledDate = (current) => {
+    return current && current > dayjs().endOf("day");
+  };
+
   return (
     <div className="processing-maids-container">
       <Table
         columns={columns}
         dataSource={getCurrentPageData()}
         loading={loading}
-        rowKey="id"
+        rowKey="key"
         scroll={{ x: 1000 }}
         pagination={false}
       />
@@ -259,6 +322,54 @@ const BodyMaidTable = () => {
           description={showNotification.description}
         />
       )}
+      <Modal
+        title="Chỉnh sửa thông tin người giúp việc"
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="Lưu"
+        cancelText="Hủy"
+      >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form.Item
+            name="phoneNumber"
+            label="Số điện thoại"
+            rules={[
+              { required: true, message: "Vui lòng nhập số điện thoại!" },
+            ]}
+          >
+            <Input style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="idCard"
+            label="CMND"
+            rules={[{ required: true, message: "Vui lòng nhập CMND!" }]}
+          >
+            <Input style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="fullName"
+            label="Họ tên"
+            rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
+          >
+            <Input style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="birthDate"
+            label="Ngày sinh"
+            rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}
+          >
+            <DatePicker format="DD/MM/YYYY" disabledDate={disabledDate} />
+          </Form.Item>
+          <Form.Item
+            name="address"
+            label="Địa chỉ"
+            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
+          >
+            <Input style={{ width: "100%" }} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };
