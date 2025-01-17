@@ -267,8 +267,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <h1 className="dashboard-title">Các Chỉ Số Hiệu Suất Chính (KPIs)</h1>
+    <div className="dashboard-container" style={{ marginLeft: "20px" }}>
+      <div style={{ marginTop: "90px" }}></div>
+      <div className="header-container">
+        <div className="green-header">
+          <span className="header-title">
+            Các Chỉ Số Hiệu Suất Chính (KPIs)
+          </span>
+        </div>
+      </div>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={24} md={12} lg={8} xl={8}>
           <Card className="dashboard-card">

@@ -31,25 +31,36 @@ const HeadOrderPage = () => {
     [dispatch]
   );
 
-  const handleDateRangeChange = useCallback((dates) => {
-    if (dates) {
-      dispatch(setDateRange({
-        startDate: dates[0],
-        endDate: dates[1]
-      }));
-    } else {
-      // Xử lý khi người dùng xóa ngày (clear)
-      dispatch(setDateRange({
-        startDate: null,
-        endDate: null
-      }));
-    }
-  }, [dispatch]);
+  const handleDateRangeChange = useCallback(
+    (dates) => {
+      if (dates) {
+        dispatch(
+          setDateRange({
+            startDate: dates[0],
+            endDate: dates[1],
+          })
+        );
+      } else {
+        // Xử lý khi người dùng xóa ngày (clear)
+        dispatch(
+          setDateRange({
+            startDate: null,
+            endDate: null,
+          })
+        );
+      }
+    },
+    [dispatch]
+  );
 
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
-      <WrapperHeaderText span={24} style={{ backgroundColor: "#48b775"}}>Quản lý đơn hàng</WrapperHeaderText>
+      <div style={{ marginLeft: "24px" }} className="header-container">
+        <div className="green-header">
+          <span className="header-title">Quản lý đơn hàng</span>
+        </div>
+      </div>
 
       <WrapperActionRow
         style={{
@@ -185,7 +196,11 @@ const HeadOrderPage = () => {
           <DatePicker.RangePicker
             style={{ height: "38px", marginTop: "-2px" }}
             onChange={handleDateRangeChange}
-            value={dateRange.startDate && dateRange.endDate ? [dateRange.startDate, dateRange.endDate] : null}
+            value={
+              dateRange.startDate && dateRange.endDate
+                ? [dateRange.startDate, dateRange.endDate]
+                : null
+            }
           />
         </WrapperFilterCol>
       </WrapperFilterRow>

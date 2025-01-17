@@ -1,9 +1,4 @@
 /* Dashboard.css */
-.dashboard-container {
-  padding: 10px; /* Even smaller padding for phones */
-  margin-top: 40px;
-}
-
 .dashboard-title {
   background-color: #48c775 !important;
   margin-top: 32px;

@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pagination, Table } from "antd";
+import { Pagination, Table, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
+import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
+
+const { confirm } = Modal;
 
 const BodyMaidTable = () => {
   const navigate = useNavigate();
@@ -12,6 +16,7 @@ const BodyMaidTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
+  const [showNotification, setShowNotification] = useState(null);
 
   const [helpers, setHelpers] = useState([]);
 
@@ -90,7 +95,7 @@ const BodyMaidTable = () => {
               borderRadius: "12px",
             }}
             styleButtonText={{ color: "#fff" }}
-            onClick={() => handleDeleteDetails(record.key)}
+            onClick={() => showDeleteConfirm(record.key)}
           ></ButtonComponent>
         </span>
       ),
@@ -111,25 +116,82 @@ const BodyMaidTable = () => {
     [navigate]
   );
 
-  const handleDeleteDetails = useCallback(
-    (recordId) => {
-      navigate(`/processing/showDetail`);
-    },
-    [navigate]
-  );
+  const showDeleteConfirm = (recordId) => {
+    confirm({
+      title: "Bạn có chắc chắn muốn xóa?",
+      icon: <ExclamationCircleOutlined />,
+      content: "Hành động này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk() {
+        handleDelete(recordId);
+      },
+      onCancel() {
+        console.log("Cancel");
+      },
+    });
+  };
+
+  const handleDelete = async (recordId) => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(
+        `${process.env.REACT_APP_API_URL}admin/helpers/delete/${recordId}`
+      );
+      if (response.status === 200) {
+        // Update state to remove deleted item
+        setHelpers((prevHelpers) =>
+          prevHelpers.filter((helper) => helper.key !== recordId)
+        );
+        setFilteredData((prevFilteredData) =>
+          prevFilteredData.filter((helper) => helper.key !== recordId)
+        );
+        // Optionally show a success message
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Xóa người giúp việc thành công",
+        });
+
+        // Tắt thông báo sau 3 giây
+        setTimeout(() => {
+          setShowNotification(null);
+        }, 3000);
+        console.log("Helper deleted successfully");
+      } else {
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: "Xóa người giúp việc thất bại",
+        });
+        console.error("Error deleting helper:", response.data.error);
+      }
+    } catch (error) {
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `Lỗi khi xóa người giúp việc: ${error.message}`,
+      });
+      console.error("Error deleting helper:", error);
+      // Optionally show an error message
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchHelpers = async () => {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/helpers`
       );
-      console.log(response)
-      const transformedData = response.data.helpers.map(helper => ({
+      console.log(response);
+      const transformedData = response.data.helpers.map((helper) => ({
         key: helper._id,
         phoneNumber: helper.phone,
         idCard: helper.helper_id,
         fullName: helper.fullName,
-        birthDate: new Date(helper.birthDate).toLocaleDateString('vi-VN'),
+        birthDate: new Date(helper.birthDate).toLocaleDateString("vi-VN"),
         address: helper.address,
       }));
       setHelpers(transformedData);
@@ -162,7 +224,6 @@ const BodyMaidTable = () => {
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
 
-
   return (
     <div className="processing-maids-container">
       <Table
@@ -185,12 +246,19 @@ const BodyMaidTable = () => {
           fontSize: "26px",
           transform: "translateX(-20px)",
           marginTop: "10px",
-          position: "fixed", 
+          position: "fixed",
           bottom: "20px",
           left: "50%",
           zIndex: 1000,
         }}
       />
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </div>
   );
 };

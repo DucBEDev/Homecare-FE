@@ -27,7 +27,11 @@ const HeadStaff = () => {
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
-      <h1 span={24}>Quản lý nhân viên</h1>
+      <div style={{ marginLeft: "20px" }} className="header-container">
+        <div className="green-header">
+          <span className="header-title">Quản lý nhân viên</span>
+        </div>
+      </div>
       <Row style={{ marginTop: "-30px", padding: "20px" }}>
         <Col span={24}>
           <div
@@ -46,7 +50,14 @@ const HeadStaff = () => {
         >
           <DropdownSortComponent defaultLabel="Số ĐT nhân viên" />
         </Col>
-        <Col xl={6} lg={8} md={12} sm={24} xs={24} style={{marginLeft:"-50px"}}>
+        <Col
+          xl={6}
+          lg={8}
+          md={12}
+          sm={24}
+          xs={24}
+          style={{ marginLeft: "-50px" }}
+        >
           <InputComponent
             size="large"
             placeholder="Tìm kiếm"

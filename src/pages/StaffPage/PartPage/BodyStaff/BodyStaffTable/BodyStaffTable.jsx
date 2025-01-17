@@ -1,9 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pagination, Table } from "antd";
+import { Pagination, Table, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
+import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
+
+const { confirm } = Modal;
 
 const BodyStaffTable = () => {
   const navigate = useNavigate();
@@ -12,6 +16,7 @@ const BodyStaffTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
+  const [showNotification, setShowNotification] = useState(null);
 
   const [staffs, setStaffs] = useState([]);
 
@@ -90,7 +95,7 @@ const BodyStaffTable = () => {
               borderRadius: "12px",
             }}
             styleButtonText={{ color: "#fff" }}
-            onClick={() => handleDeleteDetails(record.key)}
+            onClick={() => showDeleteConfirm(record.key)}
           />
         </span>
       ),
@@ -102,13 +107,13 @@ const BodyStaffTable = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/staffs`
       );
-      console.log(response)
-      const transformedData = response.data.staffs.map(staff => ({
+      console.log(response);
+      const transformedData = response.data.staffs.map((staff) => ({
         key: staff._id,
         phoneNumber: staff.phone,
         idCard: staff.staff_id,
         fullName: staff.fullName,
-        birthDate: new Date(staff.birthDate).toLocaleDateString('vi-VN'),
+        birthDate: new Date(staff.birthDate).toLocaleDateString("vi-VN"),
         address: staff.address || "Mốt sửa api mới có",
       }));
       setStaffs(transformedData);
@@ -138,7 +143,7 @@ const BodyStaffTable = () => {
 
   const getCurrentPageData = useCallback(() => {
     if (!filteredData) return [];
-    
+
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
@@ -157,12 +162,65 @@ const BodyStaffTable = () => {
     [navigate]
   );
 
-  const handleDeleteDetails = useCallback(
-    (recordId) => {
-      navigate(`/processing/showDetail`);
-    },
-    [navigate]
-  );
+  const showDeleteConfirm = (recordId) => {
+    confirm({
+      title: "Bạn có chắc chắn muốn xóa?",
+      icon: <ExclamationCircleOutlined />,
+      content: "Hành động này không thể hoàn tác.",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk() {
+        handleDelete(recordId);
+      },
+      onCancel() {
+        console.log("Cancel");
+      },
+    });
+  };
+
+  const handleDelete = async (recordId) => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(
+        `${process.env.REACT_APP_API_URL}admin/staffs/delete/${recordId}`
+      );
+      if (response.status === 200) {
+        setStaffs((prevStaffs) =>
+          prevStaffs.filter((staff) => staff.key !== recordId)
+        );
+        setFilteredData((prevFilteredData) =>
+          prevFilteredData.filter((staff) => staff.key !== recordId)
+        );
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Xóa nhân viên thành công",
+        });
+
+        setTimeout(() => {
+          setShowNotification(null);
+        }, 3000);
+        console.log("Staff deleted successfully");
+      } else {
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: "Xóa nhân viên thất bại",
+        });
+        console.error("Error deleting staff:", response.data.error);
+      }
+    } catch (error) {
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `Lỗi khi xóa nhân viên: ${error.message}`,
+      });
+      console.error("Error deleting staff:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="processing-maids-container">
@@ -186,12 +244,19 @@ const BodyStaffTable = () => {
           fontSize: "26px",
           transform: "translateX(-20px)",
           marginTop: "10px",
-          position: "fixed", 
+          position: "fixed",
           bottom: "20px",
           left: "50%",
           zIndex: 1000,
         }}
       />
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </div>
   );
 };

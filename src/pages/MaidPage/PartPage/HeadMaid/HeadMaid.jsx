@@ -27,7 +27,11 @@ const HeadMaid = () => {
   return (
     <>
       <div style={{ marginTop: "90px" }}></div>
-      <h1 span={24}>Quản lý người giúp việc</h1>
+      <div style={{ marginLeft: "20px" }} className="header-container">
+        <div className="green-header">
+          <span className="header-title">Quản lý người giúp việc</span>
+        </div>
+      </div>
       <Row style={{ marginTop: "-30px", padding: "20px" }}>
         <Col span={24}>
           <div
