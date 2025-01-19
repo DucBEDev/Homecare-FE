@@ -42,6 +42,7 @@ const EditProcessingOrder = () => {
         const orderData = response.data;
         console.log("Order data:", orderData);
 
+        // Set giá trị cho các trường trong form
         form.setFieldsValue({
           phone: orderData.request.customerInfo.phone,
           fullName: orderData.request.customerInfo.fullName,
@@ -86,23 +87,37 @@ const EditProcessingOrder = () => {
     }
   }, [orderId, form]);
 
-  //fetch data from backend for actions
+  // Fetch data from backend for actions (locations, services, etc.)
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create`
+          `${process.env.REACT_APP_API_URL}admin/requests/create` // Assuming this endpoint provides locations data
         );
         setDataFetch(response.data);
+
+        if (response.data?.locations) {
+          const formattedLocations = response.data.locations.map(
+            (province) => ({
+              value: province.Name,
+              label: province.Name,
+              children: (province.Districts || []).map((district) => ({
+                value: district.Name,
+                label: district.Name,
+                children: (district.Wards || []).map((ward) => ({
+                  value: ward.Name,
+                  label: ward.Name,
+                })),
+              })),
+            })
+          );
+          setLocations(formattedLocations);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    setLocations(locationsData);
   }, []);
 
   //TOTAL COST
@@ -452,34 +467,6 @@ const EditProcessingOrder = () => {
     updateTotalCost();
   };
 
-  const locationsData = [
-    {
-      value: "ho-chi-minh",
-      label: "Thành phố Hồ Chí Minh",
-      children: [
-        {
-          value: "quan-1",
-          label: "Quận 1",
-          children: [
-            { value: "phuong-ben-nghe", label: "Phường Bến Nghé" },
-            { value: "phuong-ben-thanh", label: "Phường Bến Thành" },
-            { value: "phuong-da-kao", label: "Phường Đa Kao" },
-          ],
-        },
-        {
-          value: "quan-2",
-          label: "Quận 2",
-          children: [
-            { value: "phuong-thao-dien", label: "Phường Thảo Điền" },
-            { value: "phuong-an-phu", label: "Phường An Phú" },
-            { value: "phuong-binh-an", label: "Phường Bình An" },
-          ],
-        },
-      ],
-    },
-    // ... other locations
-  ];
-
   const onFinish = async (values) => {
     const {
       startTime,
@@ -548,6 +535,11 @@ const EditProcessingOrder = () => {
     }
   };
 
+  // Check if dataFetch is loaded before rendering
+  if (!dataFetch || !dataFetch.locations) {
+    return <div>Loading...</div>; // Or a more sophisticated loading indicator
+  }
+
   return (
     <Card className="card" title="Thông tin đơn hàng">
       <Form
@@ -566,7 +558,7 @@ const EditProcessingOrder = () => {
                 { validator: validatePhoneNumber },
               ]}
             >
-              <Input />
+              <Input id="phone" />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -575,7 +567,7 @@ const EditProcessingOrder = () => {
               label="Họ và Tên KH"
               rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
             >
-              <Input />
+              <Input id="fullName" />
             </Form.Item>
           </Col>
         </Row>
@@ -587,7 +579,7 @@ const EditProcessingOrder = () => {
               label="Địa Chỉ Khách Hàng"
               rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
             >
-              <Input />
+              <Input id="address" />
             </Form.Item>
           </Col>
           <Col span={8} className="location-custom">

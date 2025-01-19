@@ -98,7 +98,7 @@ const BodyMaidTable = () => {
               borderRadius: "12px",
             }}
             styleButtonText={{ color: "#fff" }}
-            onClick={() => showDeleteConfirm(record.key)}
+            onClick={() => handleDelete(record.key)}
           />
         </span>
       ),
@@ -122,64 +122,14 @@ const BodyMaidTable = () => {
     setIsModalVisible(true);
   };
 
-  const showDeleteConfirm = (recordId) => {
-    confirm({
-      title: "Bạn có chắc chắn muốn xóa?",
-      icon: <ExclamationCircleOutlined />,
-      content: "Hành động này không thể hoàn tác.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk() {
-        handleDelete(recordId);
-      },
-      onCancel() {
-        console.log("Cancel");
-      },
+  const handleDelete = (recordId) => {
+    const selected = helpers.find((helper) => helper.key === recordId);
+    setSelectedHelper(selected);
+    form.setFieldsValue({
+      ...selected,
+      birthDate: dayjs(selected.birthDate, "DD/MM/YYYY"),
     });
-  };
-
-  const handleDelete = async (recordId) => {
-    setLoading(true);
-    try {
-      const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}admin/helpers/delete/${recordId}`
-      );
-      if (response.status === 200) {
-        setHelpers((prevHelpers) =>
-          prevHelpers.filter((helper) => helper.key !== recordId)
-        );
-        setFilteredData((prevFilteredData) =>
-          prevFilteredData.filter((helper) => helper.key !== recordId)
-        );
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Xóa người giúp việc thành công",
-        });
-
-        setTimeout(() => {
-          setShowNotification(null);
-        }, 3000);
-        console.log("Helper deleted successfully");
-      } else {
-        setShowNotification({
-          status: "error",
-          message: "Thất bại",
-          description: "Xóa người giúp việc thất bại",
-        });
-        console.error("Error deleting helper:", response.data.error);
-      }
-    } catch (error) {
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: `Lỗi khi xóa người giúp việc: ${error.message}`,
-      });
-      console.error("Error deleting helper:", error);
-    } finally {
-      setLoading(false);
-    }
+    setIsModalVisible(true);
   };
 
   const fetchHelpers = async () => {
@@ -227,66 +177,6 @@ const BodyMaidTable = () => {
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData]);
 
-  const handleOk = () => {
-    form.submit();
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const onFinish = async (values) => {
-    try {
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/helpers/edit/${selectedHelper.key}`,
-        {
-          ...values,
-          birthDate: values.birthDate.format("YYYY-MM-DD"),
-        }
-      );
-
-      if (response.data.success) {
-        const updatedHelpers = helpers.map((helper) =>
-          helper.key === selectedHelper.key
-            ? {
-                ...helper,
-                ...values,
-                birthDate: values.birthDate.format("DD/MM/YYYY"),
-              }
-            : helper
-        );
-        setHelpers(updatedHelpers);
-        setFilteredData(updatedHelpers);
-        setIsModalVisible(false);
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Cập nhật thông tin người giúp việc thành công!",
-        });
-      } else {
-        setShowNotification({
-          status: "error",
-          message: "Thất bại",
-          description: response.data.msg,
-        });
-      }
-    } catch (error) {
-      console.error("Error updating helper:", error);
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: "Cập nhật thông tin người giúp việc thất bại!",
-      });
-    }
-    setTimeout(() => {
-      setShowNotification(null);
-    }, 3000);
-  };
-
-  const disabledDate = (current) => {
-    return current && current > dayjs().endOf("day");
-  };
-
   return (
     <div className="processing-maids-container">
       <Table
@@ -315,61 +205,6 @@ const BodyMaidTable = () => {
           zIndex: 1000,
         }}
       />
-      {showNotification && (
-        <NotificationComponent
-          status={showNotification.status}
-          message={showNotification.message}
-          description={showNotification.description}
-        />
-      )}
-      <Modal
-        title="Chỉnh sửa thông tin người giúp việc"
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        okText="Lưu"
-        cancelText="Hủy"
-      >
-        <Form form={form} layout="vertical" onFinish={onFinish}>
-          <Form.Item
-            name="phoneNumber"
-            label="Số điện thoại"
-            rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
-            ]}
-          >
-            <Input style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="idCard"
-            label="CMND"
-            rules={[{ required: true, message: "Vui lòng nhập CMND!" }]}
-          >
-            <Input style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="fullName"
-            label="Họ tên"
-            rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
-          >
-            <Input style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="birthDate"
-            label="Ngày sinh"
-            rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}
-          >
-            <DatePicker format="DD/MM/YYYY" disabledDate={disabledDate} />
-          </Form.Item>
-          <Form.Item
-            name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
-          >
-            <Input style={{ width: "100%" }} />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 };

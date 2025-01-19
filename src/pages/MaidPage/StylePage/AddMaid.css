@@ -1,0 +1,8 @@
+.system-page-select .ant-select-selector {
+  min-height: 10px;
+  border: none !important; /* Xóa border */
+  width: 100% !important;
+}
+
+.ant-date-dateBirth {
+}

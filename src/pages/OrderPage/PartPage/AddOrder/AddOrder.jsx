@@ -112,7 +112,8 @@ const AddOrder = () => {
         const dayOfWeek = currentDate.day();
         const dailyHours = end.diff(start, "hour");
 
-        if (dayOfWeek === 0 || dayOfWeek === 6) { //cuoi tuan t7 cn
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          //cuoi tuan t7 cn
           let normalHours = 0;
           let overtimeHours = 0;
 
@@ -124,7 +125,8 @@ const AddOrder = () => {
           }
           normalHours = dailyHours - overtimeHours;
 
-          const weekendCost = basicPrice * normalHours * coefficient_service * coefficientWeekend;
+          const weekendCost =
+            basicPrice * normalHours * coefficient_service * coefficientWeekend;
           const overtimeCost =
             basicPrice *
             overtimeHours *
@@ -173,7 +175,8 @@ const AddOrder = () => {
         }
         normalHours = dailyHours - overtimeHours;
 
-        const weekendCost = basicPrice * normalHours * coefficient_service * coefficientWeekend;
+        const weekendCost =
+          basicPrice * normalHours * coefficient_service * coefficientWeekend;
         const overtimeCost =
           basicPrice *
           overtimeHours *
@@ -241,7 +244,7 @@ const AddOrder = () => {
     if (Array.isArray(orderDate)) {
       const startDate = orderDate[0];
       const endDate = orderDate[1];
-      
+
       // Kiểm tra xem có ngày nào trong khoảng là cuối tuần không
       let currentDate = startDate;
       while (currentDate.isSameOrBefore(endDate)) {
@@ -249,9 +252,9 @@ const AddOrder = () => {
         if (currentDay === saturday || currentDay === sunday) {
           return coefficientWeekend;
         }
-        currentDate = currentDate.add(1, 'day');
+        currentDate = currentDate.add(1, "day");
       }
-  
+
       // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
       if (
         (orderStartMinutes >= dayStartMinutes &&
@@ -260,11 +263,10 @@ const AddOrder = () => {
       ) {
         return coefficientOutside;
       }
-  
+
       return coefficientNormal;
     }
 
-    
     // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
     if (
       (orderStartMinutes >= dayStartMinutes &&
@@ -363,7 +365,7 @@ const AddOrder = () => {
 
   const disabledDate = (current) => {
     // Không cho phép chọn ngày trong quá khứ (trước ngày hôm nay)
-    return current && current < dayjs().startOf('day');
+    return current && current < dayjs().startOf("day");
   };
 
   /*handle validate phone number*/
@@ -386,84 +388,23 @@ const AddOrder = () => {
   };
 
   /*fetch location data*/
-  const locationsData = [
-    {
-      value: "ho-chi-minh",
-      label: "Thành phố Hồ Chí Minh",
-      children: [
-        {
-          value: "quan-1",
-          label: "Quận 1",
-          children: [
-            { value: "phuong-ben-nghe", label: "Phường Bến Nghé" },
-            { value: "phuong-ben-thanh", label: "Phường Bến Thành" },
-            { value: "phuong-da-kao", label: "Phường Đa Kao" },
-          ],
-        },
-        {
-          value: "quan-2",
-          label: "Quận 2",
-          children: [
-            { value: "phuong-thao-dien", label: "Phường Thảo Điền" },
-            { value: "phuong-an-phu", label: "Phường An Phú" },
-            { value: "phuong-binh-an", label: "Phường Bình An" },
-          ],
-        },
-      ],
-    },
-    {
-      value: "ha-noi",
-      label: "Hà Nội",
-      children: [
-        {
-          value: "quan-hoan-kiem",
-          label: "Quận Hoàn Kiếm",
-          children: [
-            { value: "phuong-hang-bac", label: "Phường Hàng Bạc" },
-            { value: "phuong-hang-bo", label: "Phường Hàng Bồ" },
-            { value: "phuong-cua-dong", label: "Phường Cửa Đông" },
-          ],
-        },
-        {
-          value: "quan-ba-dinh",
-          label: "Quận Ba Đình",
-          children: [
-            { value: "phuong-truc-bach", label: "Phường Trúc Bạch" },
-            { value: "phuong-vinh-phuc", label: "Phường Vĩnh Phúc" },
-            { value: "phuong-cong-vi", label: "Phường Cống Vị" },
-          ],
-        },
-      ],
-    },
-    {
-      value: "da-nang",
-      label: "Đà Nẵng",
-      children: [
-        {
-          value: "quan-hai-chau",
-          label: "Quận Hải Châu",
-          children: [
-            { value: "phuong-thanh-binh", label: "Phường Thanh Bình" },
-            { value: "phuong-thuan-phuoc", label: "Phường Thuận Phước" },
-            { value: "phuong-hoa-thuan-dong", label: "Phường Hòa Thuận Đông" },
-          ],
-        },
-        {
-          value: "quan-son-tra",
-          label: "Quận Sơn Trà",
-          children: [
-            { value: "phuong-man-thai", label: "Phường Mân Thái" },
-            { value: "phuong-phuoc-my", label: "Phường Phước Mỹ" },
-            { value: "phuong-an-hai-bac", label: "Phường An Hải Bắc" },
-          ],
-        },
-      ],
-    },
-  ];
   useEffect(() => {
-    // fetchLocations();
-    setLocations(locationsData);
-  }, []);
+    if (dataFetch && dataFetch.locations) {
+      const formattedLocations = dataFetch.locations.map((province) => ({
+        value: province.Name,
+        label: province.Name,
+        children: province.Districts.map((district) => ({
+          value: district.Name,
+          label: district.Name,
+          children: district.Wards.map((ward) => ({
+            value: ward.Name,
+            label: ward.Name,
+          })),
+        })),
+      }));
+      setLocations(formattedLocations);
+    }
+  }, [dataFetch]);
 
   /*onFinish create order*/
   const onFinish = (values) => {
@@ -507,7 +448,7 @@ const AddOrder = () => {
     };
 
     // Send data to backend
-    console.log("dttaforbe", dataForBackend)
+    console.log("dttaforbe", dataForBackend);
     axios
       .post(
         `${process.env.REACT_APP_API_URL}admin/requests/create`,
@@ -655,9 +596,15 @@ const AddOrder = () => {
               ]}
             >
               {requestType === "short" ? (
-                <DatePicker onChange={handleDateChange} disabledDate={disabledDate}/>
+                <DatePicker
+                  onChange={handleDateChange}
+                  disabledDate={disabledDate}
+                />
               ) : (
-                <DatePicker.RangePicker onChange={handleDateChange} disabledDate={disabledDate}/>
+                <DatePicker.RangePicker
+                  onChange={handleDateChange}
+                  disabledDate={disabledDate}
+                />
               )}
             </Form.Item>
           </Col>

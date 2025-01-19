@@ -279,9 +279,8 @@ const SystemPage = () => {
               </Col>
             </Row>
             <Row gutter={16}>
-              {/* <Col span={12}>
+              <Col span={12}>
                 <Form.Item name="workingDays" label="Ngày làm việc trong tuần">
-                
                   <Select
                     mode="multiple"
                     placeholder="Chọn ngày"
@@ -296,7 +295,7 @@ const SystemPage = () => {
                     <Option value="Sunday">Chủ Nhật</Option>
                   </Select>
                 </Form.Item>
-              </Col> */}
+              </Col>
               <Col span={12}>
                 <Form.Item
                   name="holidays"
