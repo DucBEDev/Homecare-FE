@@ -78,6 +78,10 @@
   border-radius: 50%; /* Make it a circle */
   margin-left: 8px; /* Add some space between the button and the dot */
 }
+.scrollable-column {
+  max-height: 400px;
+  overflow-y: auto; /* Thêm dòng này */
+}
 /* Responsive */
 
 /* max-width: 320px (điện thoại di động, hiển thị chiều dọc) */

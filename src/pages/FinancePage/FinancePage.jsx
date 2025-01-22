@@ -144,7 +144,7 @@ const FinancialPage = () => {
       if (selectedCoefficientType === "serviceCoefficients") {
         dataApplyTo = "service";
       } else if (selectedCoefficientType === "maidCoefficients") {
-        dataApplyTo = "maid";
+        dataApplyTo = "helper";
       } else if (selectedCoefficientType === "otherCoefficients") {
         dataApplyTo = "other";
       }
@@ -167,12 +167,14 @@ const FinancialPage = () => {
         }
       );
 
-      if (response.data.success) {
+      if (response.status >= 200 && response.status < 300) {
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Thêm mới hệ số thành công",
         });
+        console.log("showNotification:", showNotification);
+
         fetchData();
         setAddModalVisible(false);
       } else {
@@ -321,7 +323,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px", marginLeft: "20px" }}
+                style={{ maxHeight: "100%", marginLeft: "20px" }}
               >
                 <Title
                   style={{
@@ -429,7 +431,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px" }}
+                style={{ maxHeight: "100%" }}
               >
                 <Title
                   style={{
@@ -539,7 +541,7 @@ const FinancialPage = () => {
                 lg={8}
                 xl={7}
                 className="scrollable-column"
-                style={{ maxHeight: "400px" }}
+                style={{ maxHeight: "100%" }}
               >
                 <Title
                   style={{
