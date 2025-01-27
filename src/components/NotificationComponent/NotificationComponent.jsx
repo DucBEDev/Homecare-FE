@@ -2,9 +2,10 @@ import { useEffect } from "react";
 import { notification } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons"; // Import biểu tượng
 import "./NotificationComponent.css";
-const [api, contextHolder] = notification.useNotification();
 
 const NotificationComponent = ({ status, message, description }) => {
+  const [api, contextHolder] = notification.useNotification();
+
   const openNotification = () => {
     if (status === "success") {
       api.open({
