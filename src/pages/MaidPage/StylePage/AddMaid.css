@@ -4,5 +4,12 @@
   width: 100% !important;
 }
 
-.ant-date-dateBirth {
+.system-page-select .ant-select-selector {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ant-input-number-input-wrap {
+  width: 100%;
 }

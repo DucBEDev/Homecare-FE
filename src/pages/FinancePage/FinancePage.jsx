@@ -381,6 +381,7 @@ const FinancialPage = () => {
                         >
                           <InputNumber
                             min={0}
+                            step={0.1}
                             style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
                           />
@@ -489,6 +490,7 @@ const FinancialPage = () => {
                         >
                           <InputNumber
                             min={0}
+                            step={0.1}
                             style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
                           />
@@ -598,6 +600,7 @@ const FinancialPage = () => {
                           ]}
                         >
                           <InputNumber
+                            step={0.1}
                             min={coefficient.min || 0}
                             style={{ width: "100%" }}
                             className="financial-page-input-number custom-input-number"
@@ -683,6 +686,7 @@ const FinancialPage = () => {
                   rules={[{ required: true, message: "Vui lòng nhập giá trị" }]}
                 >
                   <InputNumber
+                    step={0.1}
                     style={{ width: "100%", height: "32px" }}
                     className="custom-input-number"
                   />
@@ -756,6 +760,7 @@ const FinancialPage = () => {
                   rules={[{ required: true, message: "Vui lòng nhập giá trị" }]}
                 >
                   <InputNumber
+                    step={0.1}
                     style={{ width: "100%", height: "32px" }}
                     className="custom-input-number"
                   />

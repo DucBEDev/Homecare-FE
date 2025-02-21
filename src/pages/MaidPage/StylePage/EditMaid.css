@@ -1,0 +1,11 @@
+.system-page-select .ant-select-selector {
+    min-height: 10px;
+    border: none !important; /* Xóa border */
+    width: 100% !important;
+  }
+  
+  .system-page-select .ant-select-selector {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }

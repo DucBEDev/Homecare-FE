@@ -306,6 +306,9 @@ const AddOrder = () => {
   //*HANDLE SET TIME*/
   //condition only choose hour in working time
   const disabledHours = () => {
+    if (!dataFetch || !dataFetch.timeList) { 
+      return []; // trả về một mảng giờ mặc định
+    }
     const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
@@ -318,6 +321,9 @@ const AddOrder = () => {
   };
   //condition only choose hour in working time
   const disabledMinutes = (selectedHour) => {
+    if (!dataFetch || !dataFetch.timeList) {  
+      return []; //trả về một mảng phút mặc định
+    }
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const minutes = [];
     if (selectedHour === closeHour) {
@@ -501,7 +507,7 @@ const AddOrder = () => {
           <Col span={10}>
             <Form.Item
               name="phone"
-              label="Số Điện Thoại KH"
+              label="Số điện thoại KH"
               rules={[
                 { required: true, message: "Vui lòng nhập số điện thoại!" },
                 { validator: validatePhoneNumber },
@@ -513,7 +519,7 @@ const AddOrder = () => {
           <Col span={12}>
             <Form.Item
               name="fullName"
-              label="Họ và Tên KH"
+              label="Họ và tên KH"
               rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
             >
               <Input />
@@ -525,7 +531,7 @@ const AddOrder = () => {
           <Col span={10}>
             <Form.Item
               name="address"
-              label="Địa Chỉ Khách Hàng"
+              label="Địa chỉ khách hàng"
               rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
             >
               <Input />
@@ -551,7 +557,7 @@ const AddOrder = () => {
           <Col span={7}>
             <Form.Item
               name="serviceTitle"
-              label="Loại Dịch Vụ"
+              label="Loại dịch dụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
               <Radio.Group
@@ -573,7 +579,7 @@ const AddOrder = () => {
             </Form.Item>
           </Col>
           <Col span={5}>
-            <Form.Item name="requestType" label="Loại Yêu Cầu">
+            <Form.Item name="requestType" label="Loại yêu cầu">
               <Radio.Group onChange={handleRequestType}>
                 <Radio value="short">Ngắn hạn</Radio>
                 <Radio value="long">Dài hạn</Radio>
@@ -585,7 +591,7 @@ const AddOrder = () => {
               name="workDate"
               label={
                 requestType === "short"
-                  ? "Ngày Làm Việc"
+                  ? "Ngày làm việc"
                   : "Khoảng Thời Gian Làm Việc"
               }
               rules={[
@@ -611,10 +617,10 @@ const AddOrder = () => {
         </Row>
 
         <Row>
-          <Col span={3}>
+          <Col span={3} style={{marginRight:"18px"}}>
             <Form.Item
               name="startTime"
-              label="Giờ Bắt Đầu"
+              label="Giờ bắt đầu"
               rules={[
                 { required: true, message: "Vui lòng chọn giờ bắt đầu!" },
               ]}
@@ -631,10 +637,10 @@ const AddOrder = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={3}>
+          <Col span={3} style={{marginRight:"18px"}}>
             <Form.Item
               name="endTime"
-              label="Giờ Kết Thúc"
+              label="Giờ kết thúc"
               rules={[
                 { required: true, message: "Vui lòng chọn giờ kết thúc!" },
               ]}
@@ -655,9 +661,11 @@ const AddOrder = () => {
             <Form.Item
               name="coefficient_other"
               label="Hệ số"
-              rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
+              rules={[
+                {required: true}
+              ]}
             >
-              <Input disabled value={coefficient} />
+              <Input disabled value={coefficient} style={{height: "38px", width: "80%"}}/>
             </Form.Item>
           </Col>
         </Row>

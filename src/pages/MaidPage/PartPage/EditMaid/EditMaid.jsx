@@ -6,27 +6,26 @@ import {
   DatePicker,
   Select,
   InputNumber,
+  Upload,
   message,
   Row,
   Col,
   Typography,
   Cascader,
-  Radio,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
-import "../../StylePage/AddMaid.css";
+import "../../StylePage/EditMaid.css";
 
 const { Option } = Select;
-const { Title } = Typography;
 
-const AddMaid = () => {
+const EditMaid = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState(null);
-  const [healthCert, setHealthCert] = useState(null);
-  const [locationWork, setLocationWork] = useState([]);
+  const [avatarList, setAvatarList] = useState([]);
+  const [healthCertList, setHealthCertList] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [dataFetch, setDataFetch] = useState([]);
 
   const dayOrder = {
@@ -49,10 +48,7 @@ const AddMaid = () => {
   };
 
   const beforeUpload = (file) => {
-    const isJpgOrPng =
-      file.type === "image/jpeg" ||
-      file.type === "image/png" ||
-      file.type === "image/jpg";
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/jpg";
     if (!isJpgOrPng) {
       message.error("Bạn chỉ có thể tải lên file JPG/PNG!");
     }
@@ -63,140 +59,87 @@ const AddMaid = () => {
     return isJpgOrPng && isLt2M;
   };
 
-
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    setAvatar(file);
+  const handleAvatarChange = ({ fileList: newFileList }) => {
+    setAvatarList(newFileList);
   };
 
-  const handleHealthCertChange = (e) => {
-    const file = e.target.files[0];
-    setHealthCert(file);
+  const handleHealthCertChange = ({ fileList: newFileList }) => {
+    setHealthCertList(newFileList);
   };
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // Log the initial values to verify data
-      console.log("Form Values:", values);
-
       const formData = new FormData();
       const requestData = {
         helper_id: values.cmnd,
-        fullName: values.hoTen,
+        name: values.hoTen,
         phone: values.sdt,
-        birthDate: values.ngaysinh.format("YYYY-MM-DD"),
+        birth_date: values.ngaysinh.format("YYYY-MM-DD"),
         gender: values.gioiTinh,
         ethnic: values.danToc,
-        educationLevel: values.trinhDoHocVan, // Change education to educationLevel
+        education: values.trinhDoHocVan,
         height: values.chieuCao,
         weight: values.canNang,
-        birthPlace: values.queQuan, // Changed to match the schema
-        address: values.diaChiThuongTru, // Changed to match the schema
-        yearOfExperience: values.soNamKinhNghiem,
-        experienceDescription: values.moTaKinhNghiem,
-        baseFactor: values.heSo,
-        status: "active",
+        hometown: values.queQuan,
+        permanent_address: values.diaChiThuongTru,
+        experience_years: values.soNamKinhNghiem,
+        experience_desc: values.moTaKinhNghiem,
+        working_days: values.workingDays,
+        coefficient: values.heSo,
+        status: values.trangThai,
       };
-
-      // Log requestData to verify object structure
-      console.log("Request Data:", requestData);
-
+  
       // Xử lý location (workingArea)
-      if (values.khuVucLamViec && values.khuVucLamViec.length >= 2) {  // Use khuVucLamViec (area of working) instead of location
-        requestData.workingArea = {
-          province: values.khuVucLamViec[0],
-          districts: [values.khuVucLamViec[1]]
-        };
+      if (values.location && values.location.length >= 2) {
+        requestData.province = values.location[0];
+        requestData.districts = [values.location[1]]; // Backend expect array of districts
       }
-
-      // Service title
-      if(values.serviceTitle){
-        requestData.jobDetail = values.serviceTitle
-      }
-
-      // Append all text data with explicit type checking
-      Object.keys(requestData).forEach((key) => {
+  
+      // Append tất cả dữ liệu text
+      Object.keys(requestData).forEach(key => {
         if (requestData[key] !== undefined && requestData[key] !== null) {
           if (Array.isArray(requestData[key])) {
-            // Handle arrays properly
-            requestData[key].forEach((value) => {
-              formData.append(`${key}[]`, value);
-            });
-          } else if (typeof requestData[key] === 'object') {
-            // Handle workingArea object
-            Object.keys(requestData[key]).forEach(subKey => {
-              if (Array.isArray(requestData[key][subKey])) {
-                requestData[key][subKey].forEach(value => {
-                  formData.append(`workingArea[${subKey}][]`, value);
-                });
-              } else {
-                formData.append(`workingArea[${subKey}]`, String(requestData[key][subKey]));
-              }
+            requestData[key].forEach(value => {
+              formData.append(key, value);
             });
           } else {
-            // Convert numbers to strings if necessary
-            formData.append(key, String(requestData[key]));
+            formData.append(key, requestData[key]);
           }
         }
       });
-
-      // Handle file uploads with error checking
-      if (avatar) {
-        formData.append("avatar", avatar);
+  
+      // Append avatar nếu có
+      if (avatarList && avatarList.length > 0) {
+        formData.append("avatar", avatarList[0].originFileObj);
       }
-
-      if (healthCert) {
-        formData.append("healthCertificates", healthCert);  // Changed to match the schema and pluralized
+  
+      // Append health certificate nếu có
+      if (healthCertList && healthCertList.length > 0) {
+        formData.append("health_cert", healthCertList[0].originFileObj);
       }
-
-      console.log("Nội dung FormData:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ": " + pair[1]);
-      }
-
-
-      // Add error handling for the API call
-      try {
-        const response = await axios.post(
-          `${process.env.REACT_APP_API_URL}admin/helpers/create`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        if (response.data.success === false) {
-          message.error(response.data.msg);
-        } else {
-          message.success("Thêm người giúp việc thành công");
-          form.resetFields();
-          setAvatar(null);
-          setHealthCert(null);
+  
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}admin/helpers/create`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      } catch (axiosError) {
-        console.error("API Error:", axiosError);
-        if (axiosError.response) {
-          console.error("Response Data:", axiosError.response.data);
-          console.error("Response Status:", axiosError.response.status);
-          message.error(
-            `Lỗi: ${
-              axiosError.response.data.error || "Không thể kết nối đến server"
-            }`
-          );
-        } else if (axiosError.request) {
-          console.error("Request Error:", axiosError.request);
-          message.error("Không nhận được phản hồi từ server");
-        } else {
-         console.error("Error Message:", axiosError.message);
-          message.error("Lỗi khi gửi yêu cầu");
-        }
+      );
+  
+      if (response.data.success === false) {
+        message.error(response.data.msg);
+      } else {
+        message.success("Thêm người giúp việc thành công");
+        form.resetFields();
+        setAvatarList([]);
+        setHealthCertList([]);
       }
     } catch (error) {
-      console.error("Form Processing Error:", error);
-      message.error("Lỗi xử lý form: " + error.message);
+      console.error("Error adding helper:", error);
+      message.error("Lỗi khi thêm người giúp việc: " + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -209,7 +152,6 @@ const AddMaid = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}admin/requests/create`
         );
-        console.log(response);
         setDataFetch(response.data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -221,15 +163,19 @@ const AddMaid = () => {
   // Add new useEffect for formatting locations data
   useEffect(() => {
     if (dataFetch && dataFetch.locations) {
-      const formattedLocationWork = dataFetch.locations.map((province) => ({
+      const formattedLocations = dataFetch.locations.map((province) => ({
         value: province.Name,
         label: province.Name,
         children: province.Districts.map((district) => ({
           value: district.Name,
           label: district.Name,
+          children: district.Wards.map((ward) => ({
+            value: ward.Name,
+            label: ward.Name,
+          })),
         })),
       }));
-      setLocationWork(formattedLocationWork);
+      setLocations(formattedLocations);
     }
   }, [dataFetch]);
 
@@ -442,29 +388,39 @@ const AddMaid = () => {
               <Input placeholder="Nhập địa chỉ thường trú" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col span={12} className="location-custom">
             <Form.Item
-              name="serviceTitle"
-              label="Loại dịch vụ"
-              rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
+              name="location"
+              label="Địa điểm"
+              rules={[
+                { required: true, message: "Vui lòng chọn địa điểm!" },
+              ]}
             >
-              <Radio.Group className="service-radio-group">
-                {dataFetch &&
-                dataFetch.serviceList &&
-                dataFetch.serviceList.length > 0 ? (
-                  dataFetch.serviceList.map((service, index) => (
-                    <Radio key={index} value={service.title}>
-                      {service.title}
-                    </Radio>
-                  ))
-                ) : (
-                  <div>Đang tải dịch vụ...</div>
-                )}
-              </Radio.Group>
+              <Cascader
+                options={locations}
+                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                showSearch
+                changeOnSelect
+                className="cascader-custom"
+              />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="khuVucLamViec"
+              label="Khu vực làm việc"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập khu vực làm việc",
+                },
+              ]}
+            >
+              <Input placeholder="Nhập khu vực làm việc" />
+            </Form.Item>
+          </Col>
           <Col span={12}>
             <Form.Item
               name="soNamKinhNghiem"
@@ -473,9 +429,8 @@ const AddMaid = () => {
                 {
                   required: true,
                   message: "Vui lòng nhập số năm kinh nghiệm",
-                },
-                {
-                  type: "number",
+                },{
+                  type: 'number', 
                   message: "Vui lòng nhập số",
                 },
               ]}
@@ -490,26 +445,6 @@ const AddMaid = () => {
                   alignItems: "center",
                 }}
                 placeholder="Nhập số năm kinh nghiệm"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12} className="location-custom">
-            <Form.Item
-              name="khuVucLamViec"
-              label="Khu vực làm việc"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập khu vực làm việc",
-                },
-              ]}
-            >
-              <Cascader
-                options={locationWork}
-                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện"
-                showSearch
-                changeOnSelect
-                className="cascader-custom"
               />
             </Form.Item>
           </Col>
@@ -560,9 +495,8 @@ const AddMaid = () => {
                 {
                   required: true,
                   message: "Vui lòng nhập hệ số",
-                },
-                {
-                  type: "number", // Thêm rule này
+                },  {
+                  type: 'number', // Thêm rule này
                   message: "Vui lòng nhập số",
                 },
               ]}
@@ -583,29 +517,60 @@ const AddMaid = () => {
           </Col>
         </Row>
         <Row gutter={16}>
-          <Col span={24}>
+          <Col span={12}>
             <Form.Item name="moTaKinhNghiem" label="Mô tả kinh nghiệm">
               <Input.TextArea rows={4} placeholder="Nhập mô tả kinh nghiệm" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="trangThai"
+              label="Trạng thái"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng chọn trạng thái",
+                },
+              ]}
+            >
+              <Select placeholder="Chọn trạng thái">
+                <Option value="hoat_dong">Hoạt động</Option>
+                <Option value="dung_hoat_dong">Dừng hoạt động</Option>
+              </Select>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="avatar" label="Hình ảnh">
-              <Input
-                type="file"
-                accept=".jpg,.jpeg,.png"
+            <Form.Item name="hinhAnh" label="Hình ảnh">
+              <Upload
+                fileList={avatarList}
                 onChange={handleAvatarChange}
-              />
+                beforeUpload={beforeUpload}
+                listType="picture"
+                maxCount={1}
+                multiple={true}
+              >
+                <Button icon={<UploadOutlined style={{ fontSize: "16px" }} />}>
+                  Chọn ảnh
+                </Button>
+              </Upload>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ">
-              <Input
-                type="file"
-                accept=".jpg,.jpeg,.png"
+            <Form.Item name="giayKhamSucKhoe" label="Giấy khám sức khoẻ">
+              <Upload
+                fileList={healthCertList}
                 onChange={handleHealthCertChange}
-              />
+                beforeUpload={beforeUpload}
+                listType="picture"
+                maxCount={1}
+                multiple={true}
+              >
+                <Button icon={<UploadOutlined style={{ fontSize: "16px" }} />}>
+                  Chọn file
+                </Button>
+              </Upload>
             </Form.Item>
           </Col>
         </Row>
@@ -624,4 +589,4 @@ const AddMaid = () => {
   );
 };
 
-export default AddMaid;
+export default EditMaid;

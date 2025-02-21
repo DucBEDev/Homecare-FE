@@ -99,6 +99,8 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
 
   // Update the disabled hours function
   const disabledHours = () => {
+    
+
     if (!timeList) return [];
 
     const openHour = parseInt(timeList.openHour.split(":")[0], 10);

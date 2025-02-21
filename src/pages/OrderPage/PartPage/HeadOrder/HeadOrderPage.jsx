@@ -101,7 +101,7 @@ const HeadOrderPage = () => {
             <FileExcelOutlined />
           </ButtonComponent>
         </WrapperActionCol>
-
+{/* 
         <WrapperActionCol xl={12} lg={4} md={2} sm={1} xs={8}>
           <ButtonComponent
             size="large"
@@ -115,7 +115,7 @@ const HeadOrderPage = () => {
           >
             <FileExcelOutlined />
           </ButtonComponent>
-        </WrapperActionCol>
+        </WrapperActionCol> */}
       </WrapperActionRow>
 
       <WrapperFilterRow

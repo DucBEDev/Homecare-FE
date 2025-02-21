@@ -8,6 +8,8 @@ import axios from "axios";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 import dayjs from "dayjs";
 
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
+
 const { confirm } = Modal;
 
 const BodyMaidTable = () => {
@@ -22,6 +24,9 @@ const BodyMaidTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedHelper, setSelectedHelper] = useState(null);
   const [form] = Form.useForm();
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
 
   const columns = [
     {
@@ -53,6 +58,12 @@ const BodyMaidTable = () => {
       dataIndex: "address",
       key: "address",
       sorter: (a, b) => a.address.localeCompare(b.address),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
       title: "Lựa chọn",
@@ -124,19 +135,25 @@ const BodyMaidTable = () => {
 
   const handleDelete = (recordId) => {
     const selected = helpers.find((helper) => helper.key === recordId);
-    setSelectedHelper(selected);
-    form.setFieldsValue({
-      ...selected,
-      birthDate: dayjs(selected.birthDate, "DD/MM/YYYY"),
-    });
-    setIsModalVisible(true);
+    setSelectedDeleteRecord(selected);
+    setIsDeleteModalVisible(true);
   };
+
+  const handleDeleteSuccess = useCallback((deletedHelper) => {
+    setHelpers((prevHelpers) =>
+      prevHelpers.filter((helper) => helper.key !== deletedHelper.key)
+    );
+    setFilteredData((prevData) =>
+      prevData.filter((helper) => helper.key !== deletedHelper.key)
+    );
+  }, []);
 
   const fetchHelpers = async () => {
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/helpers`
       );
+      console.log(response);
       const transformedData = response.data.helpers.map((helper) => ({
         key: helper._id,
         phoneNumber: helper.phone,
@@ -146,6 +163,7 @@ const BodyMaidTable = () => {
           ? dayjs(helper.birthDate).format("DD/MM/YYYY")
           : "",
         address: helper.address,
+        status: helper.status === "active" ? "Hoạt động" : "Không hoạt động",
       }));
       setHelpers(transformedData);
       setFilteredData(transformedData);
@@ -204,6 +222,12 @@ const BodyMaidTable = () => {
           left: "50%",
           zIndex: 1000,
         }}
+      />
+      <PopupModalDelete
+        isVisible={isDeleteModalVisible}
+        onClose={() => setIsDeleteModalVisible(false)}
+        onDelete={handleDeleteSuccess}
+        record={selectedDeleteRecord}
       />
     </div>
   );
