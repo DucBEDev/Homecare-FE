@@ -62,6 +62,11 @@ const NavbarComponent = () => {
             key: "/customer",
             icon: <TeamOutlined />,
           },
+          {
+            label: "Bài viết",
+            key: "/blog",
+            icon: <TeamOutlined />,
+          },
           // {
           //   label: "Quản lý dịch vụ",
           //   key: "/service",

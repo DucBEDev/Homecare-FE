@@ -8,6 +8,7 @@ import StaffPage from "../pages/StaffPage/PartPage/StaffPage/StaffPage";
 import SystemPage from "../pages/SystemPage/SystemPage";
 import PermissionPage from "../pages/PermissionPage/PermissionPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
+import BlogPage from "../pages/BlogPage/BlogPage/BlogPage";
 
 // Import các component con của OrderPage
 import ProcessingOrders from "../pages/OrderPage/PartPage/ProcessingOrders/ProcessingOrders";
@@ -24,6 +25,10 @@ import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable
 //import component con cua CustomerPage
 import BodyCustomerTable from "../pages/CustomerPage/PartPage/BodyCustomer/BodyCustomerTable/BodyCustomerTable";
 import ListOrderCustomer from "../pages/CustomerPage/PartPage/BodyCustomer/ListOrderCustomer/ListOrderCustomer";
+//import component con cua BlogPage
+import BodyBlog from "../pages/BlogPage/BodyBlog/BodyBlog";
+import AddBlog from "../pages/BlogPage/AddPage/AddPage";
+import ViewBlog from "../pages/BlogPage/ViewPage/ViewPage";
 
 export const routes = [
   {
@@ -80,6 +85,28 @@ export const routes = [
   {
     path: "/account",
     page: AccountPage,
+    isShowHeader: true,
+  },
+  {
+    path: "/blog",
+    page: BlogPage,
+    isShowHeader: true,
+    children: [
+      {
+        path: "processing", // Route con cho đơn hàng cần xử lý
+        page: BodyBlog,
+        isShowHeader: true,
+      },
+    ],
+  },
+  {
+    path: "blog/add",
+    page: AddBlog,
+    isShowHeader: true,
+  },
+  {
+    path: "blog/view",
+    page: ViewBlog,
     isShowHeader: true,
   },
   {
