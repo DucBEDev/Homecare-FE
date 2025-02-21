@@ -50,6 +50,7 @@ const ProcessingOrders = () => {
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
+      ellipsis: true,
       render: (text) => (
         <span className="column-with-icon request-icon">{text}</span>
       ),
@@ -75,6 +76,7 @@ const ProcessingOrders = () => {
       title: "Loại Dịch Vụ",
       dataIndex: "serviceType",
       key: "serviceType",
+      ellipsis: true,
       render: (text) => (
         <span className="column-with-icon service-icon">{text}</span>
       ),

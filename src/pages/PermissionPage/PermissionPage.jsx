@@ -9,6 +9,8 @@ import {
   Modal,
   Input,
   Divider,
+  Row,
+  Col,
 } from "antd";
 import axios from "axios";
 import "./PermissionPage.css";
@@ -21,8 +23,12 @@ const PermissionPage = () => {
   const [changes, setChanges] = useState({});
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
   const confirmRef = useRef(null);
   const [form] = Form.useForm();
+  const [record, setRecord] = useState(null); //Thêm state record để lưu trữ object (chỉnh sửa)
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const fetchPermissions = async () => {
     setLoading(true);
@@ -62,6 +68,7 @@ const PermissionPage = () => {
       dataIndex: "feature",
       key: "feature",
       className: "feature-column-header",
+      width: "20%",
       render: (text, record) => {
         if (record.isHeader) {
           return <b>{text}</b>;
@@ -75,6 +82,7 @@ const PermissionPage = () => {
       key: role.title,
       align: "center",
       className: "role-column-header",
+      width: `${80 / roles.length}%`,
       render: (text, record) => {
         if (!record.isHeader) {
           const permissionCode = `${record.featureCode}_${record.action}`;
@@ -122,7 +130,7 @@ const PermissionPage = () => {
     setLoading(true);
 
     try {
-      const updatedPermissionsData = []; // Mảng chứa thông tin cập nhật của các role
+      const updatedPermissionsData = [];
 
       for (const roleId in changes) {
         const role = roles.find((r) => r._id === roleId);
@@ -141,15 +149,11 @@ const PermissionPage = () => {
           }
         });
 
-        // Thêm thông tin role đã cập nhật vào mảng updatedPermissionsData
         updatedPermissionsData.push({
-          id: roleId, // id của role
-          permissions: updatedPermissions, // mảng permissions đã cập nhật
+          id: roleId,
+          permissions: updatedPermissions,
         });
       }
-      // const payload = permissions: updatedPermissionsData;
-
-      // console.log("aass", payload);
 
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/roles/permissions`,
@@ -169,39 +173,33 @@ const PermissionPage = () => {
           title: "",
           description: "",
         });
-        // Hiển thị thông báo thành công
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Cập nhật thông tin hệ thống thành công",
         });
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       } else {
-        // Xử lý lỗi nếu response.status không phải 200
         setShowNotification({
           status: "error",
           message: "Thất bại",
           description: "Cập nhật thông tin hệ thống thất bại",
         });
 
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin hệ thống:", error);
-      // Hiển thị thông báo lỗi
       setShowNotification({
         status: "error",
         message: "Thất bại",
         description: "Lỗi khi cập nhật thông tin hệ thống: " + error.message,
       });
 
-      // Tắt thông báo sau 3 giây
       setTimeout(() => {
         setShowNotification(null);
       }, 3000);
@@ -231,8 +229,6 @@ const PermissionPage = () => {
         description: values.description,
       };
 
-      console.log("c", dataToSend);
-
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}admin/roles/create`,
         dataToSend,
@@ -250,39 +246,33 @@ const PermissionPage = () => {
           title: "",
           description: "",
         });
-        // Hiển thị thông báo thành công
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Cập nhật thông tin hệ thống thành công",
         });
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       } else {
-        // Xử lý lỗi nếu response.status không phải 200
         setShowNotification({
           status: "error",
           message: "Thất bại",
           description: "Cập nhật thông tin hệ thống thất bại",
         });
 
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin hệ thống:", error);
-      // Hiển thị thông báo lỗi
       setShowNotification({
         status: "error",
         message: "Thất bại",
         description: "Lỗi khi cập nhật thông tin hệ thống: " + error.message,
       });
 
-      // Tắt thông báo sau 3 giây
       setTimeout(() => {
         setShowNotification(null);
       }, 3000);
@@ -303,39 +293,33 @@ const PermissionPage = () => {
           title: "",
           description: "",
         });
-        // Hiển thị thông báo thành công
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Cập nhật thông tin hệ thống thành công",
         });
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       } else {
-        // Xử lý lỗi nếu response.status không phải 200
         setShowNotification({
           status: "error",
           message: "Thất bại",
           description: "Cập nhật thông tin hệ thống thất bại",
         });
 
-        // Tắt thông báo sau 3 giây
         setTimeout(() => {
           setShowNotification(null);
         }, 3000);
       }
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin hệ thống:", error);
-      // Hiển thị thông báo lỗi
       setShowNotification({
         status: "error",
         message: "Thất bại",
         description: "Lỗi khi cập nhật thông tin hệ thống: " + error.message,
       });
 
-      // Tắt thông báo sau 3 giây
       setTimeout(() => {
         setShowNotification(null);
       }, 3000);
@@ -369,6 +353,25 @@ const PermissionPage = () => {
       });
     });
   });
+
+  const showDeleteConfirm = (role) => {
+    setSelectedRole(role); // Lưu lại role đang muốn xóa
+    setRecord(role); //Lưu trữ luôn object
+    setDeleteModalVisible(true); // Mở modal xác nhận xóa
+  };
+
+  const hideDeleteConfirm = () => {
+    setDeleteModalVisible(false); // Đóng modal xác nhận xóa
+    setSelectedRole(null);
+    setRecord(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedRole) {
+      handleDeleteRole(selectedRole._id); // Gọi hàm xóa với roleId
+      hideDeleteConfirm(); // Đóng modal sau khi xóa
+    }
+  };
 
   return (
     <>
@@ -409,10 +412,9 @@ const PermissionPage = () => {
               type="primary"
               onClick={() => showModal("addDelete")}
               style={{
-                position: "fixed",
-                right: "50px",
                 width: "80px",
                 height: "40px",
+                marginLeft: "20px",
                 backgroundColor: "#1FA1A7",
                 border: "none",
               }}
@@ -492,7 +494,7 @@ const PermissionPage = () => {
                   </Form>
                 </div>
                 <Divider type="vertical" style={{ height: "auto" }} />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1.2 }}>
                   <Divider orientation="center" style={{ fontWeight: "bold" }}>
                     <span
                       style={{
@@ -520,7 +522,7 @@ const PermissionPage = () => {
                             style={{
                               display: "flex",
                               flexDirection: "column",
-                              marginLeft: "18px",
+                              marginLeft: "12px",
                             }}
                           >
                             <span
@@ -540,49 +542,12 @@ const PermissionPage = () => {
                             type="primary"
                             danger
                             style={{
-                              marginRight: "16px",
+                              marginRight: "14px",
                               width: "28px",
                               height: "18px",
                             }}
                             size="small"
-                            onClick={() => {
-                              confirmRef.current = Modal.confirm({
-                                // Lưu instance vào confirmRef.current
-                                title: "Xác nhận xóa",
-                                content: `Bạn có chắc chắn muốn xóa nhóm quyền ${role.title}?`,
-                                okText: "Xóa",
-                                okType: "danger",
-                                cancelText: "Hủy",
-                                onOk: () => handleDeleteRole(role._id),
-                                footer: (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "flex-end",
-                                      gap: "8px",
-                                    }}
-                                  >
-                                    <Button
-                                      onClick={() => {
-                                        confirmRef.current.destroy(); // Đóng Modal confirm từ footer
-                                      }}
-                                    >
-                                      Hủy
-                                    </Button>
-                                    <Button
-                                      type="primary"
-                                      danger
-                                      onClick={() => {
-                                        handleDeleteRole(role._id);
-                                        confirmRef.current.destroy(); // Đóng Modal confirm từ footer
-                                      }}
-                                    >
-                                      Xóa
-                                    </Button>
-                                  </div>
-                                ),
-                              });
-                            }}
+                            onClick={() => showDeleteConfirm(role)}
                           >
                             X
                           </Button>
@@ -593,6 +558,64 @@ const PermissionPage = () => {
                 </div>
               </div>
             )}
+          </Modal>
+          <Modal
+             title="Xác nhận xóa nhóm quyền"
+                   visible={deleteModalVisible}
+                   onCancel={hideDeleteConfirm}
+                   footer={[
+                     <Button
+                       key="delete"
+                       danger
+                       type="primary"
+                       onClick={handleConfirmDelete}
+                       className="delete-button"
+                     >
+                       Đồng ý
+                     </Button>,
+                     <Button key="cancel" onClick={hideDeleteConfirm}>
+                       Hủy
+                     </Button>,
+                   ]}
+                   width={600}
+          >
+            <div className="popup-content">
+              <div className="info-section">
+                <p style={{ marginBottom: 20, fontWeight: "bold" }}>
+                  Bạn có chắc chắn muốn xóa nhóm quyền "{selectedRole?.title}"?
+                </p>
+                <Row gutter={[16, 16]} justify="center">
+                  <Col span={24}>
+                    <div
+                      className="info-item"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Mô Tả :
+                      </span>
+                      <span
+                        style={{
+                          width: "84%",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {record?.description || "Chưa có"}
+                      </span>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
+            </div>
           </Modal>
         </Card>
       </div>

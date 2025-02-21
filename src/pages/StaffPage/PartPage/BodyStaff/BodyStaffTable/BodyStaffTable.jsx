@@ -1,15 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Pagination, Table, Modal, Form, Input, DatePicker } from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Pagination,
+  Table,
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Button,
+  Row,
+  Col,
+} from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
-import { CloseSquareFilled, ExclamationCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 import dayjs from "dayjs";
-import ColumnGroup from "antd/es/table/ColumnGroup";
-
-const { confirm } = Modal;
 
 const BodyStaffTable = () => {
   const navigate = useNavigate();
@@ -17,12 +23,15 @@ const BodyStaffTable = () => {
   const searchValue = useSelector((state) => state.search.value);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
-  const pageSize = 5;
+  const [pageSize, setPageSize] = useState(5);
   const [showNotification, setShowNotification] = useState(null);
   const [staffs, setStaffs] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [form] = Form.useForm();
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState(null);
 
   const columns = [
     {
@@ -107,6 +116,7 @@ const BodyStaffTable = () => {
   ];
 
   const fetchStaffs = async () => {
+    setLoading(true);
     try {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/staffs`
@@ -121,9 +131,14 @@ const BodyStaffTable = () => {
       }));
       setStaffs(transformedData);
       setFilteredData(transformedData);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching staffs:", error);
+      setShowNotification({
+        status: "error",
+        message: "Lỗi",
+        description: `Lỗi khi tải dữ liệu nhân viên: ${error.message}`,
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -149,7 +164,7 @@ const BodyStaffTable = () => {
 
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [currentPage, filteredData]);
+  }, [currentPage, filteredData, pageSize]);
 
   const handleSchedule = useCallback(
     (recordId) => {
@@ -165,56 +180,47 @@ const BodyStaffTable = () => {
       ...selected,
       birthDate: dayjs(selected.birthDate, "DD/MM/YYYY"),
     });
-    setIsModalVisible(true);
+    setIsEditModalVisible(true);
   };
 
   const showDeleteConfirm = (recordId) => {
-    confirm({
-      title: "Bạn có chắc chắn muốn xóa?",
-      icon: <ExclamationCircleOutlined />,
-      content: "Hành động này không thể hoàn tác.",
-      okText: "Xóa",
-      okType: "danger",
-      cancelText: "Hủy",
-      onOk() {
-        handleDelete(recordId);
-      },
-      onCancel() {
-        console.log("Cancel");
-      },
-    });
+    const staff = staffs.find((s) => s.key === recordId);
+    setSelectedStaff(staff);
+    setStaffToDelete(recordId);
+    setIsDeleteModalVisible(true);
   };
 
-  const handleDelete = async (recordId) => {
+  const hideDeleteConfirm = () => {
+    setIsDeleteModalVisible(false);
+    setStaffToDelete(null);
+    setSelectedStaff(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!staffToDelete) return;
     setLoading(true);
     try {
       const response = await axios.delete(
-        `${process.env.REACT_APP_API_URL}admin/staffs/delete/${recordId}`
+        `${process.env.REACT_APP_API_URL}admin/staffs/delete/${staffToDelete}`
       );
       if (response.status === 200) {
         setStaffs((prevStaffs) =>
-          prevStaffs.filter((staff) => staff.key !== recordId)
+          prevStaffs.filter((staff) => staff.key !== staffToDelete)
         );
         setFilteredData((prevFilteredData) =>
-          prevFilteredData.filter((staff) => staff.key !== recordId)
+          prevFilteredData.filter((staff) => staff.key !== staffToDelete)
         );
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Xóa nhân viên thành công",
         });
-
-        setTimeout(() => {
-          setShowNotification(null);
-        }, 3000);
-        console.log("Staff deleted successfully");
       } else {
         setShowNotification({
           status: "error",
           message: "Thất bại",
-          description: "Xóa nhân viên thất bại",
+          description: `Lỗi khi xóa nhân viên (HTTP ${response.status})`,
         });
-        console.error("Error deleting staff:", response.data.error);
       }
     } catch (error) {
       setShowNotification({
@@ -222,9 +228,10 @@ const BodyStaffTable = () => {
         message: "Thất bại",
         description: `Lỗi khi xóa nhân viên: ${error.message}`,
       });
-      console.error("Error deleting staff:", error);
     } finally {
       setLoading(false);
+      hideDeleteConfirm();
+      setTimeout(() => setShowNotification(null), 3000);
     }
   };
 
@@ -233,11 +240,11 @@ const BodyStaffTable = () => {
   };
 
   const handleCancel = () => {
-    setIsModalVisible(false);
+    setIsEditModalVisible(false);
   };
 
   const onFinish = async (values) => {
-    console.log("values", values);
+    setLoading(true);
     try {
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/staffs/edit/${selectedStaff.key}`,
@@ -259,7 +266,7 @@ const BodyStaffTable = () => {
         );
         setStaffs(updatedStaffs);
         setFilteredData(updatedStaffs);
-        setIsModalVisible(false);
+
         setShowNotification({
           status: "success",
           message: "Thành công",
@@ -279,14 +286,14 @@ const BodyStaffTable = () => {
         message: "Thất bại",
         description: "Cập nhật thông tin nhân viên thất bại!",
       });
+    } finally {
+      setLoading(false);
+      setIsEditModalVisible(false);
+      setTimeout(() => setShowNotification(null), 3000);
     }
-    setTimeout(() => {
-      setShowNotification(null);
-    }, 3000);
   };
 
   const disabledDate = (current) => {
-    // Can not select days after today
     return current && current > dayjs().endOf("day");
   };
 
@@ -300,24 +307,17 @@ const BodyStaffTable = () => {
         scroll={{ x: 1000 }}
         pagination={false}
       />
-      <Pagination
-        align="center"
-        current={currentPage}
-        total={filteredData?.length || 0}
-        pageSize={pageSize}
-        onChange={setCurrentPage}
-        hideOnSinglePage={true}
-        showLessItems={true}
-        style={{
-          fontSize: "26px",
-          transform: "translateX(-20px)",
-          marginTop: "10px",
-          position: "fixed",
-          bottom: "20px",
-          left: "50%",
-          zIndex: 1000,
-        }}
-      />
+      <div className="pagination-container">
+        <Pagination
+          align="center"
+          current={currentPage}
+          total={filteredData?.length || 0}
+          pageSize={pageSize}
+          onChange={setCurrentPage}
+          hideOnSinglePage={true}
+          showLessItems={true}
+        />
+      </div>
       {showNotification && (
         <NotificationComponent
           status={showNotification.status}
@@ -325,21 +325,22 @@ const BodyStaffTable = () => {
           description={showNotification.description}
         />
       )}
+
+      {/* Edit Modal */}
       <Modal
         title="Chỉnh sửa thông tin nhân viên"
-        open={isModalVisible}
+        open={isEditModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
         okText="Lưu"
         cancelText="Hủy"
+        className="custom-modal"
       >
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item
             name="phoneNumber"
             label="Số điện thoại"
-            rules={[
-              { required: true, message: "Vui lòng nhập số điện thoại!" },
-            ]}
+            rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
           >
             <Input style={{ width: "100%" }} />
           </Form.Item>
@@ -362,7 +363,11 @@ const BodyStaffTable = () => {
             label="Ngày sinh"
             rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}
           >
-            <DatePicker format="DD/MM/YYYY" disabledDate={disabledDate} />
+            <DatePicker
+              format="DD/MM/YYYY"
+              disabledDate={disabledDate}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
           <Form.Item
             name="address"
@@ -372,6 +377,86 @@ const BodyStaffTable = () => {
             <Input style={{ width: "100%" }} />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="Xác nhận xóa nhân viên"
+        visible={isDeleteModalVisible}
+                onCancel={hideDeleteConfirm}
+                footer={[
+                  <Button
+                    key="delete"
+                    danger
+                    type="primary"
+                    onClick={handleConfirmDelete}
+                    className="delete-button"
+                  >
+                    Đồng ý
+                  </Button>,
+                  <Button key="cancel" onClick={hideDeleteConfirm}>
+                    Hủy
+                  </Button>,
+                ]}
+                width={600}
+
+      >
+        <div className="popup-content">
+          <div className="info-section">
+            <p style={{ marginBottom: 20, fontWeight: "bold" }}>
+              Bạn có chắc chắn muốn xóa nhân viên này không?
+            </p>
+            {selectedStaff && (
+              <>
+                <Row gutter={[16, 16]}>
+                  <Col span={12}>
+                    <div className="info-item">
+                      <span>
+                        Số điện thoại:
+                      </span>
+                      <span>{selectedStaff?.phoneNumber}</span>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div className="info-item">
+                      <span>
+                        CMND:
+                      </span>
+                      <span>{selectedStaff?.idCard}</span>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div className="info-item">
+                      <span>
+                        Họ tên:
+                      </span>
+                      <span>{selectedStaff?.fullName}</span>
+                    </div>
+                  </Col>
+                  <Col span={12}>
+                    <div className="info-item">
+                      <span>
+                        Ngày sinh:
+                      </span>
+                      <span>{selectedStaff?.birthDate}</span>
+                    </div>
+                  </Col>
+                  <Col span={24}>
+                    <div className="info-item">
+                      <span >
+                        Địa chỉ:
+                      </span>
+                      <span style={{
+                      width: "84%",
+                      wordBreak: "break-word",
+                    }}>{selectedStaff?.address}</span>
+                    </div>
+                  </Col>
+                </Row>
+              </>
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

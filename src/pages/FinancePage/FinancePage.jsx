@@ -11,6 +11,7 @@ import {
   Modal,
   Input,
   Select,
+  message,
 } from "antd";
 import axios from "axios";
 import "./FinancePage.css";
@@ -29,25 +30,27 @@ const FinancialPage = () => {
   const [maidCoefficients, setMaidCoefficients] = useState(null);
   const [otherCoefficients, setOtherCoefficients] = useState(null);
   const [dataFetched, setDataFetched] = useState(false);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCoefficient, setSelectedCoefficient] = useState(null);
   const [costFactorLists, setCostFactorLists] = useState(null);
-
   const [modalForm] = Form.useForm();
   const [updateLoading, setUpdateLoading] = useState(false);
+
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [addModalForm] = Form.useForm();
   const [selectedCoefficientType, setSelectedCoefficientType] = useState(null);
 
-  const fetchData = useCallback(async () => {
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [coefficientToDelete, setCoefficientToDelete] = useState(null);
+
+  const fetchPermissions = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/costFactors`
       );
       setCostFactorLists(response.data.costFactorLists);
-      console.log(response.data.costFactorLists);
-
       setServiceCoefficients(
         response.data.costFactorLists.find(
           (e) => e.title === "Hệ số lương cho dịch vụ"
@@ -64,19 +67,16 @@ const FinancialPage = () => {
 
       setDataFetched(true);
     } catch (error) {
-      setShowNotification({
-        status: "error",
-        message: "Lỗi",
-        description: "Có lỗi xảy ra khi lấy dữ liệu: " + error.message,
-      });
+      console.error("Lỗi khi lấy dữ liệu phân quyền:", error);
+      message.error("Lỗi khi lấy dữ liệu phân quyền");
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchPermissions();
+  }, []);
 
   useEffect(() => {
     if (dataFetched && costFactorLists) {
@@ -136,6 +136,16 @@ const FinancialPage = () => {
     setAddModalVisible(false);
   };
 
+  const showDeleteConfirm = (coefficient) => {
+    setCoefficientToDelete(coefficient);
+    setDeleteModalVisible(true);
+  };
+
+  const hideDeleteConfirm = () => {
+    setDeleteModalVisible(false);
+    setCoefficientToDelete(null);
+  };
+
   const handleAddCoefficient = async () => {
     try {
       setAddLoading(true);
@@ -173,9 +183,7 @@ const FinancialPage = () => {
           message: "Thành công",
           description: "Thêm mới hệ số thành công",
         });
-        console.log("showNotification:", showNotification);
-
-        fetchData();
+        fetchPermissions();
         setAddModalVisible(false);
       } else {
         setShowNotification({
@@ -195,6 +203,43 @@ const FinancialPage = () => {
       });
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!coefficientToDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.delete(
+        `${process.env.REACT_APP_API_URL}admin/costFactors/delete/${coefficientToDelete._id}`
+      );
+
+      if (response.data.success) {
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: `Xóa hệ số "${coefficientToDelete.title}" thành công`,
+        });
+        fetchPermissions();
+      } else {
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: `Xóa hệ số "${coefficientToDelete.title}" thất bại`,
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa hệ số:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Lỗi khi xóa hệ số: " + error.message,
+      });
+    } finally {
+      setLoading(false);
+      hideDeleteConfirm();
+      setTimeout(() => setShowNotification(null), 3000);
     }
   };
 
@@ -235,7 +280,7 @@ const FinancialPage = () => {
           message: "Thành công",
           description: "Cập nhật thông tin hệ số thành công",
         });
-        fetchData();
+        fetchPermissions();
       } else {
         setShowNotification({
           status: "error",
@@ -259,46 +304,8 @@ const FinancialPage = () => {
     }
   };
 
-  const handleDeleteCoefficient = async (coefficient) => {
-    try {
-      Modal.confirm({
-        title: "Xác nhận xóa",
-        content: `Bạn có chắc chắn muốn xóa hệ số "${coefficient.title}" không?`,
-        okText: "Xóa",
-        okType: "danger",
-        cancelText: "Hủy",
-        onOk: async () => {
-          const response = await axios.delete(
-            `${process.env.REACT_APP_API_URL}admin/costFactors/delete/${coefficient._id}`
-          );
-
-          if (response.data.success) {
-            setShowNotification({
-              status: "success",
-              message: "Thành công",
-              description: `Xóa hệ số "${coefficient.title}" thành công`,
-            });
-
-            fetchData();
-          } else {
-            setShowNotification({
-              status: "error",
-              message: "Thất bại",
-              description: `Xóa hệ số "${coefficient.title}" thất bại`,
-            });
-          }
-        },
-      });
-    } catch (error) {
-      console.error("Lỗi khi xóa hệ số:", error);
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: "Lỗi khi xóa hệ số: " + error.message,
-      });
-    } finally {
-      setTimeout(() => setShowNotification(null), 3000);
-    }
+  const handleDeleteCoefficient = (coefficient) => {
+    showDeleteConfirm(coefficient);
   };
 
   return (
@@ -634,7 +641,7 @@ const FinancialPage = () => {
                             backgroundColor:
                               coefficient.status === "active"
                                 ? "#53d768"
-                                : "#ee4352",
+                                : "rgb(210, 45, 45)",
                           }}
                         />
                       </Col>
@@ -654,7 +661,13 @@ const FinancialPage = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         footer={[
-          <Button key="cancel" onClick={handleCancel}>
+          <Button
+            key="cancel"
+            danger
+            type="primary"
+            className="delete-button"
+            onClick={handleCancel}
+          >
             Hủy
           </Button>,
           <Button
@@ -721,7 +734,6 @@ const FinancialPage = () => {
       </Modal>
 
       <Modal
-        className="custom-modal"
         title="Thêm mới hệ số"
         open={addModalVisible}
         onOk={handleAddCoefficient}
@@ -792,6 +804,86 @@ const FinancialPage = () => {
             </Row>
           </div>
         </Form>
+      </Modal>
+
+      {/* Modal xác nhận xóa */}
+      <Modal
+        title="Xác nhận xóa hệ số"
+        visible={deleteModalVisible}
+        onCancel={hideDeleteConfirm}
+        footer={[
+          <Button
+            key="delete"
+            danger
+            type="primary"
+            onClick={handleConfirmDelete}
+            className="delete-button"
+          >
+            Đồng ý
+          </Button>,
+          <Button key="cancel" onClick={hideDeleteConfirm}>
+            Hủy
+          </Button>,
+        ]}
+        width={600}
+      >
+        <div className="popup-content">
+          <div className="info-section">
+            <p style={{ marginBottom: 20, fontWeight: "bold" }}>
+              Bạn có chắc chắn muốn xóa hệ số "{coefficientToDelete?.title}"?
+            </p>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <div className="info-item">
+                  <span style={{
+                      whiteSpace: "nowrap",
+                    }}>Tiêu đề:</span>
+                  <span>{coefficientToDelete?.title}</span>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="info-item">
+                  <span>Trạng thái:</span>
+                  <span>{coefficientToDelete?.status === "active" ? "Hoạt động" : "Không hoạt động"}</span>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="info-item">
+                  <span>Giá trị:</span>
+                  <span>{coefficientToDelete?.value}</span>
+                </div>
+              </Col>
+              <Col span={12}></Col>
+              <Col span={24} style={{marginLeft: "2px"}}>
+                <div
+                  className="info-item"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Mô Tả:
+                  </span>
+                  <span
+                    style={{
+                      width: "84%",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                     {coefficientToDelete?.description}
+                  </span>
+                </div>
+              </Col>
+            </Row>
+          </div>
+        </div>
       </Modal>
 
       <div className="financial-page-wrapper">

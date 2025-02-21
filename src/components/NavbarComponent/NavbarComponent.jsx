@@ -12,6 +12,7 @@ import {
   ToolOutlined,
   PoweroffOutlined,
   DatabaseOutlined,
+  FormOutlined,
 } from "@ant-design/icons";
 
 const NavbarComponent = () => {
@@ -61,6 +62,11 @@ const NavbarComponent = () => {
             label: "Khách hàng",
             key: "/customer",
             icon: <TeamOutlined />,
+          },
+          {
+            label: "Bài viết",
+            key: "/blog",
+            icon: <FormOutlined />,
           },
           // {
           //   label: "Quản lý dịch vụ",

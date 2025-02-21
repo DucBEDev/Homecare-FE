@@ -63,7 +63,6 @@ const AddMaid = () => {
     return isJpgOrPng && isLt2M;
   };
 
-
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     setAvatar(file);
@@ -103,16 +102,17 @@ const AddMaid = () => {
       console.log("Request Data:", requestData);
 
       // Xử lý location (workingArea)
-      if (values.khuVucLamViec && values.khuVucLamViec.length >= 2) {  // Use khuVucLamViec (area of working) instead of location
+      if (values.khuVucLamViec && values.khuVucLamViec.length >= 2) {
+        // Use khuVucLamViec (area of working) instead of location
         requestData.workingArea = {
           province: values.khuVucLamViec[0],
-          districts: [values.khuVucLamViec[1]]
+          districts: [values.khuVucLamViec[1]],
         };
       }
 
       // Service title
-      if(values.serviceTitle){
-        requestData.jobDetail = values.serviceTitle
+      if (values.serviceTitle) {
+        requestData.jobDetail = values.serviceTitle;
       }
 
       // Append all text data with explicit type checking
@@ -123,15 +123,18 @@ const AddMaid = () => {
             requestData[key].forEach((value) => {
               formData.append(`${key}[]`, value);
             });
-          } else if (typeof requestData[key] === 'object') {
+          } else if (typeof requestData[key] === "object") {
             // Handle workingArea object
-            Object.keys(requestData[key]).forEach(subKey => {
+            Object.keys(requestData[key]).forEach((subKey) => {
               if (Array.isArray(requestData[key][subKey])) {
-                requestData[key][subKey].forEach(value => {
+                requestData[key][subKey].forEach((value) => {
                   formData.append(`workingArea[${subKey}][]`, value);
                 });
               } else {
-                formData.append(`workingArea[${subKey}]`, String(requestData[key][subKey]));
+                formData.append(
+                  `workingArea[${subKey}]`,
+                  String(requestData[key][subKey])
+                );
               }
             });
           } else {
@@ -147,14 +150,13 @@ const AddMaid = () => {
       }
 
       if (healthCert) {
-        formData.append("healthCertificates", healthCert);  // Changed to match the schema and pluralized
+        formData.append("healthCertificates", healthCert); // Changed to match the schema and pluralized
       }
 
       console.log("Nội dung FormData:");
       for (let pair of formData.entries()) {
         console.log(pair[0] + ": " + pair[1]);
       }
-
 
       // Add error handling for the API call
       try {
@@ -190,7 +192,7 @@ const AddMaid = () => {
           console.error("Request Error:", axiosError.request);
           message.error("Không nhận được phản hồi từ server");
         } else {
-         console.error("Error Message:", axiosError.message);
+          console.error("Error Message:", axiosError.message);
           message.error("Lỗi khi gửi yêu cầu");
         }
       }

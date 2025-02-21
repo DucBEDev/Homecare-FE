@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect } from "react";
 import { Row, Col } from "antd";
-import InputComponent from "../../../../components/InputComponent/InputComponent";
+import InputComponent from "../../../components/InputComponent/InputComponent";
 import { useDispatch, useSelector } from "react-redux";
-import { setSearchValue } from "../../../../redux/slides/searchSlice";
-import "../../StylePage/HeadStaff.css";
+import { setSearchValue } from "../../../redux/slides/searchSlice";
+// import "../../StylePage/HeadBlog.css";
 import { useNavigate } from "react-router-dom";
-import DropdownSortComponent from "../../../../components/DropdownComponent/DropdownSortComponent";
-import ButtonComponent from "../../../../components/ButtonComponent/ButtonComponent";
+import DropdownSortComponent from "../../../components/DropdownComponent/DropdownSortComponent";
+import ButtonComponent from "../../../components/ButtonComponent/ButtonComponent";
 
-const HeadStaff = () => {
+const HeadBlog = () => {
   const dispatch = useDispatch();
   const searchValue = useSelector((state) => state.search.value);
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ const HeadStaff = () => {
       <div style={{ marginTop: "90px" }}></div>
       <div style={{ marginLeft: "20px" }} className="header-container">
         <div className="green-header">
-          <span className="header-title">Quản lý nhân viên</span>
+          <span className="header-title">Quản lý bài viết</span>
         </div>
       </div>
       <Row style={{ marginTop: "-30px", padding: "20px" }}>
@@ -48,7 +48,7 @@ const HeadStaff = () => {
           xs={24}
           style={{ marginRight: "20px" }}
         >
-          <DropdownSortComponent defaultLabel="Số ĐT nhân viên" />
+          <DropdownSortComponent defaultLabel="Tác giả" />
         </Col>
         <Col
           xl={6}
@@ -69,8 +69,8 @@ const HeadStaff = () => {
         <Col>
           <ButtonComponent
             size="large"
-            textButton="Thêm nhân viên"
-            onClick={() => navigate("/staff/add")}
+            textButton="Thêm bài viết"
+            onClick={() => navigate("/blog/add")}
             styleButton={{
               backgroundColor: "#3cbe5d",
               width: "120px",
@@ -84,4 +84,4 @@ const HeadStaff = () => {
   );
 };
 
-export default HeadStaff;
+export default HeadBlog;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import axios from "axios";
-import "../../../StylePage/stylePopupModalDelete.css"
+import "../../../StylePage/stylePopupModalDelete.css";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 
 const PopupModalDelete = ({
@@ -28,7 +28,7 @@ const PopupModalDelete = ({
 
         response = await axios.delete(
           `${process.env.REACT_APP_API_URL}admin/requests/delete/${record.mainOrderId}`,
-          {data: payload}
+          { data: payload }
         );
       } else {
         // Chuẩn bị dữ liệu gửi đi
@@ -82,7 +82,13 @@ const PopupModalDelete = ({
       visible={isVisible}
       onCancel={onClose}
       footer={[
-        <Button key="delete" danger type="primary" onClick={handleDelete} className="delete-button">
+        <Button
+          key="delete"
+          danger
+          type="primary"
+          onClick={handleDelete}
+          className="delete-button"
+        >
           Đồng ý
         </Button>,
         <Button key="cancel" onClick={onClose}>
