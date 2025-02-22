@@ -13,3 +13,7 @@
 .ant-input-number-input-wrap {
   width: 100%;
 }
+
+.ant-upload-list-item-actions a {
+  display: none;
+}

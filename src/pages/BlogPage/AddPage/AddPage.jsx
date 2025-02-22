@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Card, Form, Input, Select, Button, Row, Col, Upload, message } from "antd";
+import {
+  Card,
+  Form,
+  Input,
+  Select,
+  Button,
+  Row,
+  Col,
+  Upload,
+  message,
+} from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -17,10 +27,7 @@ const AddBlogPost = () => {
   const [showNotification, setShowNotification] = useState(false);
 
   // Danh sách các loại blog
-  const blogTypes = [
-    "Quảng cáo",
-    "Thông báo"
-  ];
+  const blogTypes = ["Quảng cáo", "Thông báo"];
 
   // Xử lý upload ảnh
   const handleImageUpload = ({ fileList }) => {
@@ -53,39 +60,38 @@ const AddBlogPost = () => {
       }
 
       // Gửi dữ liệu lên server
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}admin/blogs/create`, formData, 
-        {
+      const response = await axios
+        .post(`${process.env.REACT_APP_API_URL}admin/blogs/create`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-        }
-      )
-      .then((response) => {
-        if (!response) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response;
-      })
-      .then((data) => {
-        setShowNotification({
-          status: "success",
-          message: "Thành công",
-          description: "Bài viết đã được tạo thành công!",
-        });
+        })
+        .then((response) => {
+          if (!response) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response;
+        })
+        .then((data) => {
+          setShowNotification({
+            status: "success",
+            message: "Thành công",
+            description: "Bài viết đã được tạo thành công!",
+          });
 
-        setTimeout(() => {
-          navigate("/blog");
-          setShowNotification(null);
-        }, 600);
-      })
-      .catch((error) => {
-        console.error("Error sending data to backend:", error);
-        setShowNotification({
-          status: "error",
-          message: "Thất bại",
-          description: "Không thể tạo bài viết. Vui lòng thử lại.",
+          setTimeout(() => {
+            navigate("/blog");
+            setShowNotification(null);
+          }, 600);
+        })
+        .catch((error) => {
+          console.error("Error sending data to backend:", error);
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: "Không thể tạo bài viết. Vui lòng thử lại.",
+          });
         });
-      });
 
       // Thông báo thành công và chuyển hướng
       message.success("Blog post created successfully!");
@@ -138,7 +144,9 @@ const AddBlogPost = () => {
         <Form.Item
           name="content"
           label={<span className="font-medium text-gray-700">Content</span>}
-          rules={[{ required: true, message: "Please enter the blog content!" }]}
+          rules={[
+            { required: true, message: "Please enter the blog content!" },
+          ]}
         >
           <TextArea
             rows={6}
@@ -164,8 +172,12 @@ const AddBlogPost = () => {
           <Col xs={24} md={12}>
             <Form.Item
               name="type"
-              label={<span className="font-medium text-gray-700">Blog Type</span>}
-              rules={[{ required: true, message: "Please select a blog type!" }]}
+              label={
+                <span className="font-medium text-gray-700">Blog Type</span>
+              }
+              rules={[
+                { required: true, message: "Please select a blog type!" },
+              ]}
             >
               <Select
                 placeholder="Select blog type"
@@ -192,7 +204,9 @@ const AddBlogPost = () => {
                     type="radio"
                     name="option"
                     value="active"
-                    onChange={(e) => form.setFieldsValue({ status: e.target.value })}
+                    onChange={(e) =>
+                      form.setFieldsValue({ status: e.target.value })
+                    }
                   />
                   Hoạt động
                 </label>
@@ -202,7 +216,9 @@ const AddBlogPost = () => {
                     type="radio"
                     name="option"
                     value="inactive"
-                    onChange={(e) => form.setFieldsValue({ status: e.target.value })}
+                    onChange={(e) =>
+                      form.setFieldsValue({ status: e.target.value })
+                    }
                   />
                   Không hoạt động
                 </label>
@@ -226,13 +242,22 @@ const AddBlogPost = () => {
           >
             {fileList.length >= 1 ? null : (
               <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
-                <UploadOutlined className="text-gray-400 text-2xl mb-2" />
-                <span className="text-sm text-gray-600 font-medium">
+                <UploadOutlined
+                  className="text-gray-400 text-2xl mb-2"
+                  style={{ fontSize: "18px", marginBottom: "10px" }}
+                />
+                <div
+                  className="text-sm text-gray-600 font-medium"
+                  style={{ fontSize: "10px" }}
+                >
                   Click to Upload
-                </span>
-                <span className="text-xs text-gray-400 mt-1">
-                  Recommended size: 1200x630px
-                </span>
+                </div>
+                <div
+                  className="text-sm text-gray-600 font-medium"
+                  style={{ fontSize: "8px", marginTop: "4px" }}
+                >
+                  Kích thước &lt; 2Mb
+                </div>
               </div>
             )}
           </Upload>

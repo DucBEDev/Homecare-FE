@@ -6,17 +6,19 @@ import {
   DatePicker,
   Select,
   InputNumber,
-  message,
   Row,
   Col,
   Typography,
   Cascader,
   Radio,
+  Upload,
+  message,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
 import "../../StylePage/AddMaid.css";
+import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -24,10 +26,11 @@ const { Title } = Typography;
 const AddMaid = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState(null);
-  const [healthCert, setHealthCert] = useState(null);
+  const [avatarFileList, setAvatarFileList] = useState([]);
+  const [healthCertFileList, setHealthCertFileList] = useState([]);
   const [locationWork, setLocationWork] = useState([]);
   const [dataFetch, setDataFetch] = useState([]);
+  const [showNotification, setShowNotification] = useState(null); // State cho notification
 
   const dayOrder = {
     Monday: 1,
@@ -44,7 +47,6 @@ const AddMaid = () => {
   };
 
   const disabledDate = (current) => {
-    // Disable dates after today
     return current && current > moment().endOf("day");
   };
 
@@ -53,30 +55,72 @@ const AddMaid = () => {
       file.type === "image/jpeg" ||
       file.type === "image/png" ||
       file.type === "image/jpg";
+    const isLt2M = file.size / 1024 / 1024 < 2;
+
     if (!isJpgOrPng) {
       message.error("Bạn chỉ có thể tải lên file JPG/PNG!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
     }
-    const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
       message.error("File phải nhỏ hơn 2MB!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
     }
-    return isJpgOrPng && isLt2M;
+    return true;
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    setAvatar(file);
+  const handleAvatarChange = ({ file, fileList }) => {
+    setAvatarFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+       setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
   };
 
-  const handleHealthCertChange = (e) => {
-    const file = e.target.files[0];
-    setHealthCert(file);
+  const handleHealthCertChange = ({ file, fileList }) => {
+    setHealthCertFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+       setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
   };
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      // Log the initial values to verify data
       console.log("Form Values:", values);
 
       const formData = new FormData();
@@ -87,44 +131,37 @@ const AddMaid = () => {
         birthDate: values.ngaysinh.format("YYYY-MM-DD"),
         gender: values.gioiTinh,
         ethnic: values.danToc,
-        educationLevel: values.trinhDoHocVan, // Change education to educationLevel
+        educationLevel: values.trinhDoHocVan,
         height: values.chieuCao,
         weight: values.canNang,
-        birthPlace: values.queQuan, // Changed to match the schema
-        address: values.diaChiThuongTru, // Changed to match the schema
+        birthPlace: values.queQuan,
+        address: values.diaChiThuongTru,
         yearOfExperience: values.soNamKinhNghiem,
         experienceDescription: values.moTaKinhNghiem,
         baseFactor: values.heSo,
         status: "active",
       };
 
-      // Log requestData to verify object structure
       console.log("Request Data:", requestData);
 
-      // Xử lý location (workingArea)
       if (values.khuVucLamViec && values.khuVucLamViec.length >= 2) {
-        // Use khuVucLamViec (area of working) instead of location
         requestData.workingArea = {
           province: values.khuVucLamViec[0],
           districts: [values.khuVucLamViec[1]],
         };
       }
 
-      // Service title
       if (values.serviceTitle) {
         requestData.jobDetail = values.serviceTitle;
       }
 
-      // Append all text data with explicit type checking
       Object.keys(requestData).forEach((key) => {
         if (requestData[key] !== undefined && requestData[key] !== null) {
           if (Array.isArray(requestData[key])) {
-            // Handle arrays properly
             requestData[key].forEach((value) => {
               formData.append(`${key}[]`, value);
             });
           } else if (typeof requestData[key] === "object") {
-            // Handle workingArea object
             Object.keys(requestData[key]).forEach((subKey) => {
               if (Array.isArray(requestData[key][subKey])) {
                 requestData[key][subKey].forEach((value) => {
@@ -138,19 +175,39 @@ const AddMaid = () => {
               }
             });
           } else {
-            // Convert numbers to strings if necessary
             formData.append(key, String(requestData[key]));
           }
         }
       });
 
-      // Handle file uploads with error checking
-      if (avatar) {
-        formData.append("avatar", avatar);
+      // Handle file uploads with error handling
+      if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
+        try {
+          formData.append("avatar", avatarFileList[0].originFileObj);
+        } catch (error) {
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi thêm file avatar: ${error.message}`,
+          });
+          return;
+        }
       }
 
-      if (healthCert) {
-        formData.append("healthCertificates", healthCert); // Changed to match the schema and pluralized
+      if (healthCertFileList.length > 0 && healthCertFileList[0].originFileObj) {
+        try {
+          formData.append(
+            "healthCertificates",
+            healthCertFileList[0].originFileObj
+          );
+        } catch (error) {
+            setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi thêm file healthCert: ${error.message}`,
+          });
+          return;
+        }
       }
 
       console.log("Nội dung FormData:");
@@ -158,7 +215,6 @@ const AddMaid = () => {
         console.log(pair[0] + ": " + pair[1]);
       }
 
-      // Add error handling for the API call
       try {
         const response = await axios.post(
           `${process.env.REACT_APP_API_URL}admin/helpers/create`,
@@ -171,40 +227,65 @@ const AddMaid = () => {
         );
 
         if (response.data.success === false) {
-          message.error(response.data.msg);
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: response.data.msg
+          })
+
         } else {
-          message.success("Thêm người giúp việc thành công");
+          setShowNotification({
+            status: "success",
+            message: "Thành công",
+            description: `Thêm người giúp việc thành công`,
+          });
           form.resetFields();
-          setAvatar(null);
-          setHealthCert(null);
+          setAvatarFileList([]);
+          setHealthCertFileList([]);
         }
       } catch (axiosError) {
         console.error("API Error:", axiosError);
         if (axiosError.response) {
           console.error("Response Data:", axiosError.response.data);
           console.error("Response Status:", axiosError.response.status);
-          message.error(
-            `Lỗi: ${
+             setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi: ${
               axiosError.response.data.error || "Không thể kết nối đến server"
             }`
-          );
+          });
         } else if (axiosError.request) {
           console.error("Request Error:", axiosError.request);
-          message.error("Không nhận được phản hồi từ server");
+           setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Không nhận được phản hồi từ server`
+          });
         } else {
           console.error("Error Message:", axiosError.message);
-          message.error("Lỗi khi gửi yêu cầu");
+           setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi gửi yêu cầu`
+          });
         }
       }
     } catch (error) {
       console.error("Form Processing Error:", error);
-      message.error("Lỗi xử lý form: " + error.message);
+       setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi xử lý form: ${error.message}`
+          });
     } finally {
       setLoading(false);
+       setTimeout(() => {
+           setShowNotification(null);
+        }, 3000);
     }
   };
 
-  // Update the fetchData in useEffect:
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -220,7 +301,6 @@ const AddMaid = () => {
     fetchData();
   }, []);
 
-  // Add new useEffect for formatting locations data
   useEffect(() => {
     if (dataFetch && dataFetch.locations) {
       const formattedLocationWork = dataFetch.locations.map((province) => ({
@@ -488,8 +568,8 @@ const AddMaid = () => {
                   width: "100%",
                   height: "32px",
                   display: "flex",
-                  fontSize: "22px",
                   alignItems: "center",
+                  fontSize: "22px",
                 }}
                 placeholder="Nhập số năm kinh nghiệm"
               />
@@ -525,7 +605,6 @@ const AddMaid = () => {
                 optionLabelProp="label"
                 className="system-page-select"
                 onChange={(values) => {
-                  // Khi có sự thay đổi, form field sẽ được cập nhật với mảng đã được sắp xếp
                   const sortedValues = sortDays(values);
                   form.setFieldValue("workingDays", sortedValues);
                 }}
@@ -564,7 +643,7 @@ const AddMaid = () => {
                   message: "Vui lòng nhập hệ số",
                 },
                 {
-                  type: "number", // Thêm rule này
+                  type: "number",
                   message: "Vui lòng nhập số",
                 },
               ]}
@@ -594,20 +673,96 @@ const AddMaid = () => {
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="avatar" label="Hình ảnh">
-              <Input
-                type="file"
-                accept=".jpg,.jpeg,.png"
+              <Upload
+                beforeUpload={beforeUpload}
                 onChange={handleAvatarChange}
-              />
+                fileList={avatarFileList}
+                maxCount={1}
+                listType="picture-card"
+                className="w-full"
+                onError={(error) => {
+                  setShowNotification({
+                    status: "error",
+                    message: "Thất bại",
+                    description: `Upload thất bại: ${error.message}`,
+                  });
+                }}
+                customRequest={async ({ file, onSuccess, onError }) => {
+                  try {
+                    onSuccess();
+                  } catch (err) {
+                    onError(err);
+                  }
+                }}
+              >
+                {avatarFileList.length >= 1 ? null : (
+                  <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                    <UploadOutlined
+                      className="text-gray-400 text-2xl mb-2"
+                      style={{ fontSize: "18px", marginBottom: "10px" }}
+                    />
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "10px" }}
+                    >
+                      Click to Upload
+                    </div>
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "8px", marginTop: "4px" }}
+                    >
+                      Kích thước &lt; 2Mb
+                    </div>
+                  </div>
+                )}
+              </Upload>
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ">
-              <Input
-                type="file"
-                accept=".jpg,.jpeg,.png"
+              <Upload
+                beforeUpload={beforeUpload}
                 onChange={handleHealthCertChange}
-              />
+                fileList={healthCertFileList}
+                maxCount={1}
+                listType="picture-card"
+                className="w-full"
+                onError={(error) => {
+                  setShowNotification({
+                    status: "error",
+                    message: "Thất bại",
+                    description: `Upload thất bại: ${error.message}`,
+                  });
+                }}
+                customRequest={async ({ file, onSuccess, onError }) => {
+                  try {
+                    onSuccess();
+                  } catch (err) {
+                    onError(err);
+                  }
+                }}
+              >
+                {healthCertFileList.length >= 1 ? null : (
+                  <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                    <UploadOutlined
+                      className="text-gray-400 text-2xl mb-2"
+                      style={{ fontSize: "18px", marginBottom: "10px" }}
+                    />
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "10px" }}
+                    >
+                      Click to Upload
+                    </div>
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "8px", marginTop: "4px" }}
+                    >
+                      Kích thước &lt; 2Mb
+                    </div>
+                  </div>
+                )}
+              </Upload>
             </Form.Item>
           </Col>
         </Row>
@@ -622,6 +777,13 @@ const AddMaid = () => {
           </Button>
         </Form.Item>
       </Form>
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </div>
   );
 };
