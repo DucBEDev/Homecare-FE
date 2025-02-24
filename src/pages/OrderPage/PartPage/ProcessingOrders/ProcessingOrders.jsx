@@ -40,11 +40,7 @@ const ProcessingOrders = () => {
       render: (text) => (
         <span className="column-with-icon request-icon">{text}</span>
       ),
-      filters: [
-        { text: "Yêu cầu mới", value: "Yêu cầu mới" },
-        { text: "Đang xử lý", value: "Đang xử lý" },
-      ],
-      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+      sorter: (a, b) => a.requestType.localeCompare(b.requestType),
     },
     {
       title: "Địa chỉ",
@@ -54,23 +50,8 @@ const ProcessingOrders = () => {
       render: (text) => (
         <span className="column-with-icon request-icon">{text}</span>
       ),
-      filters: [
-        { text: "Quận 1", value: "Quận 1" },
-        { text: "Quận 2", value: "Quận 2" },
-        { text: "Quận 3", value: "Quận 3" },
-        { text: "Quận 4", value: "Quận 4" },
-        { text: "Quận 5", value: "Quận 5" },
-        { text: "Quận 6", value: "Quận 6" },
-        { text: "Quận 7", value: "Quận 7" },
-        { text: "Quận 8", value: "Quận 8" },
-        { text: "Quận 9", value: "Quận 9" },
-        { text: "Quận 10", value: "Quận 10" },
-        { text: "Quận 11", value: "Quận 11" },
-        { text: "Quận 12", value: "Quận 12" },
-        { text: "Quận Tân Phú", value: "Quận Tân Phú" },
-        { text: "Quận Tân Bình", value: "Quận Tân Bình" },
-      ],
-      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+      sorter: (a, b) => a.address.localeCompare(b.address),
+
     },
     {
       title: "Loại Dịch Vụ",
@@ -80,11 +61,8 @@ const ProcessingOrders = () => {
       render: (text) => (
         <span className="column-with-icon service-icon">{text}</span>
       ),
-      filters: [
-        { text: "Dịch vụ A", value: "Dịch vụ A" },
-        { text: "Dịch vụ B", value: "Dịch vụ B" },
-      ],
-      onFilter: (value, record) => record.serviceType.indexOf(value) === 0,
+      sorter: (a, b) => a.serviceType.localeCompare(b.serviceType),
+
     },
     {
       title: "Ngày Đặt Yêu Cầu",
@@ -102,8 +80,8 @@ const ProcessingOrders = () => {
       render: (text) => (
         <span className="column-with-icon cost-icon">{text}</span>
       ),
-      sorter: (a, b) =>
-        a.cost.replace(/[^\d]/g, "") - b.cost.replace(/[^\d]/g, ""),
+      sorter: (a, b) => a.status.localeCompare(b.status),
+
     },
     {
       title: "Lựa Chọn",

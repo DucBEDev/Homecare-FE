@@ -1,25 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Pagination,
-  Table,
-  Modal,
-  Form,
-  Input,
-  DatePicker,
-  Button,
-  Row,
-  Col,
-} from "antd";
+import React, { useCallback, useEffect, useState } from "react";
+import { Pagination, Table } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
 import axios from "axios";
-import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
+import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent.jsx";
 import dayjs from "dayjs";
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
+import { Modal, Form, Input, DatePicker, Button, Row, Col } from "antd";
 
 const BodyStaffTable = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const searchValue = useSelector((state) => state.search.value);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
@@ -48,9 +40,9 @@ const BodyStaffTable = () => {
     },
     {
       title: "Họ tên",
-      dataIndex: "fullName",
-      key: "fullName",
-      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
+      dataIndex: "fullname",
+      key: "fullname",
+      sorter: (a, b) => a.fullname.localeCompare(b.fullname),
     },
     {
       title: "Ngày sinh",
@@ -60,9 +52,15 @@ const BodyStaffTable = () => {
     },
     {
       title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
-      sorter: (a, b) => a.address.localeCompare(b.address),
+      dataIndex: "addressStaff",
+      key: "addressStaff",
+      sorter: (a, b) => a.addressStaff.localeCompare(b.addressStaff),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
       title: "Lựa chọn",
@@ -125,9 +123,9 @@ const BodyStaffTable = () => {
         key: staff._id,
         phoneNumber: staff.phone,
         idCard: staff.staff_id,
-        fullName: staff.fullName,
+        fullname: staff.fullName,
         birthDate: dayjs(staff.birthDate).format("DD/MM/YYYY"),
-        address: staff.birthPlace,
+        addressStaff: staff.birthPlace,
       }));
       setStaffs(transformedData);
       setFilteredData(transformedData);
@@ -297,6 +295,15 @@ const BodyStaffTable = () => {
     return current && current > dayjs().endOf("day");
   };
 
+  const handleDeleteSuccess = useCallback((deletedStaff) => {
+    setStaffs((prevStaffs) =>
+      prevStaffs.filter((staff) => staff.key !== deletedStaff.key)
+    );
+    setFilteredData((prevData) =>
+      prevData.filter((staff) => staff.key !== deletedStaff.key)
+    );
+  }, []);
+
   return (
     <div className="processing-maids-container">
       <Table
@@ -325,6 +332,15 @@ const BodyStaffTable = () => {
           description={showNotification.description}
         />
       )}
+      <PopupModalDelete
+        isVisible={isDeleteModalVisible}
+        onClose={hideDeleteConfirm}
+        onDelete={handleDeleteSuccess}
+        record={selectedStaff}
+        setLoading={setLoading}
+        setShowNotification={setShowNotification}
+        staffToDelete={staffToDelete}
+      />
 
       {/* Edit Modal */}
       <Modal
@@ -342,21 +358,21 @@ const BodyStaffTable = () => {
             label="Số điện thoại"
             rules={[{ required: true, message: "Vui lòng nhập số điện thoại!" }]}
           >
-            <Input style={{ width: "100%" }} />
+            <Input style={{ width: "100%", borderRadius: "10px" }} />
           </Form.Item>
           <Form.Item
             name="idCard"
             label="CMND"
             rules={[{ required: true, message: "Vui lòng nhập CMND!" }]}
           >
-            <Input style={{ width: "100%" }} />
+            <Input style={{ width: "100%", borderRadius: "10px" }} />
           </Form.Item>
           <Form.Item
-            name="fullName"
+            name="fullname"
             label="Họ tên"
             rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
           >
-            <Input style={{ width: "100%" }} />
+            <Input style={{ width: "100%", borderRadius: "10px" }} />
           </Form.Item>
           <Form.Item
             name="birthDate"
@@ -366,97 +382,17 @@ const BodyStaffTable = () => {
             <DatePicker
               format="DD/MM/YYYY"
               disabledDate={disabledDate}
-              style={{ width: "100%" }}
+              style={{ width: "100%", height: "34px" }}
             />
           </Form.Item>
           <Form.Item
-            name="address"
+            name="addressStaff"
             label="Địa chỉ"
             rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
           >
-            <Input style={{ width: "100%" }} />
+            <Input style={{ width: "100%", borderRadius: "10px" }} />
           </Form.Item>
         </Form>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        title="Xác nhận xóa nhân viên"
-        visible={isDeleteModalVisible}
-                onCancel={hideDeleteConfirm}
-                footer={[
-                  <Button
-                    key="delete"
-                    danger
-                    type="primary"
-                    onClick={handleConfirmDelete}
-                    className="delete-button"
-                  >
-                    Đồng ý
-                  </Button>,
-                  <Button key="cancel" onClick={hideDeleteConfirm}>
-                    Hủy
-                  </Button>,
-                ]}
-                width={600}
-
-      >
-        <div className="popup-content">
-          <div className="info-section">
-            <p style={{ marginBottom: 20, fontWeight: "bold" }}>
-              Bạn có chắc chắn muốn xóa nhân viên này không?
-            </p>
-            {selectedStaff && (
-              <>
-                <Row gutter={[16, 16]}>
-                  <Col span={12}>
-                    <div className="info-item">
-                      <span>
-                        Số điện thoại:
-                      </span>
-                      <span>{selectedStaff?.phoneNumber}</span>
-                    </div>
-                  </Col>
-                  <Col span={12}>
-                    <div className="info-item">
-                      <span>
-                        CMND:
-                      </span>
-                      <span>{selectedStaff?.idCard}</span>
-                    </div>
-                  </Col>
-                  <Col span={12}>
-                    <div className="info-item">
-                      <span>
-                        Họ tên:
-                      </span>
-                      <span>{selectedStaff?.fullName}</span>
-                    </div>
-                  </Col>
-                  <Col span={12}>
-                    <div className="info-item">
-                      <span>
-                        Ngày sinh:
-                      </span>
-                      <span>{selectedStaff?.birthDate}</span>
-                    </div>
-                  </Col>
-                  <Col span={24}>
-                    <div className="info-item">
-                      <span >
-                        Địa chỉ:
-                      </span>
-                      <span style={{
-                      width: "84%",
-                      wordBreak: "break-word",
-                    }}>{selectedStaff?.address}</span>
-                    </div>
-                  </Col>
-                </Row>
-              </>
-            )}
-          </div>
-        </div>
       </Modal>
     </div>
   );

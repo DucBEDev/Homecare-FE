@@ -3,7 +3,6 @@ import { Row, Col } from "antd";
 import InputComponent from "../../../components/InputComponent/InputComponent";
 import { useDispatch, useSelector } from "react-redux";
 import { setSearchValue } from "../../../redux/slides/searchSlice";
-// import "../../StylePage/HeadBlog.css";
 import { useNavigate } from "react-router-dom";
 import DropdownSortComponent from "../../../components/DropdownComponent/DropdownSortComponent";
 import ButtonComponent from "../../../components/ButtonComponent/ButtonComponent";

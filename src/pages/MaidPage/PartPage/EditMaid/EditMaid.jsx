@@ -6,152 +6,355 @@ import {
   DatePicker,
   Select,
   InputNumber,
-  Upload,
-  message,
   Row,
   Col,
   Typography,
   Cascader,
+  Radio,
+  Upload,
+  message,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
 import "../../StylePage/EditMaid.css";
+import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
+const { Title } = Typography;
 
 const EditMaid = () => {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [avatarList, setAvatarList] = useState([]);
-  const [healthCertList, setHealthCertList] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [avatarFileList, setAvatarFileList] = useState([]);
+  const [healthCertFileList, setHealthCertFileList] = useState([]);
+  const [locationWork, setLocationWork] = useState([]);
   const [dataFetch, setDataFetch] = useState([]);
-
-  const dayOrder = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 7,
-  };
-
-  const sortDays = (days) => {
-    return days.sort((a, b) => dayOrder[a] - dayOrder[b]);
-  };
+  const [showNotification, setShowNotification] = useState(null);
+  const location = useLocation();
+  const maidId = location.state?.id;
 
   const disabledDate = (current) => {
-    // Disable dates after today
     return current && current > moment().endOf("day");
   };
 
   const beforeUpload = (file) => {
-    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/jpg";
+    const isJpgOrPng =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/jpg";
+    const isLt2M = file.size / 1024 / 1024 < 2;
+
     if (!isJpgOrPng) {
       message.error("Bạn chỉ có thể tải lên file JPG/PNG!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
     }
-    const isLt2M = file.size / 1024 / 1024 < 2;
     if (!isLt2M) {
       message.error("File phải nhỏ hơn 2MB!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
     }
-    return isJpgOrPng && isLt2M;
+    return true;
   };
 
-  const handleAvatarChange = ({ fileList: newFileList }) => {
-    setAvatarList(newFileList);
+  const handleAvatarChange = ({ file, fileList }) => {
+    setAvatarFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
   };
 
-  const handleHealthCertChange = ({ fileList: newFileList }) => {
-    setHealthCertList(newFileList);
+  const handleHealthCertChange = ({ file, fileList }) => {
+    setHealthCertFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
   };
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
+      console.log("Form Values:", values);
+
       const formData = new FormData();
       const requestData = {
         helper_id: values.cmnd,
-        name: values.hoTen,
+        fullName: values.hoTen,
         phone: values.sdt,
-        birth_date: values.ngaysinh.format("YYYY-MM-DD"),
+        birthDate: values.ngaysinh.format("YYYY-MM-DD"),
         gender: values.gioiTinh,
         ethnic: values.danToc,
-        education: values.trinhDoHocVan,
+        educationLevel: values.trinhDoHocVan,
         height: values.chieuCao,
         weight: values.canNang,
-        hometown: values.queQuan,
-        permanent_address: values.diaChiThuongTru,
-        experience_years: values.soNamKinhNghiem,
-        experience_desc: values.moTaKinhNghiem,
-        working_days: values.workingDays,
-        coefficient: values.heSo,
-        status: values.trangThai,
+        birthPlace: values.queQuan,
+        address: values.diaChiThuongTru,
+        yearOfExperience: values.soNamKinhNghiem,
+        experienceDescription: values.moTaKinhNghiem,
+        baseFactor: values.heSo,
+        status: "active", // Đã sửa
       };
-  
-      // Xử lý location (workingArea)
-      if (values.location && values.location.length >= 2) {
-        requestData.province = values.location[0];
-        requestData.districts = [values.location[1]]; // Backend expect array of districts
+
+      console.log("Request Data:", requestData);
+
+      if (values.khuVucLamViec && values.khuVucLamViec.length >= 2) {
+        requestData.workingArea = {
+          province: values.khuVucLamViec[0],
+          districts: [values.khuVucLamViec[1]],
+        };
       }
-  
-      // Append tất cả dữ liệu text
-      Object.keys(requestData).forEach(key => {
+
+      if (values.serviceTitle) {
+        requestData.jobDetail = values.serviceTitle;
+      }
+
+      Object.keys(requestData).forEach((key) => {
         if (requestData[key] !== undefined && requestData[key] !== null) {
           if (Array.isArray(requestData[key])) {
-            requestData[key].forEach(value => {
-              formData.append(key, value);
+            requestData[key].forEach((value) => {
+              formData.append(`${key}[]`, value);
+            });
+          } else if (typeof requestData[key] === "object") {
+            Object.keys(requestData[key]).forEach((subKey) => {
+              if (Array.isArray(requestData[key][subKey])) {
+                requestData[key][subKey].forEach((value) => {
+                  formData.append(`workingArea[${subKey}][]`, value);
+                });
+              } else {
+                formData.append(
+                  `workingArea[${subKey}]`,
+                  String(requestData[key][subKey])
+                );
+              }
             });
           } else {
-            formData.append(key, requestData[key]);
+            formData.append(key, String(requestData[key]));
           }
         }
       });
-  
-      // Append avatar nếu có
-      if (avatarList && avatarList.length > 0) {
-        formData.append("avatar", avatarList[0].originFileObj);
-      }
-  
-      // Append health certificate nếu có
-      if (healthCertList && healthCertList.length > 0) {
-        formData.append("health_cert", healthCertList[0].originFileObj);
-      }
-  
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}admin/helpers/create`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+
+      // Handle file uploads with error handling
+      if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
+        try {
+          formData.append("avatar", avatarFileList[0].originFileObj);
+        } catch (error) {
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi thêm file avatar: ${error.message}`,
+          });
+          return;
         }
-      );
-  
-      if (response.data.success === false) {
-        message.error(response.data.msg);
-      } else {
-        message.success("Thêm người giúp việc thành công");
-        form.resetFields();
-        setAvatarList([]);
-        setHealthCertList([]);
+      }
+
+      if (
+        healthCertFileList.length > 0 &&
+        healthCertFileList[0].originFileObj
+      ) {
+        try {
+          formData.append(
+            "healthCertificates",
+            healthCertFileList[0].originFileObj
+          );
+        } catch (error) {
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi thêm file healthCert: ${error.message}`,
+          });
+          return;
+        }
+      }
+
+      console.log("Nội dung FormData:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
+      try {
+        const response = await axios.patch(
+          `${process.env.REACT_APP_API_URL}admin/helpers/edit/${maidId}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        if (response.data.success === false) {
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: response.data.msg,
+          });
+        } else {
+          setShowNotification({
+            status: "success",
+            message: "Thành công",
+            description: `Sửa người giúp việc thành công`,
+          });
+          form.resetFields();
+          setAvatarFileList([]);
+          setHealthCertFileList([]);
+          navigate("/maid"); // Điều hướng sau khi sửa thành công
+        }
+      } catch (axiosError) {
+        console.error("API Error:", axiosError);
+        if (axiosError.response) {
+          console.error("Response Data:", axiosError.response.data);
+          console.error("Response Status:", axiosError.response.status);
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi: ${
+              axiosError.response.data.error || "Không thể kết nối đến server"
+            }`,
+          });
+        } else if (axiosError.request) {
+          console.error("Request Error:", axiosError.request);
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Không nhận được phản hồi từ server`,
+          });
+        } else {
+          console.error("Error Message:", axiosError.message);
+          setShowNotification({
+            status: "error",
+            message: "Thất bại",
+            description: `Lỗi khi gửi yêu cầu`,
+          });
+        }
       }
     } catch (error) {
-      console.error("Error adding helper:", error);
-      message.error("Lỗi khi thêm người giúp việc: " + (error.response?.data?.error || error.message));
+      console.error("Form Processing Error:", error);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `Lỗi xử lý form: ${error.message}`,
+      });
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        setShowNotification(null);
+      }, 3000);
     }
   };
 
-  // Update the fetchData in useEffect:
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create`
+          `${process.env.REACT_APP_API_URL}admin/helpers/detail/${maidId}`
         );
+        console.log("aaaa", response);
+
+        const data = response.data.helper;
+        form.setFieldsValue({
+          hoTen: data.fullName,
+          cmnd: data.helper_id,
+          ngaysinh: moment(data.birthDate),
+          gioiTinh: data.gender === "male" ? "Nam" : "Nữ",
+          danToc: data.nationality,
+          trinhDoHocVan: data.educationLevel,
+          chieuCao: data.height,
+          canNang: data.weight,
+          queQuan: data.birthPlace,
+          diaChiThuongTru: data.address,
+          soNamKinhNghiem: data.yearOfExperience,
+          moTaKinhNghiem: data.experienceDescription,
+          heSo: data.baseFactor,
+          khuVucLamViec: data.workingArea
+            ? [data.workingArea.province, data.workingArea.districts]
+            : [],
+          sdt: data.phone,
+          serviceTitle: data.jobDetail,
+        });
+
+        // Format the image data for the Upload component
+        const formattedAvatarList = data.avatar
+          ? [
+              {
+                uid: "1", // Unique ID for the file (can be anything)
+                name: "avatar", // File name (can be anything)
+                status: "done", //  'uploading' | 'done' | 'error' | 'removed'
+                url: data.avatar, // The actual URL
+              },
+            ]
+          : [];
+
+        const formattedHealthCertList = data.healthCertificates
+          ? [
+              {
+                uid: "2", // Unique ID for the file (can be anything)
+                name: "health_cert", // File name (can be anything)
+                status: "done", //  'uploading' | 'done' | 'error' | 'removed'
+                url: data.healthCertificates[0], // The actual URL
+              },
+            ]
+          : [];
+        setAvatarFileList(formattedAvatarList);
+        setHealthCertFileList(formattedHealthCertList);
+
+        console.log("Data fetched for edit:", response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setShowNotification({
+          status: "error",
+          message: "Thất bại",
+          description: "Không thể tải thông tin người giúp việc",
+        });
+      }
+    };
+
+    fetchData();
+  }, [maidId, form]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/helpers/create`
+        );
+        console.log(response);
         setDataFetch(response.data);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -160,22 +363,17 @@ const EditMaid = () => {
     fetchData();
   }, []);
 
-  // Add new useEffect for formatting locations data
   useEffect(() => {
     if (dataFetch && dataFetch.locations) {
-      const formattedLocations = dataFetch.locations.map((province) => ({
+      const formattedLocationWork = dataFetch.locations.map((province) => ({
         value: province.Name,
         label: province.Name,
         children: province.Districts.map((district) => ({
           value: district.Name,
           label: district.Name,
-          children: district.Wards.map((ward) => ({
-            value: ward.Name,
-            label: ward.Name,
-          })),
         })),
       }));
-      setLocations(formattedLocations);
+      setLocationWork(formattedLocationWork);
     }
   }, [dataFetch]);
 
@@ -183,7 +381,7 @@ const EditMaid = () => {
     <div className="add-maid-wrapper" style={{ margin: "90px 0 0 20px" }}>
       <div className="header-container">
         <div className="green-header">
-          <span className="header-title">Thêm người giúp việc</span>
+          <span className="header-title">Sửa thông tin người giúp việc</span>
         </div>
       </div>
       <Form
@@ -257,7 +455,6 @@ const EditMaid = () => {
               <Select placeholder="Chọn giới tính">
                 <Option value="Nam">Nam</Option>
                 <Option value="Nữ">Nữ</Option>
-                <Option value="Khác">Khác</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -288,7 +485,17 @@ const EditMaid = () => {
                 },
               ]}
             >
-              <Input placeholder="Nhập trình độ học vấn" />
+              <Select placeholder="Chọn trình độ">
+                <option value="Chưa có">Chưa có</option>
+                <option value="Tiểu học">Tiểu học</option>
+                <option value="THCS">THCS</option>
+                <option value="THPT">THPT</option>
+                <option value="Cao đẳng">Cao đẳng</option>
+                <option value="Đại học">Đại học</option>
+                <option value="Thạc sĩ">Thạc sĩ</option>
+                <option value="Tiến sĩ">Tiến sĩ</option>
+                <option value="Khác">Khác</option>
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -390,15 +597,18 @@ const EditMaid = () => {
           </Col>
           <Col span={12} className="location-custom">
             <Form.Item
-              name="location"
-              label="Địa điểm"
+              name="khuVucLamViec"
+              label="Khu vực làm việc"
               rules={[
-                { required: true, message: "Vui lòng chọn địa điểm!" },
+                {
+                  required: true,
+                  message: "Vui lòng nhập khu vực làm việc",
+                },
               ]}
             >
               <Cascader
-                options={locations}
-                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                options={locationWork}
+                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện"
                 showSearch
                 changeOnSelect
                 className="cascader-custom"
@@ -409,28 +619,15 @@ const EditMaid = () => {
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              name="khuVucLamViec"
-              label="Khu vực làm việc"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập khu vực làm việc",
-                },
-              ]}
-            >
-              <Input placeholder="Nhập khu vực làm việc" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
               name="soNamKinhNghiem"
               label="Số năm kinh nghiệm"
               rules={[
                 {
                   required: true,
                   message: "Vui lòng nhập số năm kinh nghiệm",
-                },{
-                  type: 'number', 
+                },
+                {
+                  type: "number",
                   message: "Vui lòng nhập số",
                 },
               ]}
@@ -441,50 +638,40 @@ const EditMaid = () => {
                   width: "100%",
                   height: "32px",
                   display: "flex",
-                  fontSize: "22px",
                   alignItems: "center",
+                  fontSize: "22px",
                 }}
                 placeholder="Nhập số năm kinh nghiệm"
               />
             </Form.Item>
           </Col>
+
+          <Col span={12}>
+            <Form.Item
+              name="serviceTitle"
+              label="Loại dịch vụ"
+              rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
+            >
+              <Radio.Group className="service-radio-group">
+                {dataFetch &&
+                dataFetch.services &&
+                dataFetch.services.length > 0 ? (
+                  dataFetch.services.map((service, index) => (
+                    <Radio key={index} value={service.title}>
+                      {service.title}
+                    </Radio>
+                  ))
+                ) : (
+                  <div>Đang tải dịch vụ...</div>
+                )}
+              </Radio.Group>
+            </Form.Item>
+          </Col>
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="workingDays" label="Ngày làm việc trong tuần">
-              <Select
-                mode="multiple"
-                placeholder="Chọn ngày"
-                optionLabelProp="label"
-                className="system-page-select"
-                onChange={(values) => {
-                  // Khi có sự thay đổi, form field sẽ được cập nhật với mảng đã được sắp xếp
-                  const sortedValues = sortDays(values);
-                  form.setFieldValue("workingDays", sortedValues);
-                }}
-              >
-                <Option value="Monday" label="Thứ 2">
-                  Thứ 2
-                </Option>
-                <Option value="Tuesday" label="Thứ 3">
-                  Thứ 3
-                </Option>
-                <Option value="Wednesday" label="Thứ 4">
-                  Thứ 4
-                </Option>
-                <Option value="Thursday" label="Thứ 5">
-                  Thứ 5
-                </Option>
-                <Option value="Friday" label="Thứ 6">
-                  Thứ 6
-                </Option>
-                <Option value="Saturday" label="Thứ 7">
-                  Thứ 7
-                </Option>
-                <Option value="Sunday" label="Chủ Nhật">
-                  Chủ Nhật
-                </Option>
-              </Select>
+            <Form.Item name="moTaKinhNghiem" label="Mô tả kinh nghiệm">
+              <Input.TextArea rows={4} placeholder="Nhập mô tả kinh nghiệm" />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -495,8 +682,9 @@ const EditMaid = () => {
                 {
                   required: true,
                   message: "Vui lòng nhập hệ số",
-                },  {
-                  type: 'number', // Thêm rule này
+                },
+                {
+                  type: "number",
                   message: "Vui lòng nhập số",
                 },
               ]}
@@ -514,17 +702,8 @@ const EditMaid = () => {
                 placeholder="Nhập hệ số"
               />
             </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="moTaKinhNghiem" label="Mô tả kinh nghiệm">
-              <Input.TextArea rows={4} placeholder="Nhập mô tả kinh nghiệm" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
             <Form.Item
-              name="trangThai"
+              name="status"
               label="Trạng thái"
               rules={[
                 {
@@ -534,42 +713,114 @@ const EditMaid = () => {
               ]}
             >
               <Select placeholder="Chọn trạng thái">
-                <Option value="hoat_dong">Hoạt động</Option>
-                <Option value="dung_hoat_dong">Dừng hoạt động</Option>
+                <Option value="Hoạt động">Hoạt động</Option>
+                <Option value="Không hoạt động">Không hoạt động</Option>
               </Select>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="hinhAnh" label="Hình ảnh">
+            <Form.Item name="avatar" label="Hình ảnh" rules={[
+                {
+                  required: true,
+                  message: "Vui lòng thêm hình ảnh",
+                },
+              ]}>
               <Upload
-                fileList={avatarList}
-                onChange={handleAvatarChange}
                 beforeUpload={beforeUpload}
-                listType="picture"
+                onChange={handleAvatarChange}
+                fileList={avatarFileList}
                 maxCount={1}
-                multiple={true}
+                listType="picture-card"
+                className="w-full"
+                onError={(error) => {
+                  setShowNotification({
+                    status: "error",
+                    message: "Thất bại",
+                    description: `Upload thất bại: ${error.message}`,
+                  });
+                }}
+                customRequest={async ({ file, onSuccess, onError }) => {
+                  try {
+                    onSuccess();
+                  } catch (err) {
+                    onError(err);
+                  }
+                }}
               >
-                <Button icon={<UploadOutlined style={{ fontSize: "16px" }} />}>
-                  Chọn ảnh
-                </Button>
+                {avatarFileList.length >= 1 ? null : (
+                  <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                    <UploadOutlined
+                      className="text-gray-400 text-2xl mb-2"
+                      style={{ fontSize: "18px", marginBottom: "10px" }}
+                    />
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "10px" }}
+                    >
+                      Click to Upload
+                    </div>
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "8px", marginTop: "4px" }}
+                    >
+                      Kích thước &lt; 2Mb
+                    </div>
+                  </div>
+                )}
               </Upload>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="giayKhamSucKhoe" label="Giấy khám sức khoẻ">
+            <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ" rules={[
+                {
+                  required: true,
+                  message: "Vui lòng thêm hình ảnh",
+                },
+              ]}>
               <Upload
-                fileList={healthCertList}
-                onChange={handleHealthCertChange}
                 beforeUpload={beforeUpload}
-                listType="picture"
+                onChange={handleHealthCertChange}
+                fileList={healthCertFileList}
                 maxCount={1}
-                multiple={true}
+                listType="picture-card"
+                className="w-full"
+                onError={(error) => {
+                  setShowNotification({
+                    status: "error",
+                    message: "Thất bại",
+                    description: `Upload thất bại: ${error.message}`,
+                  });
+                }}
+                customRequest={async ({ file, onSuccess, onError }) => {
+                  try {
+                    onSuccess();
+                  } catch (err) {
+                    onError(err);
+                  }
+                }}
               >
-                <Button icon={<UploadOutlined style={{ fontSize: "16px" }} />}>
-                  Chọn file
-                </Button>
+                {healthCertFileList.length >= 1 ? null : (
+                  <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                    <UploadOutlined
+                      className="text-gray-400 text-2xl mb-2"
+                      style={{ fontSize: "18px", marginBottom: "10px" }}
+                    />
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "10px" }}
+                    >
+                      Click to Upload
+                    </div>
+                    <div
+                      className="text-sm text-gray-600 font-medium"
+                      style={{ fontSize: "8px", marginTop: "4px" }}
+                    >
+                      Kích thước &lt; 2Mb
+                    </div>
+                  </div>
+                )}
               </Upload>
             </Form.Item>
           </Col>
@@ -581,10 +832,17 @@ const EditMaid = () => {
             loading={loading}
             className="add-maid-button"
           >
-            Thêm người giúp việc
+            Sửa thông tin người giúp việc
           </Button>
         </Form.Item>
       </Form>
+      {showNotification && (
+        <NotificationComponent
+          status={showNotification.status}
+          message={showNotification.message}
+          description={showNotification.description}
+        />
+      )}
     </div>
   );
 };

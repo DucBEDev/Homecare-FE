@@ -68,15 +68,15 @@ const NavbarComponent = () => {
             key: "/blog",
             icon: <FormOutlined />,
           },
-          // {
-          //   label: "Quản lý dịch vụ",
-          //   key: "/service",
-          //   icon: <ProductOutlined />,
-          // },
           {
             label: "Hệ số chi phí",
             key: "/finance",
             icon: <ToolOutlined />,
+          },
+          {
+            label: "Quản lý dịch vụ",
+            key: "/services",
+            icon: <ProductOutlined />,
           },
           {
             label: "Phân quyền",

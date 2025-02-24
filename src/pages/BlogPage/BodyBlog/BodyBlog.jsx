@@ -280,14 +280,23 @@ const BlogManagementTable = () => {
       />
       <div className="pagination-container">
         <Pagination
-          align="center"
-          current={currentPage}
-          total={filteredData?.length || 0}
-          pageSize={pageSize}
-          onChange={setCurrentPage}
-          hideOnSinglePage={true}
-          showLessItems={true}
-        />
+                align="center"
+                current={currentPage}
+                total={filteredData.length}
+                pageSize={pageSize}
+                onChange={setCurrentPage}
+                hideOnSinglePage={true}
+                showLessItems={true}
+                style={{
+                  fontSize: "26px",
+                  transform: "translateX(-20px)",
+                  marginTop: "10px",
+                  position: "fixed",
+                  bottom: "20px",
+                  left: "50%",
+                  zIndex: 1000,
+                }}
+              />
       </div>
       {showNotification && (
         <NotificationComponent

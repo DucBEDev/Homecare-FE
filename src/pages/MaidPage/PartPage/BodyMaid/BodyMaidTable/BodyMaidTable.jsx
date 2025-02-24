@@ -3,14 +3,10 @@ import { Pagination, Table, Modal, Form, Input, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../../../components/ButtonComponent/ButtonComponent";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
-import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent";
 import dayjs from "dayjs";
 
 import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
-
-const { confirm } = Modal;
 
 const BodyMaidTable = () => {
   const navigate = useNavigate();
@@ -19,11 +15,7 @@ const BodyMaidTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
   const pageSize = 5;
-  const [showNotification, setShowNotification] = useState(null);
   const [helpers, setHelpers] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedHelper, setSelectedHelper] = useState(null);
-  const [form] = Form.useForm();
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);
@@ -118,20 +110,18 @@ const BodyMaidTable = () => {
 
   const handleSchedule = useCallback(
     (recordId) => {
-      navigate(`/helpers/schedule`, { state: { id: recordId } }); // Thay đổi route
+      navigate(`/maid/processing/schedule`, { state: { id: recordId } }); // Thay đổi route
     },
     [navigate]
   );
 
-  const handleEdit = (recordId) => {
-    const selected = helpers.find((helper) => helper.key === recordId);
-    setSelectedHelper(selected);
-    form.setFieldsValue({
-      ...selected,
-      birthDate: dayjs(selected.birthDate, "DD/MM/YYYY"),
-    });
-    setIsModalVisible(true);
-  };
+    const handleEdit = useCallback(
+      (recordId) => {
+        navigate(`/maid/processing/editDetail`, { state: { id: recordId } });
+      },
+      [navigate]
+    );
+  
 
   const handleDelete = (recordId) => {
     const selected = helpers.find((helper) => helper.key === recordId);
@@ -205,24 +195,24 @@ const BodyMaidTable = () => {
         scroll={{ x: 1000 }}
         pagination={false}
       />
-      <Pagination
-        align="center"
-        current={currentPage}
-        total={filteredData.length}
-        pageSize={pageSize}
-        onChange={setCurrentPage}
-        hideOnSinglePage={true}
-        showLessItems={true}
-        style={{
-          fontSize: "26px",
-          transform: "translateX(-20px)",
-          marginTop: "10px",
-          position: "fixed",
-          bottom: "20px",
-          left: "50%",
-          zIndex: 1000,
-        }}
-      />
+     <Pagination
+             align="center"
+             current={currentPage}
+             total={filteredData.length}
+             pageSize={pageSize}
+             onChange={setCurrentPage}
+             hideOnSinglePage={true}
+             showLessItems={true}
+             style={{
+               fontSize: "26px",
+               transform: "translateX(-20px)",
+               marginTop: "10px",
+               position: "fixed",
+               bottom: "20px",
+               left: "50%",
+               zIndex: 1000,
+             }}
+           />
       <PopupModalDelete
         isVisible={isDeleteModalVisible}
         onClose={() => setIsDeleteModalVisible(false)}

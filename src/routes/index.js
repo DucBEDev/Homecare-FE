@@ -23,6 +23,8 @@ import AddMaid from "../pages/MaidPage/PartPage/AddMaid/AddMaid";
 //import component con cua StaffPage
 import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable/BodyStaffTable";
 import AddStaff from "../pages/StaffPage/PartPage/AddStaff/AddStaff"
+import EditMaid from "../pages/MaidPage/PartPage/EditMaid/EditMaid"
+import MaidBusySchedule from "../pages/MaidPage/PartPage/BodyMaid/MaidBusySchedule/MaidBusySchedule"
 //import component con cua CustomerPage
 import BodyCustomerTable from "../pages/CustomerPage/PartPage/BodyCustomer/BodyCustomerTable/BodyCustomerTable";
 import ListOrderCustomer from "../pages/CustomerPage/PartPage/BodyCustomer/ListOrderCustomer/ListOrderCustomer";
@@ -30,6 +32,9 @@ import ListOrderCustomer from "../pages/CustomerPage/PartPage/BodyCustomer/ListO
 import BodyBlog from "../pages/BlogPage/BodyBlog/BodyBlog";
 import AddBlog from "../pages/BlogPage/AddPage/AddPage";
 import ViewBlog from "../pages/BlogPage/ViewPage/ViewPage";
+//import component con cua ServicePage
+import ServicePage from "../pages/ServicePage/PartPage/ServicePage/ServicePage";
+import BodyServiceTable from "../pages/ServicePage/PartPage/BodyService/BodyServiceTable";
 
 export const routes = [
   {
@@ -129,6 +134,18 @@ export const routes = [
     isShowHeader: true,
   },
   {
+    path: "/services",
+    page: ServicePage,
+    isShowHeader: true,
+    children: [
+      {
+        path: "processing", // Route con cho đơn hàng cần xử lý
+        page: BodyServiceTable,
+        isShowHeader: true,
+      },
+    ],
+  },
+  {
     path: "/finance",
     page: FinancePage,
     isShowHeader: true,
@@ -153,6 +170,16 @@ export const routes = [
   {
     path: "maid/add",
     page: AddMaid,
+    isShowHeader: true,
+  },
+  {
+    path: "/maid/processing/editDetail",
+    page: EditMaid,
+    isShowHeader: true,
+  },
+  {
+    path: "/maid/processing/schedule",
+    page: MaidBusySchedule,
     isShowHeader: true,
   },
   {

@@ -19,32 +19,20 @@ import axios from "axios";
 import moment from "moment";
 import "../../StylePage/AddMaid.css";
 import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 const { Title } = Typography;
 
 const AddMaid = () => {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [avatarFileList, setAvatarFileList] = useState([]);
   const [healthCertFileList, setHealthCertFileList] = useState([]);
   const [locationWork, setLocationWork] = useState([]);
   const [dataFetch, setDataFetch] = useState([]);
-  const [showNotification, setShowNotification] = useState(null); // State cho notification
-
-  const dayOrder = {
-    Monday: 1,
-    Tuesday: 2,
-    Wednesday: 3,
-    Thursday: 4,
-    Friday: 5,
-    Saturday: 6,
-    Sunday: 7,
-  };
-
-  const sortDays = (days) => {
-    return days.sort((a, b) => dayOrder[a] - dayOrder[b]);
-  };
+  const [showNotification, setShowNotification] = useState(null); 
 
   const disabledDate = (current) => {
     return current && current > moment().endOf("day");
@@ -85,7 +73,7 @@ const AddMaid = () => {
       });
     } else if (file.status === "error") {
       setLoading(false);
-       setShowNotification({
+      setShowNotification({
         status: "error",
         message: "Thất bại",
         description: `${file.name} tải lên thất bại.`,
@@ -103,7 +91,7 @@ const AddMaid = () => {
     }
     if (file.status === "done") {
       setLoading(false);
-       setShowNotification({
+      setShowNotification({
         status: "success",
         message: "Thành công",
         description: `${file.name} đã được tải lên thành công`,
@@ -194,14 +182,17 @@ const AddMaid = () => {
         }
       }
 
-      if (healthCertFileList.length > 0 && healthCertFileList[0].originFileObj) {
+      if (
+        healthCertFileList.length > 0 &&
+        healthCertFileList[0].originFileObj
+      ) {
         try {
           formData.append(
             "healthCertificates",
             healthCertFileList[0].originFileObj
           );
         } catch (error) {
-            setShowNotification({
+          setShowNotification({
             status: "error",
             message: "Thất bại",
             description: `Lỗi khi thêm file healthCert: ${error.message}`,
@@ -230,9 +221,8 @@ const AddMaid = () => {
           setShowNotification({
             status: "error",
             message: "Thất bại",
-            description: response.data.msg
-          })
-
+            description: response.data.msg,
+          });
         } else {
           setShowNotification({
             status: "success",
@@ -242,47 +232,48 @@ const AddMaid = () => {
           form.resetFields();
           setAvatarFileList([]);
           setHealthCertFileList([]);
+          navigate("/maid")
         }
       } catch (axiosError) {
         console.error("API Error:", axiosError);
         if (axiosError.response) {
           console.error("Response Data:", axiosError.response.data);
           console.error("Response Status:", axiosError.response.status);
-             setShowNotification({
+          setShowNotification({
             status: "error",
             message: "Thất bại",
             description: `Lỗi: ${
               axiosError.response.data.error || "Không thể kết nối đến server"
-            }`
+            }`,
           });
         } else if (axiosError.request) {
           console.error("Request Error:", axiosError.request);
-           setShowNotification({
+          setShowNotification({
             status: "error",
             message: "Thất bại",
-            description: `Không nhận được phản hồi từ server`
+            description: `Không nhận được phản hồi từ server`,
           });
         } else {
           console.error("Error Message:", axiosError.message);
-           setShowNotification({
+          setShowNotification({
             status: "error",
             message: "Thất bại",
-            description: `Lỗi khi gửi yêu cầu`
+            description: `Lỗi khi gửi yêu cầu`,
           });
         }
       }
     } catch (error) {
       console.error("Form Processing Error:", error);
-       setShowNotification({
-            status: "error",
-            message: "Thất bại",
-            description: `Lỗi xử lý form: ${error.message}`
-          });
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `Lỗi xử lý form: ${error.message}`,
+      });
     } finally {
       setLoading(false);
-       setTimeout(() => {
-           setShowNotification(null);
-        }, 3000);
+      setTimeout(() => {
+        setShowNotification(null);
+      }, 3000);
     }
   };
 
@@ -290,7 +281,7 @@ const AddMaid = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create`
+          `${process.env.REACT_APP_API_URL}admin/helpers/create`
         );
         console.log(response);
         setDataFetch(response.data);
@@ -393,7 +384,6 @@ const AddMaid = () => {
               <Select placeholder="Chọn giới tính">
                 <Option value="Nam">Nam</Option>
                 <Option value="Nữ">Nữ</Option>
-                <Option value="Khác">Khác</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -424,7 +414,17 @@ const AddMaid = () => {
                 },
               ]}
             >
-              <Input placeholder="Nhập trình độ học vấn" />
+              <Select placeholder="Chọn trình độ">
+                <option value="Chưa có">Chưa có</option>
+                <option value="Tiểu học">Tiểu học</option>
+                <option value="THCS">THCS</option>
+                <option value="THPT">THPT</option>
+                <option value="Cao đẳng">Cao đẳng</option>
+                <option value="Đại học">Đại học</option>
+                <option value="Thạc sĩ">Thạc sĩ</option>
+                <option value="Tiến sĩ">Tiến sĩ</option>
+                <option value="other">Khác</option>
+              </Select>
             </Form.Item>
           </Col>
         </Row>
@@ -524,25 +524,24 @@ const AddMaid = () => {
               <Input placeholder="Nhập địa chỉ thường trú" />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col span={12} className="location-custom">
             <Form.Item
-              name="serviceTitle"
-              label="Loại dịch vụ"
-              rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
+              name="khuVucLamViec"
+              label="Khu vực làm việc"
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng nhập khu vực làm việc",
+                },
+              ]}
             >
-              <Radio.Group className="service-radio-group">
-                {dataFetch &&
-                dataFetch.serviceList &&
-                dataFetch.serviceList.length > 0 ? (
-                  dataFetch.serviceList.map((service, index) => (
-                    <Radio key={index} value={service.title}>
-                      {service.title}
-                    </Radio>
-                  ))
-                ) : (
-                  <div>Đang tải dịch vụ...</div>
-                )}
-              </Radio.Group>
+              <Cascader
+                options={locationWork}
+                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện"
+                showSearch
+                changeOnSelect
+                className="cascader-custom"
+              />
             </Form.Item>
           </Col>
         </Row>
@@ -575,62 +574,33 @@ const AddMaid = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={12} className="location-custom">
+
+          <Col span={12}>
             <Form.Item
-              name="khuVucLamViec"
-              label="Khu vực làm việc"
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng nhập khu vực làm việc",
-                },
-              ]}
+              name="serviceTitle"
+              label="Loại dịch vụ"
+              rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
-              <Cascader
-                options={locationWork}
-                placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện"
-                showSearch
-                changeOnSelect
-                className="cascader-custom"
-              />
+              <Radio.Group className="service-radio-group">
+                {dataFetch &&
+                dataFetch.services &&
+                dataFetch.services.length > 0 ? (
+                  dataFetch.services.map((service, index) => (
+                    <Radio key={index} value={service.title}>
+                      {service.title}
+                    </Radio>
+                  ))
+                ) : (
+                  <div>Đang tải dịch vụ...</div>
+                )}
+              </Radio.Group>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item name="workingDays" label="Ngày làm việc trong tuần">
-              <Select
-                mode="multiple"
-                placeholder="Chọn ngày"
-                optionLabelProp="label"
-                className="system-page-select"
-                onChange={(values) => {
-                  const sortedValues = sortDays(values);
-                  form.setFieldValue("workingDays", sortedValues);
-                }}
-              >
-                <Option value="Monday" label="Thứ 2">
-                  Thứ 2
-                </Option>
-                <Option value="Tuesday" label="Thứ 3">
-                  Thứ 3
-                </Option>
-                <Option value="Wednesday" label="Thứ 4">
-                  Thứ 4
-                </Option>
-                <Option value="Thursday" label="Thứ 5">
-                  Thứ 5
-                </Option>
-                <Option value="Friday" label="Thứ 6">
-                  Thứ 6
-                </Option>
-                <Option value="Saturday" label="Thứ 7">
-                  Thứ 7
-                </Option>
-                <Option value="Sunday" label="Chủ Nhật">
-                  Chủ Nhật
-                </Option>
-              </Select>
+        <Col span={12}>
+            <Form.Item name="moTaKinhNghiem" label="Mô tả kinh nghiệm">
+              <Input.TextArea rows={4} placeholder="Nhập mô tả kinh nghiệm" />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -664,15 +634,13 @@ const AddMaid = () => {
           </Col>
         </Row>
         <Row gutter={16}>
-          <Col span={24}>
-            <Form.Item name="moTaKinhNghiem" label="Mô tả kinh nghiệm">
-              <Input.TextArea rows={4} placeholder="Nhập mô tả kinh nghiệm" />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="avatar" label="Hình ảnh">
+            <Form.Item name="avatar" label="Hình ảnh" rules={[
+                            {
+                              required: true,
+                              message: "Vui lòng thêm hình ảnh",
+                            },
+                          ]}>
               <Upload
                 beforeUpload={beforeUpload}
                 onChange={handleAvatarChange}
@@ -719,7 +687,12 @@ const AddMaid = () => {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ">
+            <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ" rules={[
+                            {
+                              required: true,
+                              message: "Vui lòng thêm hình ảnh",
+                            },
+                          ]}>
               <Upload
                 beforeUpload={beforeUpload}
                 onChange={handleHealthCertChange}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
@@ -8,37 +8,127 @@ import {
   Row,
   Col,
   message,
+  Select,
+  Upload,
 } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
-import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
+import moment from "moment";
+
+const { Option } = Select;
 
 const AddStaff = () => {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
+  const [avatarFileList, setAvatarFileList] = useState([]); // Thêm state cho avatar
+  const [healthCertFileList, setHealthCertFileList] = useState([]); // Thêm state cho health certificate
 
   const disabledDate = (current) => {
-    return current && current > dayjs().endOf("day");
+    return current && current > moment().endOf("day"); // Sử dụng moment thay vì dayjs
+  };
+
+  const beforeUpload = (file) => {
+    const isJpgOrPng =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/jpg";
+    const isLt2M = file.size / 1024 / 1024 < 2;
+
+    if (!isJpgOrPng) {
+      message.error("Bạn chỉ có thể tải lên file JPG/PNG!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
+    }
+    if (!isLt2M) {
+      message.error("File phải nhỏ hơn 2MB!");
+      return Upload.LIST_IGNORE; // Ngăn chặn upload
+    }
+    return true;
+  };
+
+  const handleAvatarChange = ({ file, fileList }) => {
+    setAvatarFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
+  };
+
+  const handleHealthCertChange = ({ file, fileList }) => {
+    setHealthCertFileList(fileList);
+
+    // Kiểm tra trạng thái upload
+    if (file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+    if (file.status === "done") {
+      setLoading(false);
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: `${file.name} đã được tải lên thành công`,
+      });
+    } else if (file.status === "error") {
+      setLoading(false);
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: `${file.name} tải lên thất bại.`,
+      });
+    }
   };
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
-      const dataToSend = {
-        phone: values.phoneNumber,
-        staff_id: values.idCard,
-        fullName: values.fullName,
-        birthDate: values.birthDate.format("YYYY-MM-DD"),
-        birthPlace: values.address,
-      };
+      const formData = new FormData();
+      formData.append("phone", values.phoneNumber);
+      formData.append("staff_id", values.idCard);
+      formData.append("fullName", values.fullName);
+      formData.append("birthDate", values.birthDate.format("YYYY-MM-DD"));
+      formData.append("birthPlace", values.address);
+      formData.append("educationLevel", values.trinhDoHocVan); // Thêm educationLevel
+      formData.append("gender", values.gioiTinh);  //Thêm giới tính
+
+      // Handle file uploads
+      if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
+        formData.append("avatar", avatarFileList[0].originFileObj);
+      }
+
+      if (
+        healthCertFileList.length > 0 &&
+        healthCertFileList[0].originFileObj
+      ) {
+        formData.append("healthCertificates", healthCertFileList[0].originFileObj);
+      }
 
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}admin/staffs/create`,
-        dataToSend,
+        formData,
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data", // Thay đổi Content-Type
           },
         }
       );
@@ -50,6 +140,9 @@ const AddStaff = () => {
           description: "Thêm nhân viên thành công!",
         });
         form.resetFields();
+        setAvatarFileList([]); // Reset danh sách file
+        setHealthCertFileList([]); // Reset danh sách file
+        navigate("/staff"); // Điều hướng đến trang danh sách nhân viên
       } else {
         setShowNotification({
           status: "error",
@@ -132,13 +225,58 @@ const AddStaff = () => {
                 <Form.Item
                   name="birthDate"
                   label="Ngày sinh"
-                  rules={[{ required: true, message: "Vui lòng chọn ngày sinh!" }]}
+                  rules={[
+                    { required: true, message: "Vui lòng chọn ngày sinh!" },
+                  ]}
                 >
                   <DatePicker
                     style={{ width: "100%" }}
                     format="DD/MM/YYYY"
                     disabledDate={disabledDate}
                   />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="gioiTinh"
+                  label="Giới tính"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn giới tính",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Chọn giới tính">
+                    <Option value="Nam">Nam</Option>
+                    <Option value="Nữ">Nữ</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="trinhDoHocVan"
+                  label="Trình độ học vấn"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập trình độ học vấn",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Chọn trình độ">
+                    <option value="Chưa có">Chưa có</option>
+                    <option value="Tiểu học">Tiểu học</option>
+                    <option value="THCS">THCS</option>
+                    <option value="THPT">THPT</option>
+                    <option value="Cao đẳng">Cao đẳng</option>
+                    <option value="Đại học">Đại học</option>
+                    <option value="Thạc sĩ">Thạc sĩ</option>
+                    <option value="Tiến sĩ">Tiến sĩ</option>
+                    <option value="other">Khác</option>
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>
@@ -155,6 +293,102 @@ const AddStaff = () => {
                   ]}
                 >
                   <Input placeholder="Nhập địa chỉ" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="avatar" label="Hình ảnh">
+                  <Upload
+                    beforeUpload={beforeUpload}
+                    onChange={handleAvatarChange}
+                    fileList={avatarFileList}
+                    maxCount={1}
+                    listType="picture-card"
+                    className="w-full"
+                    onError={(error) => {
+                      setShowNotification({
+                        status: "error",
+                        message: "Thất bại",
+                        description: `Upload thất bại: ${error.message}`,
+                      });
+                    }}
+                    customRequest={async ({ file, onSuccess, onError }) => {
+                      try {
+                        onSuccess();
+                      } catch (err) {
+                        onError(err);
+                      }
+                    }}
+                  >
+                    {avatarFileList.length >= 1 ? null : (
+                      <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                        <UploadOutlined
+                          className="text-gray-400 text-2xl mb-2"
+                          style={{ fontSize: "18px", marginBottom: "10px" }}
+                        />
+                        <div
+                          className="text-sm text-gray-600 font-medium"
+                          style={{ fontSize: "10px" }}
+                        >
+                          Click to Upload
+                        </div>
+                        <div
+                          className="text-sm text-gray-600 font-medium"
+                          style={{ fontSize: "8px", marginTop: "4px" }}
+                        >
+                          Kích thước &lt; 2Mb
+                        </div>
+                      </div>
+                    )}
+                  </Upload>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ">
+                  <Upload
+                    beforeUpload={beforeUpload}
+                    onChange={handleHealthCertChange}
+                    fileList={healthCertFileList}
+                    maxCount={1}
+                    listType="picture-card"
+                    className="w-full"
+                    onError={(error) => {
+                      setShowNotification({
+                        status: "error",
+                        message: "Thất bại",
+                        description: `Upload thất bại: ${error.message}`,
+                      });
+                    }}
+                    customRequest={async ({ file, onSuccess, onError }) => {
+                      try {
+                        onSuccess();
+                      } catch (err) {
+                        onError(err);
+                      }
+                    }}
+                  >
+                    {healthCertFileList.length >= 1 ? null : (
+                      <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
+                        <UploadOutlined
+                          className="text-gray-400 text-2xl mb-2"
+                          style={{ fontSize: "18px", marginBottom: "10px" }}
+                        />
+                        <div
+                          className="text-sm text-gray-600 font-medium"
+                          style={{ fontSize: "10px" }}
+                        >
+                          Click to Upload
+                        </div>
+                        <div
+                          className="text-sm text-gray-600 font-medium"
+                          style={{ fontSize: "8px", marginTop: "4px" }}
+                        >
+                          Kích thước &lt; 2Mb
+                        </div>
+                      </div>
+                    )}
+                  </Upload>
                 </Form.Item>
               </Col>
             </Row>
