@@ -43,7 +43,7 @@ const PopupModalDelete = ({
           if (setShowNotification) {
             setShowNotification(null);
           }
-        }, 1500);
+        }, 1000);
       } else {
         // Xử lý kết quả thất bại
         setLocalShowNotification({
@@ -114,20 +114,8 @@ const PopupModalDelete = ({
             </Col>
             <Col span={12}>
               <div className="info-item">
-                <span>Phí Ngoài Giờ (KH):</span>
-                <span>{record?.phiNgoaiGioKH || "N/A"}</span>
-              </div>
-            </Col>
-            <Col span={12}>
-              <div className="info-item">
-                <span>Phí Ngoài Giờ (NGV):</span>
-                <span>{record?.phiNgoaiGioNGV || "N/A"}</span>
-              </div>
-            </Col>
-            <Col span={12}>
-              <div className="info-item">
-                <span>Phụ phí:</span>
-                <span>{record?.phuPhi || "N/A"}</span>
+                <span>Hệ số dịch vụ:</span>
+                <span>{record?.coefficientValue}</span>
               </div>
             </Col>
             <Col span={12}>

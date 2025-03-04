@@ -166,7 +166,7 @@ const BodyStaffTable = () => {
 
   const handleSchedule = useCallback(
     (recordId) => {
-      navigate(`/staffs/schedule`, { state: { id: recordId } });
+      navigate(`/staff/processing/schedule`, { state: { id: recordId } });
     },
     [navigate]
   );

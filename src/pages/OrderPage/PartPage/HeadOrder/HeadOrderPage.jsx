@@ -92,7 +92,7 @@ const HeadOrderPage = () => {
             textButton="Thêm đơn hàng"
             onClick={() => navigate("/order/add")}
             styleButton={{
-              backgroundColor: "#3cbe5d",
+              backgroundColor: "#28B562",
               width: "120px",
               // marginLeft: "-10px",
             }} // Prop styleButton

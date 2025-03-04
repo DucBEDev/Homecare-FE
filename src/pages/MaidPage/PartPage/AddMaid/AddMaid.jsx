@@ -22,7 +22,6 @@ import NotificationComponent from "../../../../components/NotificationComponent/
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
-const { Title } = Typography;
 
 const AddMaid = () => {
   const [form] = Form.useForm();

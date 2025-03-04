@@ -10,6 +10,8 @@ import {
   message,
   Select,
   Upload,
+  Cascader,
+  InputNumber,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -24,11 +26,12 @@ const AddStaff = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(null);
-  const [avatarFileList, setAvatarFileList] = useState([]); // Thêm state cho avatar
-  const [healthCertFileList, setHealthCertFileList] = useState([]); // Thêm state cho health certificate
+  const [avatarFileList, setAvatarFileList] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [locations, setLocations] = useState([]);
 
   const disabledDate = (current) => {
-    return current && current > moment().endOf("day"); // Sử dụng moment thay vì dayjs
+    return current && current > moment().endOf("day");
   };
 
   const beforeUpload = (file) => {
@@ -40,11 +43,11 @@ const AddStaff = () => {
 
     if (!isJpgOrPng) {
       message.error("Bạn chỉ có thể tải lên file JPG/PNG!");
-      return Upload.LIST_IGNORE; // Ngăn chặn upload
+      return Upload.LIST_IGNORE;
     }
     if (!isLt2M) {
       message.error("File phải nhỏ hơn 2MB!");
-      return Upload.LIST_IGNORE; // Ngăn chặn upload
+      return Upload.LIST_IGNORE;
     }
     return true;
   };
@@ -52,7 +55,6 @@ const AddStaff = () => {
   const handleAvatarChange = ({ file, fileList }) => {
     setAvatarFileList(fileList);
 
-    // Kiểm tra trạng thái upload
     if (file.status === "uploading") {
       setLoading(true);
       return;
@@ -74,53 +76,69 @@ const AddStaff = () => {
     }
   };
 
-  const handleHealthCertChange = ({ file, fileList }) => {
-    setHealthCertFileList(fileList);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/staffs/create`
+        );
+        setRoles(response.data.roles);
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+      }
+    };
 
-    // Kiểm tra trạng thái upload
-    if (file.status === "uploading") {
-      setLoading(true);
-      return;
-    }
-    if (file.status === "done") {
-      setLoading(false);
-      setShowNotification({
-        status: "success",
-        message: "Thành công",
-        description: `${file.name} đã được tải lên thành công`,
-      });
-    } else if (file.status === "error") {
-      setLoading(false);
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: `${file.name} tải lên thất bại.`,
-      });
-    }
-  };
+    const fetchLocationData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/locations`
+        );
+        if (response.data.success && response.data.data) {
+          const formattedLocations = response.data.data.map((province) => ({
+            value: province.Name,
+            label: province.Name,
+            children: province.Districts.map((district) => ({
+              value: district.Name,
+              label: district.Name,
+              children: district.Wards.map((ward) => ({
+                value: ward.Name,
+                label: ward.Name,
+              })),
+            })),
+          }));
+          setLocations(formattedLocations);
+        } else {
+          console.error(
+            "Error fetching location data or invalid format:",
+            response.data
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching location data:", error);
+      }
+    };
+
+    fetchData();
+    fetchLocationData();
+  }, []);
 
   const onFinish = async (values) => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("phone", values.phoneNumber);
-      formData.append("staff_id", values.idCard);
-      formData.append("fullName", values.fullName);
+      formData.append("phone", values.phoneNumber); // Sửa thành "phone"
+      formData.append("staff_id", values.staff_id); // Sửa thành staff_id
+      formData.append("fullname", values.fullName);
       formData.append("birthDate", values.birthDate.format("YYYY-MM-DD"));
-      formData.append("birthPlace", values.address);
-      formData.append("educationLevel", values.trinhDoHocVan); // Thêm educationLevel
-      formData.append("gender", values.gioiTinh);  //Thêm giới tính
+      formData.append("gender", values.gioiTinh);
+      formData.append("birthPlace", values.location.join(", "));
+      formData.append("role_id", values.role);
+      formData.append("email", values.email);
+      formData.append("salary", values.salary); 
 
-      // Handle file uploads
+
       if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
         formData.append("avatar", avatarFileList[0].originFileObj);
-      }
-
-      if (
-        healthCertFileList.length > 0 &&
-        healthCertFileList[0].originFileObj
-      ) {
-        formData.append("healthCertificates", healthCertFileList[0].originFileObj);
       }
 
       const response = await axios.post(
@@ -128,21 +146,20 @@ const AddStaff = () => {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Thay đổi Content-Type
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 201) { // Sửa thành 201 Created
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Thêm nhân viên thành công!",
         });
         form.resetFields();
-        setAvatarFileList([]); // Reset danh sách file
-        setHealthCertFileList([]); // Reset danh sách file
-        navigate("/staff"); // Điều hướng đến trang danh sách nhân viên
+        setAvatarFileList([]);
+        navigate("/staff");
       } else {
         setShowNotification({
           status: "error",
@@ -152,10 +169,23 @@ const AddStaff = () => {
       }
     } catch (error) {
       console.error("Error adding staff:", error);
+      if (error.response) {
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        console.error("Response headers:", error.response.headers);
+      }
+      let errorMessage = "Lỗi khi thêm nhân viên.";
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        errorMessage = error.response.data.message;
+      }
       setShowNotification({
         status: "error",
         message: "Thất bại",
-        description: `Lỗi khi thêm nhân viên: ${error.message}`,
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -179,21 +209,22 @@ const AddStaff = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="phoneNumber"
-                  label="Số điện thoại"
+                  name="fullname"
+                  label="Họ tên"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập số điện thoại!",
+                      message: "Vui lòng nhập họ tên!",
                     },
                   ]}
                 >
-                  <Input placeholder="Nhập số điện thoại" />
+                  <Input placeholder="Nhập họ tên" />
                 </Form.Item>
               </Col>
+
               <Col span={12}>
                 <Form.Item
-                  name="idCard"
+                  name="staff_id" // Sửa ở đây
                   label="CMND"
                   rules={[
                     {
@@ -209,16 +240,30 @@ const AddStaff = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="fullName"
-                  label="Họ tên"
+                  name="phoneNumber"
+                  label="Số điện thoại"
                   rules={[
                     {
                       required: true,
-                      message: "Vui lòng nhập họ tên!",
+                      message: "Vui lòng nhập số điện thoại!",
                     },
                   ]}
                 >
-                  <Input placeholder="Nhập họ tên" />
+                  <Input placeholder="Nhập số điện thoại" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập email!",
+                    },
+                  ]}
+                >
+                  <Input placeholder="Nhập email" />
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -230,14 +275,70 @@ const AddStaff = () => {
                   ]}
                 >
                   <DatePicker
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", height: "32px" }}
                     format="DD/MM/YYYY"
                     disabledDate={disabledDate}
                   />
                 </Form.Item>
               </Col>
+              <Col span={12} className="location-custom">
+                <Form.Item
+                  name="location"
+                  label="Quê quán"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập quê quán",
+                    },
+                  ]}
+                >
+                  <Cascader
+                    options={locations}
+                    placeholder="Chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã"
+                    showSearch
+                    changeOnSelect
+                    className="cascader-custom"
+                  />
+                </Form.Item>
+              </Col>
             </Row>
             <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="salary"
+                  label="Lương"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng nhập lương!",
+                    },
+                    {
+                      validator: (_, value) => {
+                        if (value && value > 111111) {
+                          return Promise.reject("Lương không được vượt quá 111,111!");
+                        }
+                        return Promise.resolve();
+                      },
+                    },
+                  ]}
+                  getValueFromEvent={(value) => value}
+                >
+                  <InputNumber
+                    min={0}
+                    className="system-page-input-number custom-input-number"
+                    formatter={(value) =>
+                      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                    }
+                    parser={(value) => value.replace(/\./g, "")}
+                    style={{
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  />
+                </Form.Item>
+              </Col>
               <Col span={12}>
                 <Form.Item
                   name="gioiTinh"
@@ -255,47 +356,8 @@ const AddStaff = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="trinhDoHocVan"
-                  label="Trình độ học vấn"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập trình độ học vấn",
-                    },
-                  ]}
-                >
-                  <Select placeholder="Chọn trình độ">
-                    <option value="Chưa có">Chưa có</option>
-                    <option value="Tiểu học">Tiểu học</option>
-                    <option value="THCS">THCS</option>
-                    <option value="THPT">THPT</option>
-                    <option value="Cao đẳng">Cao đẳng</option>
-                    <option value="Đại học">Đại học</option>
-                    <option value="Thạc sĩ">Thạc sĩ</option>
-                    <option value="Tiến sĩ">Tiến sĩ</option>
-                    <option value="other">Khác</option>
-                  </Select>
-                </Form.Item>
-              </Col>
             </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  name="address"
-                  label="Địa chỉ"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng nhập địa chỉ!",
-                    },
-                  ]}
-                >
-                  <Input placeholder="Nhập địa chỉ" />
-                </Form.Item>
-              </Col>
-            </Row>
+
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item name="avatar" label="Hình ảnh">
@@ -345,50 +407,24 @@ const AddStaff = () => {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="healthCertificates" label="Giấy khám sức khoẻ">
-                  <Upload
-                    beforeUpload={beforeUpload}
-                    onChange={handleHealthCertChange}
-                    fileList={healthCertFileList}
-                    maxCount={1}
-                    listType="picture-card"
-                    className="w-full"
-                    onError={(error) => {
-                      setShowNotification({
-                        status: "error",
-                        message: "Thất bại",
-                        description: `Upload thất bại: ${error.message}`,
-                      });
-                    }}
-                    customRequest={async ({ file, onSuccess, onError }) => {
-                      try {
-                        onSuccess();
-                      } catch (err) {
-                        onError(err);
-                      }
-                    }}
-                  >
-                    {healthCertFileList.length >= 1 ? null : (
-                      <div className="flex flex-col items-center justify-center h-full p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 transition-colors">
-                        <UploadOutlined
-                          className="text-gray-400 text-2xl mb-2"
-                          style={{ fontSize: "18px", marginBottom: "10px" }}
-                        />
-                        <div
-                          className="text-sm text-gray-600 font-medium"
-                          style={{ fontSize: "10px" }}
-                        >
-                          Click to Upload
-                        </div>
-                        <div
-                          className="text-sm text-gray-600 font-medium"
-                          style={{ fontSize: "8px", marginTop: "4px" }}
-                        >
-                          Kích thước &lt; 2Mb
-                        </div>
-                      </div>
-                    )}
-                  </Upload>
+                <Form.Item
+                  name="role"
+                  label="Phân quyền"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn phân quyền",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Chọn phân quyền">
+                    {roles &&
+                      roles.map((role) => (
+                        <Option key={role._id} value={role._id}>
+                          {role.title}
+                        </Option>
+                      ))}
+                  </Select>
                 </Form.Item>
               </Col>
             </Row>

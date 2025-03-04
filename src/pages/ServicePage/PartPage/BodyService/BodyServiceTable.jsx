@@ -7,9 +7,9 @@ import axios from "axios";
 import { Modal, Form, Input, InputNumber } from "antd";
 import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
 
-import PopupModalDelete from "./PopupModalDelete/PopupModalDelete"; // Import the PopupModalDelete component
+import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
 
-const BodyServiceTable = () => {
+const BodyServiceTable = ({ refreshData }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const searchValue = useSelector((state) => state.search.value);
@@ -31,7 +31,7 @@ const BodyServiceTable = () => {
             dataIndex: "stt",
             key: "stt",
             render: (text, record, index) =>
-                (currentPage - 1) * pageSize + index + 1, // Correct STT calculation
+                (currentPage - 1) * pageSize + index + 1,
         },
         {
             title: "Dịch vụ",
@@ -44,33 +44,30 @@ const BodyServiceTable = () => {
             dataIndex: "basicPrice",
             key: "basicPrice",
             sorter: (a, b) => a.basicPrice - b.basicPrice,
+            render: (value) => value.toLocaleString("vi-VN"),
         },
         {
-            title: "Phụ phí",
-            dataIndex: "phuPhi",
-            key: "phuPhi",
-            sorter: (a, b) => (a.phuPhi || 0) - (b.phuPhi || 0), // Default to 0 if null
-            render: (text) => text || "N/A", // Display "N/A" if null
-        },
-        {
-            title: "Phí Ngoài Giờ (KH)",
-            dataIndex: "phiNgoaiGioKH",
-            key: "phiNgoaiGioKH",
-            sorter: (a, b) => (a.phiNgoaiGioKH || 0) - (b.phiNgoaiGioKH || 0), // Default to 0 if null
-            render: (text) => text || "N/A", // Display "N/A" if null
-        },
-        {
-            title: "Phí Ngoài Giờ (NGV)",
-            dataIndex: "phiNgoaiGioNGV",
-            key: "phiNgoaiGioNGV",
-            sorter: (a, b) => (a.phiNgoaiGioNGV || 0) - (b.phiNgoaiGioNGV || 0), // Default to 0 if null
-            render: (text) => text || "N/A", // Display "N/A" if null
+            title: "Hệ số dịch vụ",
+            dataIndex: "coefficientValue",
+            key: "coefficientValue",
+            sorter: (a, b) => {
+                // Handle cases where coefficientValue might be undefined or null
+                const valA = a.coefficientValue ?? 0; // Use nullish coalescing operator
+                const valB = b.coefficientValue ?? 0;
+                return valA - valB;
+            },
+            render: (value) => value !== null && value !== undefined ? value : "N/A" ,  // Display "N/A" for missing values
         },
         {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
             sorter: (a, b) => a.status.localeCompare(b.status),
+        },
+        {
+            title: "Mô tả",
+            dataIndex: "description",
+            key: "description",
         },
         {
             title: "Lựa chọn",
@@ -108,23 +105,27 @@ const BodyServiceTable = () => {
             ),
         },
     ];
-
     const fetchServices = async () => {
         setLoading(true);
         try {
             const response = await axios.get(
                 `${process.env.REACT_APP_API_URL}admin/services`
             );
-            const transformedData = response.data.services.map((service, index) => ({
-                key: service._id,
-                stt: index + 1,
-                title: service.title,
-                basicPrice: service.basicPrice,
-                phuPhi: service.phuPhi,
-                phiNgoaiGioKH: service.phiNgoaiGioKH,
-                phiNgoaiGioNGV: service.phiNgoaiGioNGV,
-                status: service.status === "active" ? "Hoạt động" : "Không hoạt động",
-            }));
+            console.log("get", response);
+    
+            const transformedData = response.data.services.map((service, index) => {
+               
+                return {
+                    key: service._id,
+                    stt: index + 1,
+                    title: service.title,
+                    basicPrice: service.basicPrice,
+                    coefficientValue: service.coefficientValue,
+                    status: service.status === "active" ? "Hoạt động" : "Không hoạt động",
+                    description: service.description || "",
+                };
+            });
+    
             setServices(transformedData);
             setFilteredData(transformedData);
         } catch (error) {
@@ -138,10 +139,11 @@ const BodyServiceTable = () => {
             setLoading(false);
         }
     };
+    
 
     useEffect(() => {
         fetchServices();
-    }, []);
+    }, [refreshData]);
 
     useEffect(() => {
         let filtered = services;
@@ -166,9 +168,8 @@ const BodyServiceTable = () => {
         form.setFieldsValue({
             title: selected.title,
             basicPrice: selected.basicPrice,
-            phuPhi: selected.phuPhi,
-            phiNgoaiGioKH: selected.phiNgoaiGioKH,
-            phiNgoaiGioNGV: selected.phiNgoaiGioNGV,
+            coefficientValue: selected.coefficientValue,
+            description: selected.description,
             status: selected.status,
         });
         setIsEditModalVisible(true);
@@ -321,42 +322,15 @@ const BodyServiceTable = () => {
                             }}
                         />
                     </Form.Item>
-                    <Form.Item label="Phụ phí" name="phuPhi">
+                    <Form.Item
+                        label="Hệ số dịch vụ"
+                        name="coefficientValue"
+                        rules={[{ required: true, message: "Vui lòng nhập hệ số dịch vụ!" }]}
+                    >
                         <InputNumber
+                            
                             formatter={(value) =>
-                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-                            }
-                            parser={(value) => value.replace(/\./g, "")}
-                            style={{
-                                width: "100%",
-                                height: "32px",
-                                display: "flex",
-                                alignItems: "center",
-                                borderRadius: "10px",
-                                fontSize: "22px",
-                            }}
-                        />
-                    </Form.Item>
-                    <Form.Item label="Phí Ngoài Giờ (KH)" name="phiNgoaiGioKH">
-                        <InputNumber
-                            formatter={(value) =>
-                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-                            }
-                            parser={(value) => value.replace(/\./g, "")}
-                            style={{
-                                width: "100%",
-                                height: "32px",
-                                display: "flex",
-                                alignItems: "center",
-                                borderRadius: "10px",
-                                fontSize: "22px",
-                            }}
-                        />
-                    </Form.Item>
-                    <Form.Item label="Phí Ngoài Giờ (NGV)" name="phiNgoaiGioNGV">
-                        <InputNumber
-                            formatter={(value) =>
-                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+                                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".") //keep format if input is number
                             }
                             parser={(value) => value.replace(/\./g, "")}
                             style={{
@@ -378,6 +352,16 @@ const BodyServiceTable = () => {
                                 alignItems: "center",
                                 borderRadius: "10px",
                             }}
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        label="Mô tả"
+                        name="description"
+                    >
+                        <Input.TextArea
+                            placeholder="Nhập mô tả"
+                            rows={4}
+                            style={{ width: '100%' }}
                         />
                     </Form.Item>
                 </Form>

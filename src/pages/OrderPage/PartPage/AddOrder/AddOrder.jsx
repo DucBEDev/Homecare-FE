@@ -17,14 +17,13 @@ import "../../StylePage/styleAdd.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import NotificationComponent from "../../../../components/NotificationComponent/NotificationComponent";
-// const { Option } = Select;
 
 const AddOrder = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [dataFetch, setDataFetch] = useState([]);
 
-  const [locations, setLocations] = useState([]);
+  const [locations, setLocations] = useState([]); // State for location data
   const [coefficient, setCoefficient] = useState("0");
   const [requestType, setRequestType] = useState("short");
   const [timeErrors, setTimeErrors] = useState("");
@@ -48,6 +47,40 @@ const AddOrder = () => {
     fetchData();
   }, []);
 
+  //FETCH LOCATION DATA FROM SEPARATE API
+  useEffect(() => {
+    const fetchLocationData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/locations`
+        );
+        console.log("Location Data:", response.data);
+        if (response.data.success && response.data.data) {
+          // Format the location data into the Cascader options format
+          const formattedLocations = response.data.data.map((province) => ({
+            value: province.Name || province.name, // Use either Name or name
+            label: province.Name || province.name,
+            children: province.Districts.map((district) => ({
+              value: district.Name || district.name, // Use either Name or name
+              label: district.Name || district.name,
+              children: district.Wards.map((ward) => ({
+                value: ward.Name || ward.name, // Use either Name or name
+                label: ward.Name || ward.name,
+              })),
+            })),
+          }));
+          setLocations(formattedLocations);
+        } else {
+          console.error("Error fetching location data or invalid format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching location data:", error);
+      }
+    };
+
+    fetchLocationData();
+  }, []);
+
   //TOTAL COST
   //update cost into table
   const updateTotalCost = () => {
@@ -65,148 +98,181 @@ const AddOrder = () => {
       coefficient_other,
       requestType,
     } = formValues;
-
-    if (
-      !serviceTitle ||
-      !startTime ||
-      !endTime ||
-      !workDate ||
-      !coefficient_other
-    ) {
+  
+    // Return early if required fields are missing
+    if (!serviceTitle || !startTime || !endTime || !workDate || !coefficient_other) {
       return 0;
     }
-
+  
     const selectedService = dataFetch.serviceList.find(
       (service) => service.title === serviceTitle
     );
-
+  
     if (!selectedService) {
       return 0;
     }
-
-    const { basicPrice, coefficient: coefficient_service } = selectedService;
-    const coefficientWeekend = parseFloat(
-      dataFetch.coefficientOtherList[1].value
-    ); // Hệ số cố định cho thứ 7 và chủ nhật
-    const coefficientOvertime = parseFloat(
-      dataFetch.coefficientOtherList[0].value
-    );
-
+  
+    // Parse values as floats to ensure proper number calculations
+    const basicPrice = parseFloat(selectedService.basicPrice);
+    const coefficient_service = parseFloat(selectedService.coefficient);
+    const coefficientWeekend = parseFloat(dataFetch.coefficientOtherList[1].value); 
+    const coefficientOvertime = parseFloat(dataFetch.coefficientOtherList[0].value);
+  
     const start = dayjs(startTime);
     const end = dayjs(endTime);
-
+  
     const officeStartTime = dayjs(dataFetch.timeList.officeStartTime, "HH:mm");
     const officeEndTime = dayjs(dataFetch.timeList.officeEndTime, "HH:mm");
-
+  
     let totalCost = 0;
-
+  
     if (requestType === "long") {
+      // Long-term request (multiple days)
       const startDate = dayjs(workDate[0]);
       const endDate = dayjs(workDate[1]);
       let currentDate = startDate;
-
-      while (
-        currentDate.isBefore(endDate) ||
-        currentDate.isSame(endDate, "day")
-      ) {
+  
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
         const dayOfWeek = currentDate.day();
-        const dailyHours = end.diff(start, "hour");
-
+        // Use exact integer hours, not fractional hours
+        const dailyHours = Math.floor(end.diff(start, "hour"));
+  
         if (dayOfWeek === 0 || dayOfWeek === 6) {
-          //cuoi tuan t7 cn
+          // Weekend (Saturday or Sunday)
           let normalHours = 0;
           let overtimeHours = 0;
-
+  
           if (start.isBefore(officeStartTime)) {
-            overtimeHours += officeStartTime.diff(start, "hour");
+            // Ensure integer values for overtime hours before office hours
+            overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
           }
           if (end.isAfter(officeEndTime)) {
-            overtimeHours += end.diff(officeEndTime, "hour");
+            // Ensure integer values for overtime hours after office hours
+            overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
           }
           normalHours = dailyHours - overtimeHours;
-
-          const weekendCost =
-            basicPrice * normalHours * coefficient_service * coefficientWeekend;
-          const overtimeCost =
+          
+          // Ensure normal hours is not negative
+          normalHours = Math.max(0, normalHours);
+  
+          // Calculate costs with proper rounding
+          const weekendCost = Math.floor(
+            basicPrice * normalHours * coefficient_service * coefficientWeekend
+          );
+          const overtimeCost = Math.floor(
             basicPrice *
             overtimeHours *
             coefficient_service *
             coefficientWeekend *
-            coefficientOvertime;
-          totalCost += weekendCost + overtimeCost;
+            coefficientOvertime
+          );
+          
+          // Add to total, ensuring integer values
+          totalCost += Math.floor(weekendCost + overtimeCost);
         } else {
-          // Ngày trong tuần
+          // Weekday
           let normalHours = 0;
           let overtimeHours = 0;
-
+  
           if (start.isBefore(officeStartTime)) {
-            overtimeHours += officeStartTime.diff(start, "hour");
+            // Ensure integer values for overtime hours before office hours
+            overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
           }
           if (end.isAfter(officeEndTime)) {
-            overtimeHours += end.diff(officeEndTime, "hour");
+            // Ensure integer values for overtime hours after office hours
+            overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
           }
           normalHours = dailyHours - overtimeHours;
-
-          const normalCost = basicPrice * normalHours * coefficient_service;
-          const overtimeCost =
+          
+          // Ensure normal hours is not negative
+          normalHours = Math.max(0, normalHours);
+  
+          // Calculate costs with proper rounding
+          const normalCost = Math.floor(basicPrice * normalHours * coefficient_service);
+          const overtimeCost = Math.floor(
             basicPrice *
             overtimeHours *
             coefficient_service *
-            coefficientOvertime;
-          totalCost += normalCost + overtimeCost;
+            coefficientOvertime
+          );
+          
+          // Add to total, ensuring integer values
+          totalCost += Math.floor(normalCost + overtimeCost);
         }
-
+  
         currentDate = currentDate.add(1, "day");
       }
     } else {
-      // Đơn ngắn hạn
+      // Short-term request (single day)
       const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = end.diff(start, "hour");
-
+      // Use exact integer hours, not fractional hours
+      const dailyHours = Math.floor(end.diff(start, "hour"));
+  
       if (dayOfWeek === 0 || dayOfWeek === 6) {
+        // Weekend (Saturday or Sunday)
         let normalHours = 0;
         let overtimeHours = 0;
-
+  
         if (start.isBefore(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, "hour");
+          // Ensure integer values for overtime hours before office hours
+          overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
         }
         if (end.isAfter(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, "hour");
+          // Ensure integer values for overtime hours after office hours
+          overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
         }
         normalHours = dailyHours - overtimeHours;
-
-        const weekendCost =
-          basicPrice * normalHours * coefficient_service * coefficientWeekend;
-        const overtimeCost =
+        
+        // Ensure normal hours is not negative
+        normalHours = Math.max(0, normalHours);
+  
+        // Calculate costs with proper rounding
+        const weekendCost = Math.floor(
+          basicPrice * normalHours * coefficient_service * coefficientWeekend
+        );
+        const overtimeCost = Math.floor(
           basicPrice *
           overtimeHours *
           coefficient_service *
           coefficientWeekend *
-          coefficientOvertime;
-        totalCost = weekendCost + overtimeCost;
+          coefficientOvertime
+        );
+        
+        // Set total, ensuring integer values
+        totalCost = Math.floor(weekendCost + overtimeCost);
       } else {
-        // Ngày trong tuần
+        // Weekday
         let normalHours = 0;
         let overtimeHours = 0;
-
+  
         if (start.isBefore(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, "hour");
+          // Ensure integer values for overtime hours before office hours
+          overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
         }
         if (end.isAfter(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, "hour");
+          // Ensure integer values for overtime hours after office hours
+          overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
         }
         normalHours = dailyHours - overtimeHours;
-
-        const normalCost = basicPrice * normalHours * coefficient_service;
-        const overtimeCost =
+        
+        // Ensure normal hours is not negative
+        normalHours = Math.max(0, normalHours);
+  
+        // Calculate costs with proper rounding
+        const normalCost = Math.floor(basicPrice * normalHours * coefficient_service);
+        const overtimeCost = Math.floor(
           basicPrice *
           overtimeHours *
           coefficient_service *
-          coefficientOvertime;
-        totalCost = normalCost + overtimeCost;
+          coefficientOvertime
+        );
+        
+        // Set total, ensuring integer values
+        totalCost = Math.floor(normalCost + overtimeCost);
       }
     }
-
+  
+    // Final rounding to ensure integer cost
     return Math.floor(totalCost);
   };
   //HANDLE SET COEFFICIENT AUTOMATICALLY
@@ -394,23 +460,23 @@ const AddOrder = () => {
   };
 
   /*fetch location data*/
-  useEffect(() => {
-    if (dataFetch && dataFetch.locations) {
-      const formattedLocations = dataFetch.locations.map((province) => ({
-        value: province.Name,
-        label: province.Name,
-        children: province.Districts.map((district) => ({
-          value: district.Name,
-          label: district.Name,
-          children: district.Wards.map((ward) => ({
-            value: ward.Name,
-            label: ward.Name,
-          })),
-        })),
-      }));
-      setLocations(formattedLocations);
-    }
-  }, [dataFetch]);
+  // useEffect(() => {
+  //   if (dataFetch && dataFetch.locations) {
+  //     const formattedLocations = dataFetch.locations.map((province) => ({
+  //       value: province.Name,
+  //       label: province.Name,
+  //       children: province.Districts.map((district) => ({
+  //         value: district.Name,
+  //         label: district.Name,
+  //         children: district.Wards.map((ward) => ({
+  //           value: ward.Name,
+  //           label: ward.Name,
+  //         })),
+  //       })),
+  //     }));
+  //     setLocations(formattedLocations);
+  //   }
+  // }, [dataFetch]);
 
   /*onFinish create order*/
   const onFinish = (values) => {

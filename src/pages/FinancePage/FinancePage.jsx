@@ -356,13 +356,13 @@ const FinancialPage = () => {
                 </Divider>
                 {/* Display column headers */}
                 <Row gutter={[8, 8]} style={{ marginBottom: "8px" }}>
-                  <Col className="header-col" style={{ flex: 3 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Chức năng
                   </Col>
                 </Row>
@@ -371,7 +371,7 @@ const FinancialPage = () => {
                     <Row gutter={[8, 8]} key={coefficient._id}>
                       <Col
                         className="title-col"
-                        style={{ flex: 3, wordWrap: "break-word" }}
+                        style={{ flex: 4, wordWrap: "break-word" }}
                       >
                         {coefficient.title}
                       </Col>
@@ -465,13 +465,13 @@ const FinancialPage = () => {
                 </Divider>
                 {/* Display column headers */}
                 <Row gutter={[8, 8]} style={{ marginBottom: "8px" }}>
-                  <Col className="header-col" style={{ flex: 3 }}>
+                  <Col className="header-col" style={{ flex: 3,  fontWeight: "500", marginBottom: "8px" }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px"}}>
                     Chức năng
                   </Col>
                 </Row>
@@ -576,13 +576,13 @@ const FinancialPage = () => {
                 </Divider>
                 {/* Display column headers */}
                 <Row gutter={[8, 8]} style={{ marginBottom: "8px" }}>
-                  <Col className="header-col" style={{ flex: 3 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Tiêu đề
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Giá trị
                   </Col>
-                  <Col className="header-col" style={{ flex: 4 }}>
+                  <Col className="header-col" style={{ flex: 4,  fontWeight: "500", marginBottom: "8px" }}>
                     Chức năng
                   </Col>
                 </Row>
@@ -591,7 +591,7 @@ const FinancialPage = () => {
                     <Row gutter={[8, 8]} key={coefficient._id}>
                       <Col
                         className="title-col"
-                        style={{ flex: 3, wordWrap: "break-word" }}
+                        style={{ flex: 4, wordWrap: "break-word" }}
                       >
                         {coefficient.title}
                       </Col>

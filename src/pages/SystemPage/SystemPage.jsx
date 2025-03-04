@@ -168,7 +168,7 @@ const SystemPage = () => {
           >
             <div
               className="system-page-section-title"
-              style={{ marginTop: "-4px" }}
+              style={{ marginTop: "-6px" }}
             >
               Thông tin chung
             </div>
@@ -279,23 +279,7 @@ const SystemPage = () => {
               </Col>
             </Row>
             <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="workingDays" label="Ngày làm việc trong tuần">
-                  <Select
-                    mode="multiple"
-                    placeholder="Chọn ngày"
-                    className="system-page-select"
-                  >
-                    <Option value="Monday">Thứ 2</Option>
-                    <Option value="Tuesday">Thứ 3</Option>
-                    <Option value="Wednesday">Thứ 4</Option>
-                    <Option value="Thursday">Thứ 5</Option>
-                    <Option value="Friday">Thứ 6</Option>
-                    <Option value="Saturday">Thứ 7</Option>
-                    <Option value="Sunday">Chủ Nhật</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
+             
               <Col span={12}>
                 <Form.Item
                   name="holidays"
