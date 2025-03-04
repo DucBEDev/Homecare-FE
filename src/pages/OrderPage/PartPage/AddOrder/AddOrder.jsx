@@ -113,10 +113,12 @@ const AddOrder = () => {
     }
   
     // Parse values as floats to ensure proper number calculations
-    const basicPrice = parseFloat(selectedService.basicPrice);
-    const coefficient_service = parseFloat(selectedService.coefficient);
-    const coefficientWeekend = parseFloat(dataFetch.coefficientOtherList[1].value); 
-    const coefficientOvertime = parseFloat(dataFetch.coefficientOtherList[0].value);
+    const basicCost = parseFloat(selectedService.basicPrice);
+    const HSDV = parseFloat(selectedService.coefficient); // Service coefficient
+    const HSovertime = parseFloat(dataFetch.coefficientOtherList[0].value); // Overtime coefficient
+    const HScuoituan = parseFloat(dataFetch.coefficientOtherList[1].value); // Weekend coefficient
+    // If you have holiday coefficient, you would add it here
+    // const HSle = parseFloat(dataFetch.coefficientOtherList[2].value);
   
     const start = dayjs(startTime);
     const end = dayjs(endTime);
@@ -134,146 +136,84 @@ const AddOrder = () => {
   
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
         const dayOfWeek = currentDate.day();
-        // Use exact integer hours, not fractional hours
         const dailyHours = Math.floor(end.diff(start, "hour"));
-  
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          // Weekend (Saturday or Sunday)
-          let normalHours = 0;
-          let overtimeHours = 0;
-  
-          if (start.isBefore(officeStartTime)) {
-            // Ensure integer values for overtime hours before office hours
-            overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
-          }
-          if (end.isAfter(officeEndTime)) {
-            // Ensure integer values for overtime hours after office hours
-            overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
-          }
-          normalHours = dailyHours - overtimeHours;
-          
-          // Ensure normal hours is not negative
-          normalHours = Math.max(0, normalHours);
-  
-          // Calculate costs with proper rounding
-          const weekendCost = Math.floor(
-            basicPrice * normalHours * coefficient_service * coefficientWeekend
-          );
-          const overtimeCost = Math.floor(
-            basicPrice *
-            overtimeHours *
-            coefficient_service *
-            coefficientWeekend *
-            coefficientOvertime
-          );
-          
-          // Add to total, ensuring integer values
-          totalCost += Math.floor(weekendCost + overtimeCost);
-        } else {
-          // Weekday
-          let normalHours = 0;
-          let overtimeHours = 0;
-  
-          if (start.isBefore(officeStartTime)) {
-            // Ensure integer values for overtime hours before office hours
-            overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
-          }
-          if (end.isAfter(officeEndTime)) {
-            // Ensure integer values for overtime hours after office hours
-            overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
-          }
-          normalHours = dailyHours - overtimeHours;
-          
-          // Ensure normal hours is not negative
-          normalHours = Math.max(0, normalHours);
-  
-          // Calculate costs with proper rounding
-          const normalCost = Math.floor(basicPrice * normalHours * coefficient_service);
-          const overtimeCost = Math.floor(
-            basicPrice *
-            overtimeHours *
-            coefficient_service *
-            coefficientOvertime
-          );
-          
-          // Add to total, ensuring integer values
-          totalCost += Math.floor(normalCost + overtimeCost);
+        
+        // Calculate overtime hours (T1) and normal hours (T2)
+        let T1 = 0; // Overtime hours
+        let T2 = 0; // Normal hours
+        
+        // Calculate overtime before office hours
+        if (start.isBefore(officeStartTime)) {
+          T1 += Math.floor(officeStartTime.diff(start, "hour"));
         }
-  
+        
+        // Calculate overtime after office hours
+        if (end.isAfter(officeEndTime)) {
+          T1 += Math.floor(end.diff(officeEndTime, "hour"));
+        }
+        
+        // Calculate normal hours
+        T2 = Math.max(0, dailyHours - T1);
+        
+        // Determine if it's a weekend
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        
+        // Apply weekend coefficient if applicable
+        const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
+        
+        // Calculate cost based on your formula:
+        // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
+        const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
+        const normalCost = applicableWeekendCoefficient * T2;
+        
+        // No T3 in the provided information, so assuming T3 = 0
+        
+        const dailyCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
+        
+        totalCost += dailyCost;
         currentDate = currentDate.add(1, "day");
       }
     } else {
       // Short-term request (single day)
       const dayOfWeek = dayjs(workDate).day();
-      // Use exact integer hours, not fractional hours
       const dailyHours = Math.floor(end.diff(start, "hour"));
-  
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // Weekend (Saturday or Sunday)
-        let normalHours = 0;
-        let overtimeHours = 0;
-  
-        if (start.isBefore(officeStartTime)) {
-          // Ensure integer values for overtime hours before office hours
-          overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
-        }
-        if (end.isAfter(officeEndTime)) {
-          // Ensure integer values for overtime hours after office hours
-          overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
-        }
-        normalHours = dailyHours - overtimeHours;
-        
-        // Ensure normal hours is not negative
-        normalHours = Math.max(0, normalHours);
-  
-        // Calculate costs with proper rounding
-        const weekendCost = Math.floor(
-          basicPrice * normalHours * coefficient_service * coefficientWeekend
-        );
-        const overtimeCost = Math.floor(
-          basicPrice *
-          overtimeHours *
-          coefficient_service *
-          coefficientWeekend *
-          coefficientOvertime
-        );
-        
-        // Set total, ensuring integer values
-        totalCost = Math.floor(weekendCost + overtimeCost);
-      } else {
-        // Weekday
-        let normalHours = 0;
-        let overtimeHours = 0;
-  
-        if (start.isBefore(officeStartTime)) {
-          // Ensure integer values for overtime hours before office hours
-          overtimeHours += Math.floor(officeStartTime.diff(start, "hour"));
-        }
-        if (end.isAfter(officeEndTime)) {
-          // Ensure integer values for overtime hours after office hours
-          overtimeHours += Math.floor(end.diff(officeEndTime, "hour"));
-        }
-        normalHours = dailyHours - overtimeHours;
-        
-        // Ensure normal hours is not negative
-        normalHours = Math.max(0, normalHours);
-  
-        // Calculate costs with proper rounding
-        const normalCost = Math.floor(basicPrice * normalHours * coefficient_service);
-        const overtimeCost = Math.floor(
-          basicPrice *
-          overtimeHours *
-          coefficient_service *
-          coefficientOvertime
-        );
-        
-        // Set total, ensuring integer values
-        totalCost = Math.floor(normalCost + overtimeCost);
+      
+      // Calculate overtime hours (T1) and normal hours (T2)
+      let T1 = 0; // Overtime hours
+      let T2 = 0; // Normal hours
+      
+      // Calculate overtime before office hours
+      if (start.isBefore(officeStartTime)) {
+        T1 += Math.floor(officeStartTime.diff(start, "hour"));
       }
+      
+      // Calculate overtime after office hours
+      if (end.isAfter(officeEndTime)) {
+        T1 += Math.floor(end.diff(officeEndTime, "hour"));
+      }
+      
+      // Calculate normal hours
+      T2 = Math.max(0, dailyHours - T1);
+      
+      // Determine if it's a weekend
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+      
+      // Apply weekend coefficient if applicable
+      const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
+      console.log(applicableWeekendCoefficient);
+      
+      // Calculate cost based on your formula:
+      // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
+      const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
+      const normalCost = applicableWeekendCoefficient * T2;
+      
+      // No T3 in the provided information, so assuming T3 = 0
+      
+      totalCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
     }
-  
+    
     // Final rounding to ensure integer cost
-    return Math.floor(totalCost);
+    return Math.floor(totalCost/1000) * 1000;
   };
   //HANDLE SET COEFFICIENT AUTOMATICALLY
   //convert time to minutes
@@ -283,66 +223,74 @@ const AddOrder = () => {
   };
   //check coefficient automatically return value coefficient
   const checkCoefficient = (orderDate, startTime, endTime, timeList) => {
-    //when using dayjs libraries, we have 7 days, 0 is sunday and 6 is saturday
     const saturday = 6;
     const sunday = 0;
-
+  
     if (!orderDate || !startTime || !endTime || !timeList) return "0";
-
-    const orderDay = orderDate.day();
-    console.log("orderDayyyyyyyyyyyyyyy", orderDay);
+  
     const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
     const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
-
+  
     const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
     const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
     const dayStartMinutes = timeToMinutes(timeList.openHour);
     const dayEndMinutes = timeToMinutes(timeList.closeHour);
-
+  
     const coefficientWeekend = dataFetch.coefficientOtherList[1].value;
     const coefficientOutside = dataFetch.coefficientOtherList[0].value;
     const coefficientNormal = "1";
-
-    if (orderDay === saturday || orderDay === sunday) {
-      return coefficientWeekend;
-    }
-
+  
+    // Check if we're dealing with a date range (long-term request)
     if (Array.isArray(orderDate)) {
+      // Get the start and end dates from the array
       const startDate = orderDate[0];
       const endDate = orderDate[1];
-
-      // Kiểm tra xem có ngày nào trong khoảng là cuối tuần không
-      let currentDate = startDate;
-      while (currentDate.isSameOrBefore(endDate)) {
+      
+      // Check if any day in the range is a weekend
+      let hasWeekend = false;
+      let currentDate = startDate.clone();
+      
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
         const currentDay = currentDate.day();
         if (currentDay === saturday || currentDay === sunday) {
-          return coefficientWeekend;
+          hasWeekend = true;
+          break;
         }
-        currentDate = currentDate.add(1, "day");
+        currentDate = currentDate.add(1, 'day');
       }
-
-      // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
+      
+      if (hasWeekend) {
+        return coefficientWeekend;
+      }
+      
+      // If no weekend, check for outside office hours
       if (
-        (orderStartMinutes >= dayStartMinutes &&
-          orderStartMinutes < officeStartMinutes) ||
+        (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
         (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
       ) {
         return coefficientOutside;
       }
-
+      
       return coefficientNormal;
+    } else {
+      // Single date (short-term request)
+      const orderDay = orderDate.day();
+      console.log("orderDayyyyyyyyyyyyyyy", orderDay);
+      
+      if (orderDay === saturday || orderDay === sunday) {
+        return coefficientWeekend;
+      }
+      
+      // Check for outside office hours
+      if (
+        (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
+        (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+      ) {
+        return coefficientOutside; // Outside office hours coefficient
+      }
+      
+      return coefficientNormal; // Default to normal coefficient
     }
-
-    // Nếu không có ngày cuối tuần, kiểm tra giờ làm việc
-    if (
-      (orderStartMinutes >= dayStartMinutes &&
-        orderStartMinutes < officeStartMinutes) ||
-      (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
-    ) {
-      return coefficientOutside; // Outside office hours coefficient
-    }
-
-    return coefficientNormal; // Default to normal coefficient
   };
 
   //update coefficient into form
@@ -350,10 +298,11 @@ const AddOrder = () => {
     const workDate = form.getFieldValue("workDate");
     const startTime = form.getFieldValue("startTime");
     const endTime = form.getFieldValue("endTime");
-
+  
     if (workDate && startTime && endTime && dataFetch.timeList) {
+      // Handle both single date and date range
       const newCoefficient = checkCoefficient(
-        dayjs(workDate),
+        workDate, // Pass workDate directly, whether it's a single date or array
         dayjs(startTime),
         dayjs(endTime),
         dataFetch.timeList
@@ -547,7 +496,7 @@ const AddOrder = () => {
         });
 
         setTimeout(() => {
-          navigate("/order");
+          // navigate("/order");
           setShowNotification(null);
         }, 600);
       })
