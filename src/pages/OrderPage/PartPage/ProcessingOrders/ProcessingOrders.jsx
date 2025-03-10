@@ -18,7 +18,7 @@ const ProcessingOrders = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
-  const pageSize = 5;
+  const pageSize = 6;
 
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedDeleteRecord, setSelectedDeleteRecord] = useState(null);

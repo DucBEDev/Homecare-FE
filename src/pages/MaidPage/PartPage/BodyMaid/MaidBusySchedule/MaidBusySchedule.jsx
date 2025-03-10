@@ -1,197 +1,454 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Card, Descriptions, Table, Button, Typography, Modal } from "antd";
-import axios from "axios";
-import { CheckCircleOutlined } from "@ant-design/icons";
-import moment from 'moment';
+import React, { useState } from "react";
+import {
+  Card,
+  Table,
+  Avatar,
+  Row,
+  Col,
+  Typography,
+  Button,
+  ConfigProvider,
+  Tooltip,
+  Modal,
+} from "antd";
+import {
+  EditOutlined,
+  InfoCircleOutlined,
+  CalendarOutlined,
+  UserOutlined,
+  IdcardOutlined,
+  PhoneOutlined,
+  HomeOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons";
 
-const { Title } = Typography;
+const { Text, Title } = Typography;
 
 const MaidBusySchedule = () => {
-    const location = useLocation();
-    const { id } = location.state || {}; // maidId
-    const navigate = useNavigate();
-    const [maidInfo, setMaidInfo] = useState(null);
-    const [scheduleData, setScheduleData] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-    useEffect(() => {
-        const fetchMaidInfo = async () => {
-            try {
-                const response = await axios.get(`/admin/timeOffs/${id}`); // API endpoint to get maid info
-                setMaidInfo(response.data.helperInfo[0]); // Adjust based on your API's structure
-            } catch (error) {
-                console.error("Error fetching maid info:", error);
-                // Handle error (e.g., show an error message to the user)
-            }
+  const helperInfo = {
+    cmnd: "2222222",
+    name: "Nguyễn Thị A",
+    birthDate: "6/4/2003",
+    phone: "0789456123",
+    district: "q1",
+    hometown: "HCM",
+  };
+
+  const generateCalendarData = () => {
+    const dates = [];
+    for (let i = 2; i <= 31; i++) {
+      dates.push({
+        date: `${i}/3`,
+        available: i >= 6,
+        timeSlots: i >= 6 ? [] : ["8:00 - 12:00", "13:00 - 17:00"],
+      });
+    }
+    for (let i = 1; i <= 4; i++) {
+      dates.push({ date: `${i}/4`, available: true, timeSlots: [] });
+    }
+    return dates;
+  };
+
+  const createCalendarColumns = () => {
+    const dates = generateCalendarData();
+    const daysOfWeek = ["CN", "TH 2", "TH 3", "TH 4", "TH 5", "TH 6", "TH 7"];
+    const rows = [];
+
+    for (let i = 0; i < dates.length; i += 7) {
+      const weekDates = dates.slice(i, i + 7);
+      const row = {};
+      weekDates.forEach((dateInfo, index) => {
+        row[daysOfWeek[index]] = dateInfo;
+      });
+      rows.push(row);
+    }
+
+    const columns = daysOfWeek.map((day) => ({
+      title: () => (
+        <div
+          style={{
+            fontSize: "14px",
+            fontWeight: "bold",
+            textAlign: "center",
+            backgroundColor: "#8BC34A",
+            color: "white",
+            padding: "8px 0",
+            borderRadius: "4px 4px 0 0",
+          }}
+        >
+          {day}
+        </div>
+      ),
+      dataIndex: day,
+      key: day,
+      width: 90,
+      align: "center",
+      render: (dateInfo) => {
+        if (!dateInfo) return null;
+        const hasTimeSlots = dateInfo.timeSlots?.length > 0; // Use optional chaining
+
+        const style = {
+          backgroundColor: dateInfo.available ? "#e6f7e1" : "#f5f5f5",
+          border: `1px solid ${dateInfo.available ? "#9CCC65" : "#d9d9d9"}`,
+          borderRadius: "4px",
+          height: "75px",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          cursor: "pointer",
+          transition: "all 0.3s",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+          position: "relative",
         };
 
-        const fetchSchedule = async () => {
-            try {
-              const startDate = moment().startOf('month').format('YYYY-MM-DD'); // Get the first day of the current month
-              const endDate = moment().endOf('month').format('YYYY-MM-DD'); // Get the last day of the current month
-              let allSchedules = [];
-      
-              // Loop through each day of the month
-              for (let day = moment(startDate); day <= moment(endDate); day.add(1, 'days')) {
-                const formattedDate = day.format('YYYY-MM-DD');
-      
-                // Call API for each day
-                const scheduleResponse = await axios.get(`/admin/timeOffs/detailSchedule/${id}/${formattedDate}`);
-      
-                // Map schedule data with formatted date
-                const mappedScheduleData = scheduleResponse.data.busyDateList.map(item => ({
-                  day: moment(item.dateOff).format('dd').toLowerCase(), // Get the day name in lowercase
-                  date: moment(item.dateOff).format('YYYY-MM-DD'), // Get the date in YYYY-MM-DD format
-                  startTime: item.startTime,
-                  endTime: item.endTime
-                }));
-      
-                // Push mapped schedule data to allSchedules array
-                allSchedules.push(...mappedScheduleData);
-              }
-      
-              // Update schedule data in the state
-              setScheduleData(allSchedules);
-            } catch (error) {
-              console.error("Error fetching schedule:", error);
-              // Handle error (e.g., show an error message to the user)
-            }
-          };
+        return (
+          <div
+            style={style}
+            onClick={() => {
+              setSelectedDate(dateInfo);
+              setModalVisible(true);
+            }}
+            className="calendar-date-cell"
+          >
+            <Text
+              strong
+              style={{ color: dateInfo.available ? "#4CAF50" : "#757575" }}
+            >
+              {dateInfo.date}
+            </Text>
+            {hasTimeSlots && (
+              <InfoCircleOutlined
+                style={{
+                  color: "#FF5252",
+                  position: "absolute",
+                  right: "5px",
+                  top: "5px",
+                }}
+              />
+            )}
+          </div>
+        );
+      },
+    }));
 
-        fetchMaidInfo();
-        fetchSchedule();
-        setLoading(false)
+    return { columns, rows };
+  };
 
-    }, [id]);
+  const { columns, rows } = createCalendarColumns();
 
-    if (loading) {
-        return <div>Loading...</div>; // Or a loading spinner
-    }
+  const infoItems = [
+    { label: "CMND", value: helperInfo.cmnd, icon: <IdcardOutlined /> },
+    { label: "Họ Tên", value: helperInfo.name, icon: <UserOutlined /> },
+    {
+      label: "Ngày Sinh",
+      value: helperInfo.birthDate,
+      icon: <CalendarOutlined />,
+    },
+    { label: "Số ĐT", value: helperInfo.phone, icon: <PhoneOutlined /> },
+    {
+      label: "Quận",
+      value: helperInfo.district,
+      icon: <EnvironmentOutlined />,
+    },
+    { label: "Quê Quán", value: helperInfo.hometown, icon: <HomeOutlined /> },
+  ];
 
-    if (!maidInfo) {
-        return <div>Error loading maid data.</div>; // Or an error message
-    }
-
-    // Prepare table data based on scheduleData
-    const prepareTableData = () => {
-        const firstDayOfMonth = moment().startOf('month');
-        const lastDayOfMonth = moment().endOf('month');
-        const tableData = [];
-    
-        let weekData = {};
-        let day = moment(firstDayOfMonth);
-    
-        while (day <= lastDayOfMonth) {
-          const dayOfWeek = day.format('ddd').toLowerCase();
-          const formattedDate = day.format('YYYY-MM-DD');
-    
-          weekData[dayOfWeek] = formattedDate;
-    
-          if (dayOfWeek === 'sat') {
-            tableData.push({ ...weekData });
-            weekData = {};
-          }
-    
-          day.add(1, 'day');
-        }
-    
-        if (Object.keys(weekData).length > 0) {
-          tableData.push({ ...weekData });
-        }
-    
-        // Loop through each day of month
-        for (let i = 0; i < tableData.length; i++) {
-          const item = tableData[i];
-    
-          // Loop through each day of week
-          for (const dayOfWeek in item) {
-            const formattedDate = item[dayOfWeek];
-    
-            // Check if formattedDate matches any date in scheduleData
-            const matchingSchedule = scheduleData.find(scheduleItem => moment(scheduleItem.date).format('YYYY-MM-DD') === formattedDate);
-    
-            if (matchingSchedule) {
-              item[dayOfWeek] = moment(formattedDate).format('DD/MM') + ' (Bận)';
-            } else {
-              item[dayOfWeek] = moment(formattedDate).format('DD/MM');
-            }
-          }
-        }
-    
-        return tableData;
-      };
-    
-      const tableData = prepareTableData();
-
-      // Handle the case where maidInfo.workingArea is an object
-      const renderWorkingArea = () => {
-        if (typeof maidInfo.workingArea === 'string') {
-          return maidInfo.workingArea; // It's a simple string, render directly
-        } else if (typeof maidInfo.workingArea === 'object' && maidInfo.workingArea !== null) {
-          // Assuming workingArea has a structure like { province: "...", districts: [...] }
-          return `${maidInfo.workingArea.province}, ${maidInfo.workingArea.districts ? maidInfo.workingArea.districts.join(', ') : ''}`;
-        } else {
-          return 'N/A'; // Handle cases where workingArea is null or undefined
-        }
-      };
-
-    return (
-        <div style={{ padding: 24 }}>
-            <Title level={5}>
-                Thông tin chi tiết lịch bận của người giúp việc:
-            </Title>
-            <Card title="Thông tin người giúp việc">
-                <Descriptions bordered>
-                    <Descriptions.Item label="CMND/CCCD">{maidInfo.helper_id}</Descriptions.Item>
-                    <Descriptions.Item label="Họ Tên">{maidInfo.fullName}</Descriptions.Item>
-                    <Descriptions.Item label="Ngày Sinh">{moment(maidInfo.birthDate).format('YYYY-MM-DD')}</Descriptions.Item>
-                    <Descriptions.Item label="Số ĐT">{maidInfo.phone}</Descriptions.Item>
-                    <Descriptions.Item label="Khu Vực Làm Việc">{renderWorkingArea()}</Descriptions.Item>
-                </Descriptions>
-            </Card>
-
-            <Card title="Lịch Bận">
-                <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
-                    <div
-                        style={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: "#10CE80",
-                            marginRight: 8,
-                        }}
-                    />
-                    <span style={{fontSize: "12px"}}>Ngày rảnh</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", marginBottom: 16 }}>
-                    <div
-                        style={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: "#FF4D4F",
-                            marginRight: 8,
-                        }}
-                    />
-                    <span style={{fontSize: "12px"}}>Ngày có khung giờ bận</span>
-                </div>
-                <p style={{fontSize: "12px"}}>* Nhấp vào từng ngày để coi chi tiết thông tin bận</p>
-
-                <Table
-                    columns={[
-                        { title: "Sun", dataIndex: "sun" },
-                        { title: "Mon", dataIndex: "mon" },
-                        { title: "Tue", dataIndex: "tue" },
-                        { title: "Wed", dataIndex: "wed" },
-                        { title: "Thu", dataIndex: "thu" },
-                        { title: "Fri", dataIndex: "fri" },
-                        { title: "Sat", dataIndex: "sat" },
-                    ]}
-                    dataSource={tableData}
-                    pagination={false}
-                />
-            </Card>
+  return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#8BC34A",
+          borderRadius: 6,
+        },
+      }}
+    >
+      <div
+        style={{ background: "#f0f2f5", minHeight: "100vh" }}
+      >
+        <div style={{ marginTop: "90px" }}></div>
+      <div style={{ marginLeft: "20px" }} className="header-container">
+        <div className="green-header">
+          <span className="header-title">Quản lý người giúp việc</span>
         </div>
-    );
+      </div>
+
+        <Card
+          bordered={false}
+          style={{
+            backgroundColor: "#FFF",
+            borderRadius: "8px",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+            marginLeft: "20px"
+          }}
+        >
+          <Row gutter={24}>
+            <Col xs={24} md={10}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "column",
+                  position: "relative",
+                  borderRight: "1px solid #f0f0f0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    textAlign: "center",
+                    marginBottom: "20px",
+                    backgroundColor: "#f9f9f9",
+                    borderRadius: "8px",
+                    marginLeft: "20px"
+                  }}
+                >
+                  <Avatar
+                    size={100}
+                    src="avatar"
+                    icon={<UserOutlined />}
+                    style={{
+                      border: "4px solid #fff",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    }}
+                  />
+                  <Title
+                    level={4}
+                    style={{ marginTop: "16px", marginBottom: "0" }}
+                  >
+                    {helperInfo.name}
+                  </Title>
+                  <Text type="secondary">Người giúp việc</Text>
+                </div>
+
+                {infoItems.map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      borderBottom:
+                        index < infoItems.length - 1
+                          ? "1px solid #f0f0f0"
+                          : "none",
+                      padding: "16px 0",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40%",
+                        textAlign: "right",
+                        paddingRight: "20px",
+                        fontWeight: "bold",
+                        color: "#555",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <span style={{ marginRight: "8px" }}>{item.icon}</span>
+                      {item.label} :
+                    </div>
+                    <div
+                      style={{
+                        width: "60%",
+                        backgroundColor: "#f9f9f9",
+                        padding: "8px 12px",
+                        borderRadius: "4px",
+                        border: "1px solid #f0f0f0",
+                      }}
+                    >
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Col>
+            <Col xs={24} md={14}>
+              <div style={{ position: "relative" }}>
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<EditOutlined />}
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: 0,
+                    zIndex: 1,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  }}
+                />
+                <Table
+                  columns={columns}
+                  dataSource={rows}
+                  pagination={false}
+                  bordered
+                  rowKey={(record) => JSON.stringify(record)}
+                  size="middle"
+                  style={{
+                    marginTop: "20px",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  }}
+                  className="calendar-table"
+                />
+              </div>
+            </Col>
+          </Row>
+
+          <Row style={{ marginTop: "30px" }}>
+            <Col span={24}>
+              <Card
+                style={{
+                  borderRadius: "8px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                }}
+                title={
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <InfoCircleOutlined
+                      style={{ marginRight: "8px", color: "#8BC34A" }}
+                    />
+                    <span>Chú thích</span>
+                  </div>
+                }
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        backgroundColor: "#e6f7e1",
+                        marginRight: "10px",
+                        border: "1px solid #9CCC65",
+                        borderRadius: "4px",
+                      }}
+                    ></div>
+                    <Text>Ngày rảnh</Text>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        backgroundColor: "#f5f5f5",
+                        marginRight: "10px",
+                        border: "1px solid #d9d9d9",
+                        borderRadius: "4px",
+                      }}
+                    ></div>
+                    <Text>Ngày có khung giờ bận</Text>
+                  </div>
+                  <Tooltip title="Nhấp vào từng ngày để xem chi tiết">
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        marginBottom: "10px",
+                        cursor: "help",
+                      }}
+                    >
+                      <InfoCircleOutlined
+                        style={{
+                          color: "#FF5252",
+                          marginRight: "10px",
+                          fontSize: "18px",
+                        }}
+                      />
+                      <Text italic>
+                        Nhấp vào từng ngày để coi chi tiết thông tin bận
+                      </Text>
+                    </div>
+                  </Tooltip>
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </Card>
+
+        <Modal
+          title={
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <CalendarOutlined
+                style={{ marginRight: "8px", color: "#8BC34A" }}
+              />
+              <span>Chi tiết ngày {selectedDate?.date}</span>
+            </div>
+          }
+          open={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={[
+            <Button key="back" onClick={() => setModalVisible(false)}>
+              Đóng
+            </Button>,
+          ]}
+        >
+          {selectedDate && (
+            <div>
+              <div
+                style={{
+                  padding: "12px",
+                  backgroundColor: selectedDate.available
+                    ? "#e6f7e1"
+                    : "#f5f5f5",
+                  borderRadius: "6px",
+                  marginBottom: "16px",
+                  border: `1px solid ${
+                    selectedDate.available ? "#9CCC65" : "#d9d9d9"
+                  }`,
+                }}
+              >
+                <Text strong>Trạng thái: </Text>
+                <Text>{selectedDate.available ? "Rảnh" : "Có lịch bận"}</Text>
+              </div>
+
+              {selectedDate.timeSlots && selectedDate.timeSlots.length > 0 ? (
+                <div>
+                  <Text strong>Khung giờ bận:</Text>
+                  <ul style={{ marginTop: "8px" }}>
+                    {selectedDate.timeSlots.map((slot, index) => (
+                      <li key={index} style={{ marginBottom: "8px" }}>
+                        <div
+                          style={{
+                            padding: "8px 12px",
+                            backgroundColor: "#fff1f0",
+                            borderRadius: "4px",
+                            border: "1px solid #ffccc7",
+                          }}
+                        >
+                          {slot}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <Text>Không có khung giờ bận trong ngày này.</Text>
+              )}
+            </div>
+          )}
+        </Modal>
+      </div>
+    </ConfigProvider>
+  );
 };
 
 export default MaidBusySchedule;

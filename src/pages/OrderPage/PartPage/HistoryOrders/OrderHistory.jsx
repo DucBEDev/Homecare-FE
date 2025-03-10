@@ -108,7 +108,7 @@ const OrderHistory = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests?status=done`
+          `${process.env.REACT_APP_API_URL}admin/requests?status=history`
         );
         console.log("re", response);
         const transformedData = response.data.requestList.map(

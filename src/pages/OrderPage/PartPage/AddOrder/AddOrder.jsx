@@ -99,7 +99,6 @@ const AddOrder = () => {
       requestType,
     } = formValues;
   
-    // Return early if required fields are missing
     if (!serviceTitle || !startTime || !endTime || !workDate || !coefficient_other) {
       return 0;
     }
@@ -112,13 +111,10 @@ const AddOrder = () => {
       return 0;
     }
   
-    // Parse values as floats to ensure proper number calculations
     const basicCost = parseFloat(selectedService.basicPrice);
-    const HSDV = parseFloat(selectedService.coefficient); // Service coefficient
-    const HSovertime = parseFloat(dataFetch.coefficientOtherList[0].value); // Overtime coefficient
-    const HScuoituan = parseFloat(dataFetch.coefficientOtherList[1].value); // Weekend coefficient
-    // If you have holiday coefficient, you would add it here
-    // const HSle = parseFloat(dataFetch.coefficientOtherList[2].value);
+    const HSDV = parseFloat(selectedService.coefficient);
+    const HSovertime = parseFloat(dataFetch.coefficientOtherList[0].value);
+    const HScuoituan = parseFloat(dataFetch.coefficientOtherList[1].value); 
   
     const start = dayjs(startTime);
     const end = dayjs(endTime);
@@ -138,35 +134,26 @@ const AddOrder = () => {
         const dayOfWeek = currentDate.day();
         const dailyHours = Math.floor(end.diff(start, "hour"));
         
-        // Calculate overtime hours (T1) and normal hours (T2)
-        let T1 = 0; // Overtime hours
-        let T2 = 0; // Normal hours
+        let T1 = 0; 
+        let T2 = 0; 
         
-        // Calculate overtime before office hours
         if (start.isBefore(officeStartTime)) {
           T1 += Math.floor(officeStartTime.diff(start, "hour"));
         }
         
-        // Calculate overtime after office hours
         if (end.isAfter(officeEndTime)) {
           T1 += Math.floor(end.diff(officeEndTime, "hour"));
         }
         
-        // Calculate normal hours
         T2 = Math.max(0, dailyHours - T1);
         
-        // Determine if it's a weekend
         const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
         
-        // Apply weekend coefficient if applicable
         const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
         
-        // Calculate cost based on your formula:
         // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
         const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
         const normalCost = applicableWeekendCoefficient * T2;
-        
-        // No T3 in the provided information, so assuming T3 = 0
         
         const dailyCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
         
@@ -174,31 +161,24 @@ const AddOrder = () => {
         currentDate = currentDate.add(1, "day");
       }
     } else {
-      // Short-term request (single day)
       const dayOfWeek = dayjs(workDate).day();
       const dailyHours = Math.floor(end.diff(start, "hour"));
       
-      // Calculate overtime hours (T1) and normal hours (T2)
-      let T1 = 0; // Overtime hours
-      let T2 = 0; // Normal hours
+      let T1 = 0; 
+      let T2 = 0; 
       
-      // Calculate overtime before office hours
       if (start.isBefore(officeStartTime)) {
         T1 += Math.floor(officeStartTime.diff(start, "hour"));
       }
       
-      // Calculate overtime after office hours
       if (end.isAfter(officeEndTime)) {
         T1 += Math.floor(end.diff(officeEndTime, "hour"));
       }
       
-      // Calculate normal hours
       T2 = Math.max(0, dailyHours - T1);
       
-      // Determine if it's a weekend
       const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
       
-      // Apply weekend coefficient if applicable
       const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
       console.log(applicableWeekendCoefficient);
       
@@ -207,14 +187,12 @@ const AddOrder = () => {
       const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
       const normalCost = applicableWeekendCoefficient * T2;
       
-      // No T3 in the provided information, so assuming T3 = 0
-      
       totalCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
     }
     
-    // Final rounding to ensure integer cost
     return Math.floor(totalCost/1000) * 1000;
   };
+  
   //HANDLE SET COEFFICIENT AUTOMATICALLY
   //convert time to minutes
   const timeToMinutes = (time) => {
