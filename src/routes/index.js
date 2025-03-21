@@ -31,7 +31,7 @@ import BodyCustomerTable from "../pages/CustomerPage/PartPage/BodyCustomer/BodyC
 import ListOrderCustomer from "../pages/CustomerPage/PartPage/BodyCustomer/ListOrderCustomer/ListOrderCustomer";
 //import component con cua BlogPage
 import BodyBlog from "../pages/BlogPage/BodyBlog/BodyBlog";
-import AddBlog from "../pages/BlogPage/AddPage/AddPage";
+import AddBlog from "../pages/BlogPage/AddPage/AddBlog.jsx";
 import ViewBlog from "../pages/BlogPage/ViewPage/ViewPage";
 //import component con cua ServicePage
 import ServicePage from "../pages/ServicePage/PartPage/ServicePage/ServicePage";

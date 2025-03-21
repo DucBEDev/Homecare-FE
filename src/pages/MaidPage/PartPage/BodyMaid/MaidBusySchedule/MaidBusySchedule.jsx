@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   Table,
@@ -21,20 +21,55 @@ import {
   HomeOutlined,
   EnvironmentOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
+import moment from "moment"
+import { useLocation } from "react-router-dom";
 
 const { Text, Title } = Typography;
 
 const MaidBusySchedule = () => {
+  const location = useLocation();
+  const helperId = location.state?.id;
   const [selectedDate, setSelectedDate] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [helper, setHelper] = useState(null); // Initialize helper to null
+  const [loading, setLoading] = useState(true);
+
+  const fetchHelper = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}admin/timeOffs/${helperId}`
+      );
+      setHelper(response.data.helperInfo[0]);
+    } catch (error) {
+      console.error("Error fetching helpers:", error);
+    } finally {
+      setLoading(false); 
+    }
+  };
+
+  console.log(helper);
+
+  useEffect(() => {
+    fetchHelper();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>; 
+  }
+
+  if (!helper) {
+    return <div>Helper not found.</div>; 
+  }
 
   const helperInfo = {
-    cmnd: "2222222",
-    name: "Nguyễn Thị A",
-    birthDate: "6/4/2003",
-    phone: "0789456123",
-    district: "q1",
-    hometown: "HCM",
+    cmnd: helper.helper_id,
+    name: helper.fullName,
+    birthDate: moment(helper.birthDate).format("DD/MM/YYYY"),
+    phone: helper.phone,
+    workingArea: helper.workingArea.province,
+    hometown: helper.workingArea.province,
   };
 
   const generateCalendarData = () => {
@@ -88,7 +123,7 @@ const MaidBusySchedule = () => {
       align: "center",
       render: (dateInfo) => {
         if (!dateInfo) return null;
-        const hasTimeSlots = dateInfo.timeSlots?.length > 0; // Use optional chaining
+        const hasTimeSlots = dateInfo.timeSlots?.length > 0; 
 
         const style = {
           backgroundColor: dateInfo.available ? "#e6f7e1" : "#f5f5f5",
@@ -151,7 +186,7 @@ const MaidBusySchedule = () => {
     { label: "Số ĐT", value: helperInfo.phone, icon: <PhoneOutlined /> },
     {
       label: "Quận",
-      value: helperInfo.district,
+      value: helperInfo.workingArea,
       icon: <EnvironmentOutlined />,
     },
     { label: "Quê Quán", value: helperInfo.hometown, icon: <HomeOutlined /> },
@@ -166,15 +201,13 @@ const MaidBusySchedule = () => {
         },
       }}
     >
-      <div
-        style={{ background: "#f0f2f5", minHeight: "100vh" }}
-      >
+      <div style={{ background: "#f0f2f5", minHeight: "100vh" }}>
         <div style={{ marginTop: "90px" }}></div>
-      <div style={{ marginLeft: "20px" }} className="header-container">
-        <div className="green-header">
-          <span className="header-title">Quản lý người giúp việc</span>
+        <div style={{ marginLeft: "20px" }} className="header-container">
+          <div className="green-header">
+            <span className="header-title">Quản lý người giúp việc</span>
+          </div>
         </div>
-      </div>
 
         <Card
           bordered={false}
@@ -182,7 +215,7 @@ const MaidBusySchedule = () => {
             backgroundColor: "#FFF",
             borderRadius: "8px",
             boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-            marginLeft: "20px"
+            marginLeft: "20px",
           }}
         >
           <Row gutter={24}>
@@ -204,7 +237,7 @@ const MaidBusySchedule = () => {
                     marginBottom: "20px",
                     backgroundColor: "#f9f9f9",
                     borderRadius: "8px",
-                    marginLeft: "20px"
+                    marginLeft: "20px",
                   }}
                 >
                   <Avatar
@@ -270,19 +303,7 @@ const MaidBusySchedule = () => {
               </div>
             </Col>
             <Col xs={24} md={14}>
-              <div style={{ position: "relative" }}>
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon={<EditOutlined />}
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: 0,
-                    zIndex: 1,
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                />
+              <div>
                 <Table
                   columns={columns}
                   dataSource={rows}
