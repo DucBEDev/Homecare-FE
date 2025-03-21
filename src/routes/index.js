@@ -36,32 +36,38 @@ import ViewBlog from "../pages/BlogPage/ViewPage/ViewPage";
 //import component con cua ServicePage
 import ServicePage from "../pages/ServicePage/PartPage/ServicePage/ServicePage";
 import BodyServiceTable from "../pages/ServicePage/PartPage/BodyService/BodyServiceTable";
+import LoginComponent from "../components/LoginComponent/LoginComponent.jsx";
 
 export const routes = [
   {
     path: "/",
     page: DashBoard,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "order/add",
     page: AddOrder,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/order",
     page: OrderPage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing", // Route con cho đơn hàng cần xử lý
         page: ProcessingOrders,
         isShowHeader: true,
+        isProtected: true,
       },
       {
         path: "history", // Route con cho lịch sử đơn hàng
         page: OrderHistory,
         isShowHeader: true,
+        isProtected: true,
       },
     ],
   },
@@ -70,39 +76,46 @@ export const routes = [
     path: "/order/processing/showDetail",
     page: ShowProcessingDetail,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     //option procesing
     path: "/order/processing/editDetail",
     page: EditProcessingDetail,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     //option history
     path: "/order/history/showDetail",
     page: ShowHistoryDetail,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     //option history
     path: "/order/history/editDetail",
     page: ShowProcessingDetail,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/account",
     page: AccountPage,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/blog",
     page: BlogPage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing", // Route con cho đơn hàng cần xử lý
         page: BodyBlog,
         isShowHeader: true,
+        isProtected: true,
       },
     ],
   },
@@ -110,21 +123,25 @@ export const routes = [
     path: "blog/add",
     page: AddBlog,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "blog/view",
     page: ViewBlog,
-    isShowHeader: true,
+    isShowHeader: true, 
+    isProtected: true,
   },
   {
     path: "/customer",
     page: CustomerPage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing", // Route con cho đơn hàng cần xử lý
         page: BodyCustomerTable,
         isShowHeader: true,
+        isProtected: true,
       },
     ],
   },
@@ -133,16 +150,19 @@ export const routes = [
     path: "/customer/history",
     page: ListOrderCustomer,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/services",
     page: ServicePage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing", // Route con cho đơn hàng cần xử lý
         page: BodyServiceTable,
         isShowHeader: true,
+        isProtected: true,
       },
     ],
   },
@@ -150,21 +170,25 @@ export const routes = [
     path: "/finance",
     page: FinancePage,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/permission",
     page: PermissionPage,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/maid",
     page: MaidPage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing", // Route con cho đơn hàng cần xử lý
         page: BodyMaidTable,
         isShowHeader: true,
+        isProtected: true,
       },
     ],
   },
@@ -172,26 +196,31 @@ export const routes = [
     path: "maid/add",
     page: AddMaid,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/maid/processing/editDetail",
     page: EditMaid,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/maid/processing/schedule",
     page: MaidBusySchedule,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/staff",
     page: StaffPage,
     isShowHeader: true,
+    isProtected: true,
     children: [
       {
         path: "processing",
         page: BodyStaffTable,
-        isShowHeader: true,
+        isShowHeader: true, 
+        isProtected: true,
       },
     ],
   },
@@ -199,16 +228,25 @@ export const routes = [
     path: "staff/add",
     page: AddStaff,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/staff/processing/schedule",
     page: StaffBusySchedule,
     isShowHeader: true,
+    isProtected: true,
   },
   {
     path: "/system",
     page: SystemPage,
     isShowHeader: true,
+    isProtected: true,
+  },
+  {
+    path: "/login",
+    page: LoginComponent,
+    isShowHeader: false,
+    isProtected: false,
   },
   {
     path: "*",

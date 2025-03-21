@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StyledMenu } from "./style";
+import { useAuth } from "../../redux/hooks/AuthContext";
 import {
   MenuUnfoldOutlined,
   DashboardFilled,
@@ -18,6 +19,13 @@ import {
 const NavbarComponent = () => {
   const [isExpanded, setExpanded] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   return (
     <div>
       <StyledMenu
@@ -26,9 +34,9 @@ const NavbarComponent = () => {
         className={`sidebar ${isExpanded ? "expanded" : "collapsed"}`}
         onClick={({ key }) => {
           if (key === " ") {
-            // setExpanded(prevState => !prevState);
+            setExpanded(prevState => !prevState);
           } else if (key === "signout") {
-            // Thêm logic xử lý đăng xuất tại đây
+            handleLogout();
           } else {
             navigate(key);
           }
@@ -88,11 +96,6 @@ const NavbarComponent = () => {
             key: "/system",
             icon: <AppstoreOutlined />,
           },
-          // {
-          //   label: "Tài khoản",
-          //   key: "/account",
-          //   icon: <ProfileOutlined />,
-          // },
           {
             label: "Đăng xuất",
             key: "signout",
@@ -101,7 +104,6 @@ const NavbarComponent = () => {
           },
         ]}
       ></StyledMenu>
-      {/* <Content /> */}
     </div>
   );
 };
