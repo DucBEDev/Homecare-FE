@@ -1,6 +1,6 @@
 /* Dashboard.css */
 .dashboard-title {
-  background-color: #48c775 !important;
+  background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%);
   margin-top: 32px;
   font-size: 14px; /* Smaller font size for phones */
   font-weight: 600;

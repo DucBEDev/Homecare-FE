@@ -338,7 +338,7 @@ const SystemPage = () => {
                   marginLeft: "auto",
                   marginRight: "10px",
                   height: "40px",
-                  backgroundColor: "#3CBE5D",
+                  background: "linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%)",
                   border: "none",
                 }}
               >

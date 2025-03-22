@@ -402,7 +402,7 @@ const PermissionPage = () => {
               style={{
                 marginLeft: "30px",
                 height: "40px",
-                backgroundColor: "#3CBE5D",
+                background: "linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%)",
                 border: "none",
               }}
             >
@@ -415,7 +415,7 @@ const PermissionPage = () => {
                 width: "80px",
                 height: "40px",
                 marginLeft: "20px",
-                backgroundColor: "#1FA1A7",
+                background: "linear-gradient(135deg, #1161D7 0%, #1371E7 100%)",
                 border: "none",
               }}
             >

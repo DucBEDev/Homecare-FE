@@ -12,7 +12,7 @@ export const WrapperHeaderText = styled.h1 `
     font-size: 16px;
     font-weight: 700;
     width: 100%;
-    background-color: #41A767;
+     background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%);
     @media (max-width: 992px) {
         width: 110%;
         margin-left: -40px;

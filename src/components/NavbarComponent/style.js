@@ -30,7 +30,7 @@ export const StyledMenu = styled(Menu)
   }
 
   .ant-menu-item-selected {
-    background-color: #28A562;
+     background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%);
     color: #fff;
     width: 100%;
   }

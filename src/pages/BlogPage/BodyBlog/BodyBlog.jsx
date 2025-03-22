@@ -73,7 +73,7 @@ const BlogManagementTable = () => {
             size="large"
             textButton="Sửa"
             styleButton={{
-              backgroundColor: "#3cbe5d",
+              backgroundImage: "linear-gradient(135deg, #07BF73 0%, #17CF73 50%, #17CF83 100%)",
               width: "40px",
               height: "40px",
               border: "1px",

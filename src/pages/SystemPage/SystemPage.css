@@ -9,7 +9,7 @@
 }
 
 .green-header {
-  background-color: #28b562 !important;
+  background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%) !important;
   color: white;
   padding: 10px 20px;
   border-radius: 8px;

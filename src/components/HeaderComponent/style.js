@@ -1,32 +1,37 @@
-import { Col, Row } from "antd"
+import {
+    Col,
+    Row
+} from "antd"
 import styled from "styled-components"
 
-export const WrapperHeaderRow = styled(Row)`
+export const WrapperHeaderRow = styled(Row)
+`
     margin: 0 !important;
     padding: 24px 0 24px 36px;
-    background-color: #41A767;
     border-radius: 4px;
     position: fixed;
     width: 100%;
     z-index: 1;
+     background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%);
 
     @media (max-width: 1480px) {
         padding-right: 50px
     }
 `
 
-export const WrapperHeaderCol = styled(Col)`
+export const WrapperHeaderCol = styled(Col)
+`
     margin: 0 20px;
 `
 
-export const WrapperLogo = styled.img`
+export const WrapperLogo = styled.img `
     width: 40px;
     height: 40px;
     padding: 0;
     margin: 0;
 `
 
-export const WrapperHeaderText = styled.span`
+export const WrapperHeaderText = styled.span `
     font-size: 28px;
     color: #eeeeee;
     font-weight: bold;
@@ -41,7 +46,7 @@ export const WrapperHeaderText = styled.span`
     }
 `
 
-export const WrapperHeaderTextSmall = styled.span`
+export const WrapperHeaderTextSmall = styled.span `
     font-size: 12px;
     color: #eeeeee;
     position: absolute;
@@ -55,7 +60,7 @@ export const WrapperHeaderTextSmall = styled.span`
     }
 `
 
-export const WrapperHeaderTextSub = styled.span`
+export const WrapperHeaderTextSub = styled.span `
     font-size: 14px;
     font-weight: 400;
     white-space: nowrap;
@@ -69,7 +74,7 @@ export const WrapperHeaderTextSub = styled.span`
     }
 `
 
-export const WrapperHeaderAccount = styled.div`
+export const WrapperHeaderAccount = styled.div `
     display: flex;
     align-items: center;
     color: #eeeeee;
@@ -80,7 +85,7 @@ export const WrapperHeaderAccount = styled.div`
     }
 `
 
-export const WrapperHeaderHome = styled.div`
+export const WrapperHeaderHome = styled.div `
     color: #eeeeee;
     display: flex;
     align-items: center;

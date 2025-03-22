@@ -102,7 +102,7 @@ const HeadService = () => {
             textButton="Thêm dịch vụ"
             onClick={showAddModal}
             styleButton={{
-              backgroundColor: "#28B562",
+              background: "linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%)",
               width: "120px",
               marginLeft: "70px",
             }} 

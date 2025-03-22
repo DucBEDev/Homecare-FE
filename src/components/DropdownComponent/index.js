@@ -10,7 +10,7 @@ export const DropdownLink = styled(Typography.Link)`
   padding: 12px 16px;
   font-size: 32px;
   color: #fff !important;
-  background-color: #28B562;
+   background: linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%);
   border-radius: 8px;
   width: 240px;
 `;

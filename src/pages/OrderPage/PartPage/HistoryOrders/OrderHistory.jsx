@@ -84,7 +84,7 @@ const OrderHistory = () => {
             size="large"
             textButton="Chi tiết"
             styleButton={{
-              backgroundColor: "#3cbe5d",
+              backgroundImage: "linear-gradient(135deg, #07BF73 0%, #17CF73 50%, #17CF83 100%)",
               marginLeft: "6px",
               width: "54px",
               height: "40px",
