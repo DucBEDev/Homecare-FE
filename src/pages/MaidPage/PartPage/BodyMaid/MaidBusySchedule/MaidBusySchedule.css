@@ -1,0 +1,542 @@
+/* MaidBusySchedule.css */
+
+/* Variables for easy theming */
+:root {
+    --primary-color: #1677ff;
+    --primary-light: #e6f7ff;
+    --primary-dark: #0958d9;
+    --success-color: #52c41a;
+    --error-color: #f5222d;
+    --text-primary: #1a1f36;
+    --text-secondary: #637381;
+    --bg-light: #f7f9fc;
+    --border-color: #eaedf3;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --transition-base: all 0.3s ease;
+  }
+  
+  /* General Styles */
+  .maid-schedule-container {
+    padding: 24px;
+    background-color: #f5f7fa;
+  }
+  
+  .maid-schedule-header {
+    margin-bottom: 24px;
+    margin-top: 90px;
+    position: relative;
+  }
+  
+  .maid-schedule-header::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 3px;
+  }
+  
+  
+  .header-icon {
+    margin-right: 12px;
+    font-size: 28px;
+    color: var(--primary-color);
+  }
+  
+  /* Card Styles - Improved */
+  .helper-info-card,
+  .schedule-summary-card {
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    border: none;
+    transition: var(--transition-base);
+    overflow: hidden;
+    background: #fff;
+    height: 100%;
+  }
+  
+  .helper-info-card:hover,
+  .schedule-summary-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+  }
+  
+  .helper-info-card .ant-card-head,
+  .schedule-summary-card .ant-card-head {
+    background: linear-gradient(to right, var(--primary-light), #fff);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 20px;
+  }
+  
+  .calendar-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-title {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .title-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    color: var(--primary-color);
+  }
+  
+  /* Helper Avatar Section - Revamped */
+  .helper-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255,255,255,0.8) 100%);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .helper-avatar {
+    border: 5px solid #fff;
+    margin-bottom: 16px;
+    background-color: var(--primary-color);
+    box-shadow: 0 5px 15px rgba(22, 119, 255, 0.2);
+    transition: transform 0.3s ease;
+  }
+  
+  .helper-avatar:hover {
+    transform: scale(1.05);
+  }
+  
+  .helper-name-section {
+    text-align: center;
+  }
+  
+  .helper-name-section h4 {
+    margin-bottom: 5px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 20px;
+  }
+  
+  .helper-name-section .ant-typography-secondary {
+    color: var(--text-secondary);
+  }
+  
+  /* Helper Details - Improved */
+  .helper-details {
+    margin-bottom: 24px;
+  }
+  
+  .detail-item {
+    display: flex;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    padding: 10px;
+    transition: var(--transition-base);
+    background-color: rgba(247, 249, 252, 0.4);
+  }
+  
+  .detail-item:hover {
+    background-color: var(--bg-light);
+    transform: translateX(5px);
+  }
+  
+  .detail-label {
+    display: flex;
+    align-items: center;
+    width: 40%;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0;
+  }
+  
+  .detail-icon {
+    margin-right: 10px;
+    color: var(--primary-color);
+    font-size: 16px;
+  }
+  
+  .detail-value {
+    width: 60%;
+    background-color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+    font-weight: 500;
+    color: var(--text-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Add Time Off Section - Enhanced */
+  .add-time-off-section {
+    margin-top: 24px;
+  }
+  
+  .add-time-off-section .ant-alert {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .add-time-off-section .ant-btn {
+    height: 44px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+    border: none;
+    box-shadow: 0 4px 10px rgba(22, 119, 255, 0.25);
+    transition: all 0.3s ease;
+  }
+  
+  .add-time-off-section .ant-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(22, 119, 255, 0.35);
+  }
+  
+  /* Summary stats - Redesigned */
+  .summary-stat-list {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 12px;
+  }
+  
+  .summary-stat {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 10px;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    border-bottom: 3px solid var(--primary-color);
+  }
+  
+  .summary-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+  }
+  
+  .stat-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+  }
+  
+  /* Calendar legend - Enhanced */
+  .calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+  }
+  
+  .legend-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .legend-item span {
+    margin-left: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  
+  /* Keep original calendar styles */
+  .calendar-month {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .calendar-range-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .calendar-range-indicator .calendar-outlined {
+    margin-right: 8px;
+  }
+  
+  .date-cell {
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .date-cell:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .date-cell-busy {
+    background-color: rgba(255, 0, 0, 0.1);
+  }
+  
+  .date-cell-work {
+    background-color: rgba(24, 144, 255, 0.1);
+  }
+  
+  .date-cell-free {
+    background-color: rgba(82, 196, 26, 0.1);
+  }
+  
+  .time-slots {
+    margin-top: 4px;
+  }
+  
+  .work-indicator {
+    font-size: 12px;
+    color: #1890ff;
+  }
+  
+  /* Modal styling - Enhanced */
+  .modal-title {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .modal-title-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    color: var(--primary-color);
+  }
+  
+  .schedule-detail-modal .ant-modal-content,
+  .create-time-off-modal .ant-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .schedule-detail-modal .ant-modal-header,
+  .create-time-off-modal .ant-modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 24px;
+    background: linear-gradient(to right, var(--primary-light), #fff);
+  }
+  
+  .schedule-detail-modal .ant-modal-body {
+    padding: 24px;
+  }
+  
+  .schedule-section-card {
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-base);
+    border: none;
+  }
+  
+  .schedule-section-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .section-title {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .section-icon.success {
+    color: #52c41a;
+    margin-right: 8px;
+  }
+  
+  .section-icon.error {
+    color: #f5222d;
+    margin-right: 8px;
+  }
+  
+  .schedule-list {
+    margin-top: 8px;
+  }
+  
+  /* Schedule items - Enhanced */
+  .schedule-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .schedule-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .work-item {
+    background: linear-gradient(to right, var(--primary-light), white);
+    border-left: 4px solid var(--primary-color);
+  }
+  
+  .busy-item {
+    background: linear-gradient(to right, #fff2f0, white);
+    border-left: 4px solid var(--error-color);
+  }
+  
+  .schedule-badge {
+    margin-right: 12px;
+  }
+  
+  .schedule-content {
+    flex: 1;
+  }
+  
+  .schedule-time {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  
+  .schedule-info {
+    margin-left: 8px;
+  }
+  
+  .schedule-info .ant-tag {
+    border-radius: 12px;
+    padding: 2px 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Form in modal - Enhanced */
+  .create-time-off-modal .ant-modal-body {
+    padding: 24px;
+  }
+  
+  .create-time-off-modal .ant-form-item {
+    margin-bottom: 16px;
+  }
+  
+  .create-time-off-modal .ant-input,
+  .create-time-off-modal .ant-select-selector {
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    transition: var(--transition-base);
+  }
+  
+  .create-time-off-modal .ant-input:hover,
+  .create-time-off-modal .ant-select-selector:hover {
+    border-color: var(--primary-color);
+  }
+  
+  .create-time-off-modal .ant-textarea {
+    resize: none;
+    border-radius: 6px;
+    min-height: 100px;
+  }
+  
+  /* Keep original Helper calendar - disabled date styles */
+  .helper-calendar .ant-picker-cell-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .helper-calendar .ant-picker-cell-disabled .ant-picker-calendar-date {
+    background-color: #f5f5f5;
+  }
+  
+  /* Keep original Helper calendar - today indicator */
+  .helper-calendar .ant-picker-cell-today .ant-picker-calendar-date-value {
+    position: relative;
+  }
+  
+  .helper-calendar .ant-picker-cell-today .ant-picker-calendar-date-value::after {
+    content: '•';
+    position: absolute;
+    color: var(--primary-color);
+    font-size: 18px;
+    line-height: 0;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 992px) {
+    .summary-stat-list {
+      flex-wrap: wrap;
+    }
+    
+    .summary-stat {
+      flex: 0 0 calc(33.333% - 10px);
+      margin-bottom: 10px;
+    }
+    
+    .maid-schedule-header {
+      margin-top: 70px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .summary-stat {
+      flex: 0 0 calc(50% - 10px);
+    }
+    
+    .helper-avatar-section {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .helper-avatar {
+      margin-right: 0;
+      margin-bottom: 16px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .maid-schedule-container {
+      padding: 16px;
+    }
+    
+    .summary-stat {
+      flex: 0 0 100%;
+    }
+    
+    .detail-item {
+      flex-direction: column;
+    }
+    
+    .detail-label, .detail-value {
+      width: 100%;
+    }
+    
+    .detail-value {
+      margin-top: 8px;
+    }
+  }

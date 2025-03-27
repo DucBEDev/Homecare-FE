@@ -92,8 +92,9 @@ const HeadOrderPage = () => {
             textButton="Thêm đơn hàng"
             onClick={() => navigate("/order/add")}
             styleButton={{
-              backgroundImage: "linear-gradient(135deg, #07BF73 0%, #17CF73 50%, #17CF83 100%)",
+              backgroundImage: "linear-gradient(120deg, #17CF73 0%, #07DF73 50%, #17CF83 100%)",
               width: "120px",
+
               // marginLeft: "-10px",
             }} // Prop styleButton
             styleButtonText={{ color: "#fff" }}

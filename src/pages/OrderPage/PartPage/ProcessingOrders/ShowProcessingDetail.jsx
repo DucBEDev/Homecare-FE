@@ -38,6 +38,12 @@ const ShowProcessingDetail = () => {
 
   const [showNotification, setShowNotification] = useState(null);
 
+  const [isProcessingModalVisible, setIsProcessingModalVisible] =
+    useState(false);
+  const [isWorkCompleteModalVisible, setIsWorkCompleteModalVisible] =
+    useState(false);
+  const [isPaidModalVisible, setIsPaidModalVisible] = useState(false);
+
   const showModal = (record) => {
     setSelectedRecord({
       ...record,
@@ -144,6 +150,141 @@ const ShowProcessingDetail = () => {
 
       setTimeout(() => {
         setIsConfirmModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    }
+  };
+
+  // Thêm hàm xử lý chuyển sang Processing
+  const handleProcessingClick = () => {
+    setIsProcessingModalVisible(true);
+  };
+
+  const handleProcessingConfirm = async () => {
+    try {
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestProcessing/${id}`
+      );
+
+      // Nếu thành công
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: "Đã chuyển trạng thái sang đang tiến hành!",
+      });
+
+      fetchData();
+
+      setTimeout(() => {
+        setIsProcessingModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    } catch (error) {
+      console.error("Error:", error);
+
+      // Kiểm tra error response
+      const errorMessage =
+        error.response?.data?.message ||
+        "Không thể chuyển trạng thái. Vui lòng thử lại.";
+
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: errorMessage,
+      });
+
+      setTimeout(() => {
+        setIsProcessingModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    }
+  };
+
+  const handleWorkCompleteClick = () => {
+    setIsWorkCompleteModalVisible(true);
+  };
+
+  const handleWorkCompleteConfirm = async () => {
+    try {
+      // Vẫn giữ nguyên API endpoint
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestWaitPayment/${id}`
+      );
+
+      // Cập nhật thông báo thành công
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: "Đã chuyển trạng thái sang đã tiến hành xong!",
+      });
+
+      fetchData();
+
+      setTimeout(() => {
+        setIsWorkCompleteModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    } catch (error) {
+      console.error("Error:", error);
+
+      // Kiểm tra error response
+      const errorMessage =
+        error.response?.data?.message ||
+        "Không thể chuyển trạng thái. Vui lòng thử lại.";
+
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: errorMessage,
+      });
+
+      setTimeout(() => {
+        setIsWorkCompleteModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    }
+  };
+
+  // Hàm xử lý chuyển sang đã thanh toán
+  const handlePaidClick = () => {
+    setIsPaidModalVisible(true);
+  };
+
+  const handlePaidConfirm = async () => {
+    try {
+      await axios.patch(
+        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestPaid/${id}`
+      );
+
+      // Nếu thành công
+      setShowNotification({
+        status: "success",
+        message: "Thành công",
+        description: "Đã chuyển trạng thái sang đã thanh toán!",
+      });
+
+      fetchData();
+
+      setTimeout(() => {
+        setIsPaidModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    } catch (error) {
+      console.error("Error:", error);
+
+      // Kiểm tra error response
+      const errorMessage =
+        error.response?.data?.message ||
+        "Không thể chuyển trạng thái. Vui lòng thử lại.";
+
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: errorMessage,
+      });
+
+      setTimeout(() => {
+        setIsPaidModalVisible(false);
         setShowNotification(null);
       }, 1500);
     }
@@ -407,7 +548,7 @@ const ShowProcessingDetail = () => {
               style={{
                 position: "absolute",
                 top: "2px",
-                left: "62%",
+                left: "45%",
                 background: "#10ce80",
                 maxWidth: "90px",
               }}
@@ -418,13 +559,57 @@ const ShowProcessingDetail = () => {
             >
               Giao việc dài hạn
             </Button>
+
             <Button
               style={{
                 position: "absolute",
                 top: "2px",
-                left: "70%",
+                left: "52%",
+                background: "#1677ff",
+                maxWidth: "90px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleProcessingClick}
+            >
+              Đang tiến hành
+            </Button>
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "59%",
+                background: "#fa8c16",
+                maxWidth: "90px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleWorkCompleteClick}
+            >
+              Đã tiến hành
+            </Button>
+
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "66%",
+                background: "#12c68a",
+                maxWidth: "90px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handlePaidClick}
+            >
+              Đã thanh toán
+            </Button>
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "73%",
                 background: "#4096FF",
-                minWidth: "90px",
+                maxWidth: "90px",
               }}
               type="primary"
               size="normal"
@@ -530,6 +715,181 @@ const ShowProcessingDetail = () => {
                 }}
               >
                 Bạn có chắc chắn muốn hoàn thành đơn hàng này?
+              </p>
+            </Modal>
+            {/* Modal xác nhận chuyển trạng thái đang tiến hành */}
+            <Modal
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "24px",
+                  }}
+                >
+                  <CheckCircleOutlined
+                    style={{ color: "#1677ff", fontSize: "24px" }}
+                  />
+                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
+                </div>
+              }
+              open={isProcessingModalVisible}
+              onOk={handleProcessingConfirm}
+              onCancel={() => setIsProcessingModalVisible(false)}
+              okText="Xác nhận"
+              cancelText="Hủy"
+              className="custom-modal"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+              wrapClassName="custom-modal-wrap"
+              footer={[
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={handleProcessingConfirm}
+                  style={{ background: "#1677ff" }}
+                >
+                  Xác nhận
+                </Button>,
+                <Button
+                  key="cancel"
+                  danger
+                  onClick={() => setIsProcessingModalVisible(false)}
+                  style={{ background: "#ff4d4f", color: "#fff" }}
+                >
+                  Hủy
+                </Button>,
+              ]}
+            >
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginTop: "20px",
+                }}
+              >
+                Bạn có chắc chắn muốn xác nhận người giúp việc đã đến nhà khách
+                và đang tiến hành công việc?
+              </p>
+            </Modal>
+
+            {/* Modal xác nhận đã tiến hành xong (đổi từ chờ thanh toán) */}
+            <Modal
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "24px",
+                  }}
+                >
+                  <CheckCircleOutlined
+                    style={{ color: "#fa8c16", fontSize: "24px" }}
+                  />
+                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
+                </div>
+              }
+              open={isWorkCompleteModalVisible}
+              onOk={handleWorkCompleteConfirm}
+              onCancel={() => setIsWorkCompleteModalVisible(false)}
+              okText="Xác nhận"
+              cancelText="Hủy"
+              className="custom-modal"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+              wrapClassName="custom-modal-wrap"
+              footer={[
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={handleWorkCompleteConfirm}
+                  style={{ background: "#fa8c16" }}
+                >
+                  Xác nhận
+                </Button>,
+                <Button
+                  key="cancel"
+                  danger
+                  onClick={() => setIsWorkCompleteModalVisible(false)}
+                  style={{ background: "#ff4d4f", color: "#fff" }}
+                >
+                  Hủy
+                </Button>,
+              ]}
+            >
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginTop: "20px",
+                }}
+              >
+                Bạn có chắc chắn muốn xác nhận công việc đã được tiến hành xong?
+                Sau bước này sẽ yêu cầu thanh toán từ khách hàng.
+              </p>
+            </Modal>
+
+            {/* Modal xác nhận chuyển trạng thái đã thanh toán */}
+            <Modal
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "24px",
+                  }}
+                >
+                  <CheckCircleOutlined
+                    style={{ color: "#12c68a", fontSize: "24px" }}
+                  />
+                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
+                </div>
+              }
+              open={isPaidModalVisible}
+              onOk={handlePaidConfirm}
+              onCancel={() => setIsPaidModalVisible(false)}
+              okText="Xác nhận"
+              cancelText="Hủy"
+              className="custom-modal"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+              wrapClassName="custom-modal-wrap"
+              footer={[
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={handlePaidConfirm}
+                  style={{ background: "#12c68a" }}
+                >
+                  Xác nhận
+                </Button>,
+                <Button
+                  key="cancel"
+                  danger
+                  onClick={() => setIsPaidModalVisible(false)}
+                  style={{ background: "#ff4d4f", color: "#fff" }}
+                >
+                  Hủy
+                </Button>,
+              ]}
+            >
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginTop: "20px",
+                }}
+              >
+                Bạn có chắc chắn xác nhận khách hàng đã thanh toán đơn hàng này?
               </p>
             </Modal>
           </Card>

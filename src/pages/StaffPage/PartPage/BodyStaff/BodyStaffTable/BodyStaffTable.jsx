@@ -7,7 +7,7 @@ import axios from "axios";
 import NotificationComponent from "../../../../../components/NotificationComponent/NotificationComponent.jsx";
 import dayjs from "dayjs";
 import PopupModalDelete from "./PopupModalDelete/PopupModalDelete";
-import { Modal, Form, Input, DatePicker, Button, Row, Col } from "antd";
+import { Modal, Form, Input, DatePicker } from "antd";
 
 const BodyStaffTable = () => {
   const navigate = useNavigate();

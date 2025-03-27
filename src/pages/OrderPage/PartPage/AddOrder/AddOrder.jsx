@@ -132,17 +132,17 @@ const AddOrder = () => {
   
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
         const dayOfWeek = currentDate.day();
-        const dailyHours = Math.floor(end.diff(start, "hour"));
+        const dailyHours = (end.diff(start, "hour", true));
         
         let T1 = 0; 
         let T2 = 0; 
         
         if (start.isBefore(officeStartTime)) {
-          T1 += Math.floor(officeStartTime.diff(start, "hour"));
+          T1 += (officeStartTime.diff(start, "hour", true));
         }
         
         if (end.isAfter(officeEndTime)) {
-          T1 += Math.floor(end.diff(officeEndTime, "hour"));
+          T1 += (end.diff(officeEndTime, "hour", true));
         }
         
         T2 = Math.max(0, dailyHours - T1);
@@ -155,24 +155,24 @@ const AddOrder = () => {
         const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
         const normalCost = applicableWeekendCoefficient * T2;
         
-        const dailyCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
+        const dailyCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
         
         totalCost += dailyCost;
         currentDate = currentDate.add(1, "day");
       }
     } else {
       const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = Math.floor(end.diff(start, "hour"));
+      const dailyHours = (end.diff(start, "hour"));
       
       let T1 = 0; 
       let T2 = 0; 
       
       if (start.isBefore(officeStartTime)) {
-        T1 += Math.floor(officeStartTime.diff(start, "hour"));
+        T1 += (officeStartTime.diff(start, "hour", true));
       }
       
       if (end.isAfter(officeEndTime)) {
-        T1 += Math.floor(end.diff(officeEndTime, "hour"));
+        T1 += (end.diff(officeEndTime, "hour", true));
       }
       
       T2 = Math.max(0, dailyHours - T1);
@@ -187,10 +187,10 @@ const AddOrder = () => {
       const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
       const normalCost = applicableWeekendCoefficient * T2;
       
-      totalCost = Math.floor(basicCost * HSDV * (overtimeCost + normalCost));
+      totalCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
     }
     
-    return Math.floor(totalCost/1000) * 1000;
+    return Math.ceil(totalCost/1000) * 1000;
   };
   
   //HANDLE SET COEFFICIENT AUTOMATICALLY
@@ -292,6 +292,27 @@ const AddOrder = () => {
   //once change date, update coefficient
   const handleDateChange = (date) => {
     form.setFieldsValue({ workDate: date });
+    
+    // For long-term requests
+    if (requestType === 'long' && Array.isArray(date)) {
+      const startDate = date[0];
+      const currentTime = dayjs();
+      const closeHour = dayjs().set('hour', parseInt(dataFetch.timeList.closeHour.split(":")[0], 10));
+      
+      // If start date is today, validate time constraints
+      if (startDate.isSame(currentTime, 'day')) {
+        const startTime = form.getFieldValue('startTime');
+        if (startTime) {
+          const start = dayjs(startTime);
+          if (start.diff(currentTime, 'hour', true) < 2 || start.add(2, 'hour').isAfter(closeHour)) {
+            setTimeErrors("Không thể đặt đơn dài hạn bắt đầu từ hôm nay do giới hạn thời gian. Vui lòng chọn từ ngày mai.");
+            form.setFieldsValue({ workDate: null });
+            return;
+          }
+        }
+      }
+    }
+  
     updateCoefficient();
     updateTotalCost();
   };
@@ -300,16 +321,42 @@ const AddOrder = () => {
   //condition only choose hour in working time
   const disabledHours = () => {
     if (!dataFetch || !dataFetch.timeList) { 
-      return []; // trả về một mảng giờ mặc định
+      return [];
     }
+    
+    const currentDate = dayjs();
+    const selectedDate = form.getFieldValue('workDate');
     const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
-    for (let i = 0; i < 24; i++) {
-      if (i < openHour || i - 1 > closeHour) {
-        hours.push(i);
+  
+    // If selected date is today
+    if (selectedDate?.isSame(currentDate, 'day')) {
+      const currentHour = currentDate.hour();
+      const minimumStartHour = currentHour + 2; // Minimum 2 hours from now
+  
+      for (let i = 0; i < 24; i++) {
+        // Disable hours that are:
+        // 1. Before opening hour
+        // 2. After closing hour
+        // 3. Less than 2 hours from current time
+        // 4. If starting now would end after closing hour
+        if (i < openHour || 
+            i > closeHour || 
+            i < minimumStartHour || 
+            (i + 2 > closeHour)) {
+          hours.push(i);
+        }
+      }
+    } else {
+      // For future dates, only disable hours outside working hours
+      for (let i = 0; i < 24; i++) {
+        if (i < openHour || i > closeHour) {
+          hours.push(i);
+        }
       }
     }
+    
     return hours;
   };
   //condition only choose hour in working time
@@ -329,35 +376,54 @@ const AddOrder = () => {
   //condition only choose time with condition 2 hours and not 30 minutes
   const isValidTimeRange = (startTime, endTime) => {
     if (!startTime || !endTime) return false;
-
+  
     const start = dayjs(startTime);
     const end = dayjs(endTime);
-
+    const currentTime = dayjs();
+    const closeHour = dayjs().set('hour', parseInt(dataFetch.timeList.closeHour.split(":")[0], 10)).set('minute', 0);
+    
     const diffInHours = end.diff(start, "hour", true);
-
-    return diffInHours >= 2 && diffInHours % 1 === 0;
+    const diffFromNow = start.diff(currentTime, "hour", true);
+    
+    // Check if end time exceeds closing hour
+    const exceedsCloseHour = end.isAfter(closeHour);
+    
+    // For same day orders, ensure minimum 2 hours from current time
+    if (start.isSame(currentTime, 'day') && diffFromNow < 2) {
+      setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng. Vui lòng đặt vào ngày mai.");
+      return false;
+    }
+    
+    // Check if ending time exceeds closing hour
+    if (exceedsCloseHour) {
+      setTimeErrors("Thời gian kết thúc không được vượt quá giờ đóng cửa. Vui lòng đặt vào ngày mai.");
+      return false;
+    }
+  
+    // Original 2-hour minimum and no 30-minute intervals check
+    if (!(diffInHours >= 2 && diffInHours % 1 === 0)) {
+      setTimeErrors("Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút.");
+      return false;
+    }
+  
+    return true;
   };
   //handle set time
   const handleTimeChange = (field, time) => {
     form.setFieldsValue({ [field]: time });
-
-    updateCoefficient();
-    updateTotalCost();
-
-    const startTime =
-      field === "startTime" ? time : form.getFieldValue("startTime");
+  
+    const startTime = field === "startTime" ? time : form.getFieldValue("startTime");
     const endTime = field === "endTime" ? time : form.getFieldValue("endTime");
-    console.log(startTime, endTime);
+    
     if (startTime && endTime) {
       const isValid = isValidTimeRange(startTime, endTime);
       if (!isValid) {
-        setTimeErrors(
-          "Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút."
-        );
         setIsFormValid(false);
       } else {
         setTimeErrors("");
         setIsFormValid(true);
+        updateCoefficient();
+        updateTotalCost();
       }
     }
   };

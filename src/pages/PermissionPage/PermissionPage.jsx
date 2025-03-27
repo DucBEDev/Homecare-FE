@@ -12,6 +12,7 @@ import {
   Row,
   Col,
 } from "antd";
+import { DownOutlined, RightOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
 import axios from "axios";
 import "./PermissionPage.css";
 import NotificationComponent from "../../components/NotificationComponent/NotificationComponent";
@@ -27,6 +28,7 @@ const PermissionPage = () => {
   const confirmRef = useRef(null);
   const [form] = Form.useForm();
   const [record, setRecord] = useState(null); //Thêm state record để lưu trữ object (chỉnh sửa)
+  const [expandedFeatures, setExpandedFeatures] = useState({}); // Thêm state để quản lý tình trạng mở/đóng
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -51,6 +53,11 @@ const PermissionPage = () => {
 
   const features = [
     {
+      name: "Dashboard",
+      code: "dashboard",
+      actions: ["view"],
+    },
+    {
       name: "Quản lý người giúp việc",
       code: "helpers",
       actions: ["view", "create", "edit", "delete"],
@@ -60,7 +67,146 @@ const PermissionPage = () => {
       code: "staffs",
       actions: ["view", "create", "edit", "delete"],
     },
+    {
+      name: "Quản lý khách hàng",
+      code: "customers",
+      actions: ["view", "create", "edit", "delete"],
+    },
+    {
+      name: "Quản lý dịch vụ",
+      code: "services",
+      actions: ["view", "create", "edit", "delete"],
+    },
+    {
+      name: "Quản lý blogs",
+      code: "blogs",
+      actions: ["view", "create", "edit", "delete"],
+    },
+    {
+      name: "Hệ số giá",
+      code: "costCoefficients",
+      actions: ["view", "create", "edit", "delete"],
+    },
+    {
+      name: "Cài đặt chung",
+      code: "generalSetting",
+      actions: ["view", "edit"],
+    },
+    {
+      name: "Chính sách",
+      code: "policies",
+      actions: ["view", "create", "edit", "delete"],
+    },
+    {
+      name: "Quản lý phân quyền",
+      code: "roles",
+      actions: ["view", "create", "edit", "delete"],
+    },
   ];
+
+  // Thêm hàm để xử lý việc mở/thu gọn tính năng
+  const toggleFeatureExpand = (featureName) => {
+    setExpandedFeatures((prev) => ({
+      ...prev,
+      [featureName]: !prev[featureName],
+    }));
+  };
+
+  // Thêm hàm để chọn tất cả quyền cho một tính năng và một vai trò
+  const handleFeatureAllPermissions = (roleId, featureCode, checked) => {
+    const feature = features.find((f) => f.code === featureCode);
+    if (!feature) return;
+
+    setChanges((prevChanges) => {
+      const roleChanges = [...(prevChanges[roleId] || [])];
+
+      // Xử lý cho từng action trong tính năng
+      feature.actions.forEach((action) => {
+        const permissionCode = `${featureCode}_${action}`;
+        const existingIndex = roleChanges.findIndex(
+          (p) => p.code === permissionCode
+        );
+
+        if (existingIndex >= 0) {
+          roleChanges[existingIndex].checked = checked;
+        } else {
+          roleChanges.push({ code: permissionCode, checked });
+        }
+      });
+
+      return { ...prevChanges, [roleId]: roleChanges };
+    });
+  };
+
+  // Kiểm tra nếu tất cả các quyền của một tính năng đã được chọn
+  const isFeatureFullyChecked = (roleId, featureCode) => {
+    const feature = features.find((f) => f.code === featureCode);
+    if (!feature) return false;
+
+    const role = roles.find((r) => r._id === roleId);
+    if (!role) return false;
+
+    // Kiểm tra từng action trong feature
+    return feature.actions.every((action) => {
+      const permissionCode = `${featureCode}_${action}`;
+      const changedPermission = changes[roleId]?.find(
+        (p) => p.code === permissionCode
+      );
+
+      // Nếu có thay đổi, kiểm tra giá trị checked
+      if (changedPermission !== undefined) {
+        return changedPermission.checked;
+      }
+
+      // Nếu không có thay đổi, kiểm tra trong permissions hiện tại
+      return role.permissions.includes(permissionCode);
+    });
+  };
+
+  // Kiểm tra nếu ít nhất một quyền của tính năng được chọn (để hiển thị indeterminate)
+  const isFeaturePartiallyChecked = (roleId, featureCode) => {
+    const feature = features.find((f) => f.code === featureCode);
+    if (!feature) return false;
+
+    const role = roles.find((r) => r._id === roleId);
+    if (!role) return false;
+
+    // Nếu tất cả quyền đã được chọn, trả về false
+    if (isFeatureFullyChecked(roleId, featureCode)) return false;
+
+    // Kiểm tra từng action trong feature
+    return feature.actions.some((action) => {
+      const permissionCode = `${featureCode}_${action}`;
+      const changedPermission = changes[roleId]?.find(
+        (p) => p.code === permissionCode
+      );
+
+      // Nếu có thay đổi, kiểm tra giá trị checked
+      if (changedPermission !== undefined) {
+        return changedPermission.checked;
+      }
+
+      // Nếu không có thay đổi, kiểm tra trong permissions hiện tại
+      return role.permissions.includes(permissionCode);
+    });
+  };
+
+  // Mở tất cả hoặc đóng tất cả tính năng
+  const expandAllFeatures = () => {
+    const allExpanded = {};
+    features.forEach((feature) => {
+      allExpanded[feature.name] = true;
+    });
+    setExpandedFeatures(allExpanded);
+  };
+
+  const collapseAllFeatures = () => {
+    const allCollapsed = {};
+    features.forEach((feature) => {
+      allCollapsed[feature.name] = false;
+    });
+    setExpandedFeatures(allCollapsed);
+  };
 
   const columns = [
     {
@@ -71,9 +217,28 @@ const PermissionPage = () => {
       width: "20%",
       render: (text, record) => {
         if (record.isHeader) {
-          return <b>{text}</b>;
+          const isExpanded = expandedFeatures[record.feature] !== false;
+          return (
+            <div
+              className="feature-header"
+              style={{ display: "flex", alignItems: "center", height: "auto" }}
+              onClick={() => toggleFeatureExpand(record.feature)}
+            >
+              <span
+                className="feature-toggle-icon"
+                style={{ marginRight: "8px", cursor: "pointer" }}
+              >
+                {isExpanded ? <DownOutlined /> : <RightOutlined />}
+              </span>
+              <b>{text}</b>
+            </div>
+          );
         }
-        return record.display;
+        return (
+          <span className="feature-action" style={{ paddingLeft: "20px" }}>
+            {record.display}
+          </span>
+        );
       },
     },
     ...roles.map((role) => ({
@@ -84,6 +249,30 @@ const PermissionPage = () => {
       className: "role-column-header",
       width: `${80 / roles.length}%`,
       render: (text, record) => {
+        if (record.isHeader) {
+          // Hiển thị checkbox cho header tính năng
+          return (
+            <Checkbox
+              checked={isFeatureFullyChecked(role._id, record.featureCode)}
+              indeterminate={isFeaturePartiallyChecked(
+                role._id,
+                record.featureCode
+              )}
+              onChange={(e) =>
+                handleFeatureAllPermissions(
+                  role._id,
+                  record.featureCode,
+                  e.target.checked
+                )
+              }
+              style={{ 
+                color: "#1890ff",
+                backgroundColor: "#e6f7ff"
+              }}
+            />
+          );
+        }
+
         if (!record.isHeader) {
           const permissionCode = `${record.featureCode}_${record.action}`;
           const hasPermission = role.permissions.includes(permissionCode);
@@ -154,6 +343,8 @@ const PermissionPage = () => {
           permissions: updatedPermissions,
         });
       }
+
+      console.log("updatedPermissionsData", updatedPermissionsData);
 
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/roles/permissions`,
@@ -333,25 +524,31 @@ const PermissionPage = () => {
     data.push({
       key: feature.name,
       feature: feature.name,
+      featureCode: feature.code, // Thêm featureCode cho header
       isHeader: true,
     });
-    feature.actions.forEach((action) => {
-      data.push({
-        key: `${feature.name}-${action}`,
-        featureCode: feature.code,
-        feature: feature.name,
-        action: action,
-        isHeader: false,
-        display:
-          action === "view"
-            ? "Xem"
-            : action === "create"
-            ? "Thêm mới"
-            : action === "edit"
-            ? "Chỉnh sửa"
-            : "Xóa",
+
+    // Chỉ hiển thị các hành động nếu tính năng đang được mở rộng
+    const isExpanded = expandedFeatures[feature.name] !== false;
+    if (isExpanded) {
+      feature.actions.forEach((action) => {
+        data.push({
+          key: `${feature.name}-${action}`,
+          featureCode: feature.code,
+          feature: feature.name,
+          action: action,
+          isHeader: false,
+          display:
+            action === "view"
+              ? "Xem"
+              : action === "create"
+              ? "Thêm mới"
+              : action === "edit"
+              ? "Chỉnh sửa"
+              : "Xóa",
+        });
       });
-    });
+    }
   });
 
   const showDeleteConfirm = (role) => {
@@ -393,7 +590,8 @@ const PermissionPage = () => {
             className="permission-table"
             loading={loading}
           />
-          <div style={{ marginTop: "20px" }}>
+          <div style={{ marginTop: "20px" , display: "flex", justifyContent: "space-between"}}>
+            <span>
             <Button
               type="primary"
               onClick={handleUpdatePermissions}
@@ -402,7 +600,8 @@ const PermissionPage = () => {
               style={{
                 marginLeft: "30px",
                 height: "40px",
-                background: "linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%)",
+                background:
+                  "linear-gradient(135deg, #07BF73 0%,#17CF73 50%, #17CF83 100%)",
                 border: "none",
               }}
             >
@@ -421,7 +620,25 @@ const PermissionPage = () => {
             >
               <span style={{ color: "white", fontSize: "14px" }}>Quản lý</span>
             </Button>
+            </span>
+            <span style={{ marginBottom: "10px", textAlign: "right" }}>
+              <Button
+                type="link"
+                onClick={expandAllFeatures}
+                style={{ marginRight: "10px", fontSize: "20px" }}
+              >
+                Mở tất cả
+              </Button>
+              <Button
+                type="link"
+                onClick={collapseAllFeatures}
+                style={{ marginRight: "10px", fontSize: "20px" }}
+              >
+                Thu gọn tất cả
+              </Button>
+            </span>
           </div>
+
           <Modal
             title={
               <span style={{ fontWeight: "bolder", fontSize: "16px" }}>
@@ -560,24 +777,24 @@ const PermissionPage = () => {
             )}
           </Modal>
           <Modal
-             title="Xác nhận xóa nhóm quyền"
-                   visible={deleteModalVisible}
-                   onCancel={hideDeleteConfirm}
-                   footer={[
-                     <Button
-                       key="delete"
-                       danger
-                       type="primary"
-                       onClick={handleConfirmDelete}
-                       className="delete-button"
-                     >
-                       Đồng ý
-                     </Button>,
-                     <Button key="cancel" onClick={hideDeleteConfirm}>
-                       Hủy
-                     </Button>,
-                   ]}
-                   width={600}
+            title="Xác nhận xóa nhóm quyền"
+            visible={deleteModalVisible}
+            onCancel={hideDeleteConfirm}
+            footer={[
+              <Button
+                key="delete"
+                danger
+                type="primary"
+                onClick={handleConfirmDelete}
+                className="delete-button"
+              >
+                Đồng ý
+              </Button>,
+              <Button key="cancel" onClick={hideDeleteConfirm}>
+                Hủy
+              </Button>,
+            ]}
+            width={600}
           >
             <div className="popup-content">
               <div className="info-section">

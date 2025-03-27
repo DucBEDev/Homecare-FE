@@ -27,13 +27,33 @@
 
 .liLabelDelete {
   border-bottom: 1px solid #ccc; /* Thêm border-bottom */
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
 .liLabelDelete .spanTitleDelete {
-  font-size: 12px;
+  font-size: 4px;
 }
 
 .liLabelDelete .spanDescriptionDelete {
-  font-size: 10px;
+  font-size: 8px;
+}
+
+.feature-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.feature-header:hover {
+  background-color: rgba(3, 3, 3, 0.03);
+}
+
+.feature-toggle-icon {
+  margin-right: 8px;
+  transition: transform 0.2s;
+}
+
+.feature-action {
+  padding-left: 20px;
 }
