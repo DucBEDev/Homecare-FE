@@ -226,7 +226,7 @@ const AddOrder = () => {
       
       // Check if any day in the range is a weekend
       let hasWeekend = false;
-      let currentDate = startDate.clone();
+      let currentDate = startDate;
       
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
         const currentDay = currentDate.day();
@@ -291,28 +291,65 @@ const AddOrder = () => {
   };
   //once change date, update coefficient
   const handleDateChange = (date) => {
+    const currentDate = dayjs();
+    
+    // Luôn cập nhật giá trị workDate vào form trước, để không làm mất chọn lựa của người dùng
     form.setFieldsValue({ workDate: date });
     
-    // For long-term requests
+    // Xử lý với đơn dài hạn
     if (requestType === 'long' && Array.isArray(date)) {
       const startDate = date[0];
-      const currentTime = dayjs();
-      const closeHour = dayjs().set('hour', parseInt(dataFetch.timeList.closeHour.split(":")[0], 10));
+      const endDate = date[1];
       
-      // If start date is today, validate time constraints
-      if (startDate.isSame(currentTime, 'day')) {
+      // Nếu ngày bắt đầu là quá khứ hoặc ngày kết thúc là quá khứ
+      if (startDate.isBefore(currentDate, 'day') || endDate.isBefore(currentDate, 'day')) {
+        setTimeErrors("Không thể đặt đơn cho ngày trong quá khứ. Vui lòng chọn ngày trong tương lai.");
+        return;
+      }
+      
+      // Nếu ngày bắt đầu là hôm nay, kiểm tra thời gian
+      if (startDate.isSame(currentDate, 'day')) {
         const startTime = form.getFieldValue('startTime');
         if (startTime) {
           const start = dayjs(startTime);
-          if (start.diff(currentTime, 'hour', true) < 2 || start.add(2, 'hour').isAfter(closeHour)) {
-            setTimeErrors("Không thể đặt đơn dài hạn bắt đầu từ hôm nay do giới hạn thời gian. Vui lòng chọn từ ngày mai.");
-            form.setFieldsValue({ workDate: null });
+          const currentHour = currentDate.hour();
+          
+          if (start.hour() <= currentHour) {
+            setTimeErrors("Không thể đặt đơn dài hạn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
             return;
           }
+        } else {
+          // Nếu chưa chọn thời gian bắt đầu, chỉ hiển thị thông báo nhưng không xóa ngày
+          setTimeErrors("Hãy chọn giờ bắt đầu sau thời điểm hiện tại.");
+          return;
+        }
+      }
+    } 
+    // Đơn ngắn hạn
+    else if (date) {
+      // Nếu ngày được chọn là hôm nay
+      if (date.isSame(currentDate, 'day')) {
+        const startTime = form.getFieldValue('startTime');
+        if (startTime) {
+          const start = dayjs(startTime);
+          const currentHour = currentDate.hour();
+          
+          if (start.hour() <= currentHour) {
+            setTimeErrors("Không thể đặt đơn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+            return;
+          }
+        } else {
+          // Nếu chưa chọn thời gian bắt đầu, chỉ hiển thị thông báo
+          setTimeErrors("Hãy chọn giờ bắt đầu sau thời điểm hiện tại.");
+          return;
         }
       }
     }
-  
+
+    // Xóa lỗi nếu mọi kiểm tra đều thành công
+    setTimeErrors("");
+    
+    // Cập nhật hệ số và tổng chi phí
     updateCoefficient();
     updateTotalCost();
   };
@@ -330,28 +367,31 @@ const AddOrder = () => {
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
   
-    // If selected date is today
-    if (selectedDate?.isSame(currentDate, 'day')) {
+    // Kiểm tra xem selectedDate có phải là đối tượng dayjs và có isSame method
+    // Nếu selectedDate là mảng (long-term), lấy ngày đầu tiên
+    const dateToCheck = Array.isArray(selectedDate) ? selectedDate[0] : selectedDate;
+    
+    // Chỉ vô hiệu hóa giờ đã qua nếu ngày được chọn là hôm nay
+    if (dateToCheck && dayjs.isDayjs(dateToCheck) && dateToCheck.isSame(currentDate, 'day')) {
       const currentHour = currentDate.hour();
-      const minimumStartHour = currentHour + 2; // Minimum 2 hours from now
-  
+      
       for (let i = 0; i < 24; i++) {
-        // Disable hours that are:
-        // 1. Before opening hour
-        // 2. After closing hour
-        // 3. Less than 2 hours from current time
-        // 4. If starting now would end after closing hour
+        // Vô hiệu hóa các giờ:
+        // 1. Trước giờ mở cửa
+        // 2. Sau giờ đóng cửa
+        // 3. Các giờ đã qua trong ngày hiện tại
+        // 4. Các giờ không thể hoàn thành trước giờ đóng cửa (thêm 2 giờ tối thiểu)
         if (i < openHour || 
             i > closeHour || 
-            i < minimumStartHour || 
+            i <= currentHour || 
             (i + 2 > closeHour)) {
           hours.push(i);
         }
       }
     } else {
-      // For future dates, only disable hours outside working hours
+      // Đối với các ngày trong tương lai, chỉ vô hiệu hóa giờ ngoài giờ làm việc
       for (let i = 0; i < 24; i++) {
-        if (i < openHour || i > closeHour) {
+        if (i < openHour || i > closeHour || (i + 2 > closeHour)) {
           hours.push(i);
         }
       }
@@ -383,29 +423,43 @@ const AddOrder = () => {
     const closeHour = dayjs().set('hour', parseInt(dataFetch.timeList.closeHour.split(":")[0], 10)).set('minute', 0);
     
     const diffInHours = end.diff(start, "hour", true);
+    
+    // Lấy ngày làm việc từ form
+    const workDate = form.getFieldValue("workDate");
+    const isLongTerm = requestType === "long";
+    
+    // Kiểm tra xem thời gian bắt đầu đã qua chưa (chỉ áp dụng nếu ngày làm việc là hôm nay)
+    const isToday = isLongTerm ? 
+      (Array.isArray(workDate) && workDate[0]?.isSame(currentTime, 'day')) : 
+      (workDate?.isSame(currentTime, 'day'));
+    
+    if (isToday && start.isBefore(currentTime)) {
+      setTimeErrors("Không thể đặt thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+      return false;
+    }
+    
+    // Kiểm tra khoảng cách tối thiểu 2 giờ từ thời điểm hiện tại
+    if (isToday) {
     const diffFromNow = start.diff(currentTime, "hour", true);
+    if (diffFromNow < 2) {
+      setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng.");
+      return false;
+      }
+    }
     
-    // Check if end time exceeds closing hour
+    // Kiểm tra nếu thời gian kết thúc vượt quá giờ đóng cửa
     const exceedsCloseHour = end.isAfter(closeHour);
-    
-    // For same day orders, ensure minimum 2 hours from current time
-    if (start.isSame(currentTime, 'day') && diffFromNow < 2) {
-      setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng. Vui lòng đặt vào ngày mai.");
-      return false;
-    }
-    
-    // Check if ending time exceeds closing hour
     if (exceedsCloseHour) {
-      setTimeErrors("Thời gian kết thúc không được vượt quá giờ đóng cửa. Vui lòng đặt vào ngày mai.");
+      setTimeErrors("Thời gian kết thúc không được vượt quá giờ đóng cửa.");
       return false;
     }
-  
-    // Original 2-hour minimum and no 30-minute intervals check
+
+    // Kiểm tra thời gian tối thiểu 2 giờ và không lẻ 30 phút
     if (!(diffInHours >= 2 && diffInHours % 1 === 0)) {
       setTimeErrors("Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút.");
       return false;
     }
-  
+
     return true;
   };
   //handle set time
@@ -414,12 +468,28 @@ const AddOrder = () => {
   
     const startTime = field === "startTime" ? time : form.getFieldValue("startTime");
     const endTime = field === "endTime" ? time : form.getFieldValue("endTime");
+    const workDate = form.getFieldValue("workDate");
     
     if (startTime && endTime) {
       const isValid = isValidTimeRange(startTime, endTime);
+      
       if (!isValid) {
         setIsFormValid(false);
       } else {
+        // Nếu thời gian hợp lệ, hãy kiểm tra thêm với ngày hiện tại
+        const currentDate = dayjs();
+        const dateToCheck = Array.isArray(workDate) ? workDate[0] : workDate;
+        
+        if (dateToCheck && dateToCheck.isSame(currentDate, 'day')) {
+          // Nếu thời gian bắt đầu đã qua
+          const start = dayjs(startTime);
+          if (start.hour() <= currentDate.hour()) {
+            setTimeErrors("Không thể đặt đơn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+            setIsFormValid(false);
+            return;
+          }
+        }
+        
         setTimeErrors("");
         setIsFormValid(true);
         updateCoefficient();
@@ -540,7 +610,7 @@ const AddOrder = () => {
         });
 
         setTimeout(() => {
-          // navigate("/order");
+          navigate("/order");
           setShowNotification(null);
         }, 600);
       })

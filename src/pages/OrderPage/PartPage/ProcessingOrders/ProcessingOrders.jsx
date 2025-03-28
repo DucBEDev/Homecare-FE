@@ -189,7 +189,10 @@ const ProcessingOrders = () => {
               statusNow = "Chờ xác nhận";
             } else if (record.status === "processing") {
               statusNow = "Đang tiến hành";
-            } else {
+            } else if (record.status === "waitPayment") {
+              statusNow = "Chờ thanh toán"
+            }
+            else {
               statusNow = "Đã hoàn thành";
             }
             return {

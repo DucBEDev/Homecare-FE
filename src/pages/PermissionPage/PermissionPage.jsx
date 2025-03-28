@@ -250,7 +250,7 @@ const PermissionPage = () => {
       width: `${80 / roles.length}%`,
       render: (text, record) => {
         if (record.isHeader) {
-          // Hiển thị checkbox cho header tính năng
+          // Hiển thị checkbox cho header tính năng với class mới
           return (
             <Checkbox
               checked={isFeatureFullyChecked(role._id, record.featureCode)}
@@ -265,10 +265,7 @@ const PermissionPage = () => {
                   e.target.checked
                 )
               }
-              style={{ 
-                color: "#1890ff",
-                backgroundColor: "#e6f7ff"
-              }}
+              className="feature-header-checkbox"
             />
           );
         }

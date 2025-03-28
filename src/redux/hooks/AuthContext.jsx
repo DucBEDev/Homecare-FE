@@ -9,28 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Thiết lập axios interceptor để xử lý lỗi 401
-  useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
-      response => response,
-      error => {
-        if (error.response && error.response.status === 401) {
-          // Tự động logout khi nhận được lỗi 401 từ API
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setToken(null);
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-        return Promise.reject(error);
-      }
-    );
-    
-    // Cleanup interceptor khi component unmount
-    return () => {
-      axios.interceptors.response.eject(interceptor);
-    };
-  }, []);
+ 
 
   // Kiểm tra xác thực khi component mount
   useEffect(() => {
