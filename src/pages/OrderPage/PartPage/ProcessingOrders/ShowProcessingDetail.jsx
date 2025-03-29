@@ -570,6 +570,7 @@ const ShowProcessingDetail = () => {
             style={{
               position: "relative",
               height: "calc(32vh)", // Chiều cao động dựa theo viewport
+              minHeight: "300px",
               display: "flex",
               flexDirection: "column",
             }}
