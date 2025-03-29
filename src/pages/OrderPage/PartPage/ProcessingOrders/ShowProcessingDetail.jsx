@@ -49,9 +49,11 @@ const ShowProcessingDetail = () => {
   const [currentStatus, setCurrentStatus] = useState('');
 
   const showModal = (record) => {
+    console.log("Record data:", record);
+    
     setSelectedRecord({
       ...record,
-      mainOrderId: id, // Thêm id của đơn hàng lớn vào record
+      mainOrderId: id, 
     });
     setIsModalVisible(true);
   };
@@ -456,7 +458,7 @@ const ShowProcessingDetail = () => {
       setAllHelpers(helperData);
 
       let requestType =
-        data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+        data.request.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
       let statusNow = "";
       if (data.request.status === "notDone") {
         statusNow = "Chưa tiến hành";

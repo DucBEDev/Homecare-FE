@@ -78,10 +78,7 @@ const PopupModalDetail = ({
           startTime: record.gioBatDau,
           endTime: record.gioKetThuc,
           baseFactor: selectedHelperInfo.baseFactor,
-          coefficient_other: Math.max(
-            record.coefficientOtherList[1].value,
-            record.coefficientOtherList[1].value
-          ),
+          coefficient_other: record.coefficient_other,
           coefficient_OT: record.coefficientOtherList[0].value,
           coefficient_service: record.coefficient_service,
         };
@@ -105,10 +102,7 @@ const PopupModalDetail = ({
           startTime: record.gioBatDau,
           endTime: record.gioKetThuc,
           helper_baseFactor: selectedHelperInfo.baseFactor,
-          coefficient_other: Math.max(
-            record.coefficientOtherList[1].value,
-            record.coefficientOtherList[1].value
-          ),
+          coefficient_other: record.coefficient_other,
           coefficient_ot: record.coefficientOtherList[0].value,
           coefficient_service: record.coefficient_service,
         };
@@ -144,7 +138,7 @@ const PopupModalDetail = ({
           setShowNotification(null);
           console.log("closeeeeeeeeeeeeeeeee", showNotification);
           onClose();
-        }, 0);
+        }, 1000);
       }
     } catch (error) {
       console.error("Error assigning helper:", error);
@@ -156,7 +150,7 @@ const PopupModalDetail = ({
       // Xóa notification lỗi sau delay
       setTimeout(() => {
         setShowNotification(null);
-      }, 0);
+      }, 1000);
     }
   };
 
