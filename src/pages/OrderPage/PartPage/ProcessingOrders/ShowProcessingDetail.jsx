@@ -59,6 +59,7 @@ const ShowProcessingDetail = () => {
   };
 
   const showEditModal = (record) => {
+    
     setSelectedEditRecord({
       ...record,
       mainOrderId: id,
@@ -699,9 +700,9 @@ const ShowProcessingDetail = () => {
             />
             <PopupModalEdit
               isVisible={isEditModalVisible}
-              onClose={() => setIsEditModalVisible(false)}
               record={selectedEditRecord}
               orderData={orderData}
+              onClose={() => setIsEditModalVisible(false)}
               onEdit={handleSuccess}
             />
             <PopupModalDelete

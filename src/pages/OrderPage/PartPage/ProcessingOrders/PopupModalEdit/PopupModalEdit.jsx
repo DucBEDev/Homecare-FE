@@ -136,6 +136,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
     console.log("ca", editedRecord);
     console.log("cab", record);
     try {
+
       const payload = {
         startTime: editedRecord.gioBatDauMoi,
         endTime: editedRecord.gioKetThucMoi,

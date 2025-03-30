@@ -123,6 +123,8 @@ const OrderHistory = () => {
               statusNow = "Chờ xác nhận"
             } else if (record.status === "processing") {
               statusNow = "Đang tiến hành"
+            } else if (record.status === "cancelled") {
+              statusNow = "Đã hủy"
             } else {
               statusNow = "Đã hoàn hành"
             }
