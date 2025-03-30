@@ -155,7 +155,7 @@ const AddOrder = () => {
         const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
         const normalCost = applicableWeekendCoefficient * T2;
         
-        const dailyCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
+        const dailyCost = (basicCost * HSDV * (overtimeCost + normalCost));
         
         totalCost += dailyCost;
         currentDate = currentDate.add(1, "day");
@@ -187,10 +187,10 @@ const AddOrder = () => {
       const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
       const normalCost = applicableWeekendCoefficient * T2;
       
-      totalCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
+      totalCost = (basicCost * HSDV * (overtimeCost + normalCost));
     }
     
-    return Math.ceil(totalCost/1000) * 1000;
+    return (totalCost/1000) * 1000;
   };
   
   //HANDLE SET COEFFICIENT AUTOMATICALLY

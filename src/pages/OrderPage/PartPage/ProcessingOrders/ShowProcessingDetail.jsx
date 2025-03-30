@@ -387,15 +387,17 @@ const ShowProcessingDetail = () => {
         <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
           {record.trangThai !== "Đã hoàn thành" ? (
             <>
-              <Button
-                type="primary"
-                size="small"
-                style={{ marginRight: 8 }}
-                onClick={() => showEditModal(record)}
-              >
-                Sửa
-              </Button>
-
+              {record.trangThai !== "Đã hủy" && (
+                <Button
+                  type="primary"
+                  size="small"
+                  style={{ marginRight: 8 }}
+                  onClick={() => showEditModal(record)}
+                >
+                  Sửa
+                </Button>
+              )}
+      
               {record.nguoiGiupViec !== "Chưa có" ? (
                 <>
                   <Button
@@ -415,16 +417,18 @@ const ShowProcessingDetail = () => {
                   </Button>
                 </>
               ) : (
-                <Button
-                  type="primary"
-                  size="small"
-                  style={{ marginRight: 8, background: "#10ce80" }}
-                  onClick={() => showModal(record)}
-                >
-                  Giao việc
-                </Button>
+                record.trangThai !== "Đã hủy" && (
+                  <Button
+                    type="primary"
+                    size="small"
+                    style={{ marginRight: 8, background: "#10ce80" }}
+                    onClick={() => showModal(record)}
+                  >
+                    Giao việc
+                  </Button>
+                )
               )}
-
+      
               <Button
                 danger
                 size="small"
@@ -621,6 +625,7 @@ const ShowProcessingDetail = () => {
                   left: "20%",
                   background: "#10ce80",
                   maxWidth: "120px",
+                  marginLeft: "90px"
                 }}
                 type="primary"
                 size="normal"
@@ -640,6 +645,7 @@ const ShowProcessingDetail = () => {
                   left: "20%",
                   background: "#fa8c16",
                   maxWidth: "120px",
+                   marginLeft: "90px"
                 }}
                 type="primary"
                 size="normal"
@@ -658,6 +664,7 @@ const ShowProcessingDetail = () => {
                   left: "20%",
                   background: "#4096FF",
                   maxWidth: "120px",
+                   marginLeft: "90px"
                 }}
                 type="primary"
                 size="normal"

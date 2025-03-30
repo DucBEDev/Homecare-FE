@@ -113,7 +113,7 @@ const OrderHistory = () => {
         console.log("re", response);
         const transformedData = response.data.requestList.map(
           (record, index) => {
-            let requestName = record.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+            let requestName = record.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
             let statusNow = ""
             if (record.status === "notDone") {
               statusNow = "Chưa tiến hành"
