@@ -37,29 +37,20 @@ const ShowProcessingDetail = () => {
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
 
   const [showNotification, setShowNotification] = useState(null);
-
-  const [isProcessingModalVisible, setIsProcessingModalVisible] =
-    useState(false);
-  const [isWorkCompleteModalVisible, setIsWorkCompleteModalVisible] =
-    useState(false);
-  const [isPaidModalVisible, setIsPaidModalVisible] = useState(false);
-
-  const [allSchedulesAssigned, setAllSchedulesAssigned] = useState(false);
-  const [allSchedulesCompleted, setAllSchedulesCompleted] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState('');
+  
+  // Thêm state cho modal chờ thanh toán của đơn nhỏ
+  const [isDetailWaitPaymentModalVisible, setIsDetailWaitPaymentModalVisible] = useState(false);
+  const [selectedDetailForWaitPayment, setSelectedDetailForWaitPayment] = useState(null);
 
   const showModal = (record) => {
-    console.log("Record data:", record);
-    
     setSelectedRecord({
       ...record,
-      mainOrderId: id, 
+      mainOrderId: id,
     });
     setIsModalVisible(true);
   };
 
   const showEditModal = (record) => {
-    
     setSelectedEditRecord({
       ...record,
       mainOrderId: id,
@@ -67,7 +58,6 @@ const ShowProcessingDetail = () => {
     setIsEditModalVisible(true);
   };
 
-  // Thêm hàm show modal xóa
   const showDeleteModal = (record) => {
     setSelectedDeleteRecord({
       ...record,
@@ -85,12 +75,15 @@ const ShowProcessingDetail = () => {
     setSelectedFinishRecord(updatedRecord);
     setIsFinishModalVisible(true);
   };
+  
+  // Hàm hiển thị modal xác nhận chuyển trạng thái sang chờ thanh toán
+  const showDetailWaitPaymentModal = (record) => {
+    setSelectedDetailForWaitPayment(record);
+    setIsDetailWaitPaymentModalVisible(true);
+  };
 
   const handleSuccess = () => {
-    // Force a full data refresh
     fetchData();
-    
-    // Update UI state as needed
     setIsModalVisible(false);
     setIsEditModalVisible(false);
     setIsDeleteModalVisible(false);
@@ -99,15 +92,13 @@ const ShowProcessingDetail = () => {
 
   // Thêm hàm xử lý cho giao việc dài hạn
   const handleLongTermAssignment = () => {
-    // Tạo một record mới cho giao việc dài hạn
     const longTermRecord = {
-      mainOrderId: id, // Thêm ID của đơn hàng chính
+      mainOrderId: id,
       ngayLam: orderData?.ngayDatYeuCau,
       gioBatDau: timeSlots[0]?.gioBatDau,
       gioKetThuc: timeSlots[0]?.gioKetThuc,
       nguoiGiupViec: "Chưa có",
       isLongTerm: true,
-
       coefficientOtherList: timeSlots[0]?.coefficientOtherList || [],
       coefficient_service: timeSlots[0]?.coefficient_service,
       coefficient_other: timeSlots[0]?.coefficient_other,
@@ -129,7 +120,6 @@ const ShowProcessingDetail = () => {
         `${process.env.REACT_APP_API_URL}admin/requests/updateRequestDone/${id}`
       );
 
-      // Nếu thành công
       setShowNotification({
         status: "success",
         message: "Thành công",
@@ -148,8 +138,6 @@ const ShowProcessingDetail = () => {
       }, 1000);
     } catch (error) {
       console.error("Error:", error);
-
-      // Kiểm tra error response
       const errorMessage =
         error.response?.data?.message ||
         "Không thể hoàn thành đơn hàng. Vui lòng thử lại.";
@@ -166,198 +154,44 @@ const ShowProcessingDetail = () => {
       }, 1500);
     }
   };
-
-  // Thêm hàm xử lý chuyển sang Processing
-  const handleProcessingClick = () => {
-    setIsProcessingModalVisible(true);
-  };
-
-  const handleProcessingConfirm = async () => {
-    try {
-      await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestProcessing/${id}`
-      );
-
-      // Nếu thành công
-      setShowNotification({
-        status: "success",
-        message: "Thành công",
-        description: "Đã chuyển trạng thái sang đang tiến hành!",
-      });
-
-      fetchData();
-
-      setTimeout(() => {
-        setIsProcessingModalVisible(false);
-        setShowNotification(null);
-      }, 1500);
-    } catch (error) {
-      console.error("Error:", error);
-
-      // Kiểm tra error response
-      const errorMessage =
-        error.response?.data?.message ||
-        "Không thể chuyển trạng thái. Vui lòng thử lại.";
-
-      setShowNotification({
-        status: "error",
-        message: "Thất bại",
-        description: errorMessage,
-      });
-
-      setTimeout(() => {
-        setIsProcessingModalVisible(false);
-        setShowNotification(null);
-      }, 1500);
-    }
-  };
-
-  // Hàm kiểm tra trạng thái đơn hàng
-  const checkOrderStatus = useCallback(() => {
-    // Kiểm tra xem tất cả các lịch đã được giao việc chưa
-    const allAssigned = timeSlots.every(slot => slot.nguoiGiupViec !== "Chưa có");
-    setAllSchedulesAssigned(allAssigned);
-    
-    // Kiểm tra xem tất cả các lịch đã hoàn thành chưa
-    const allCompleted = timeSlots.every(slot => slot.trangThai === "Đã hoàn thành");
-    setAllSchedulesCompleted(allCompleted);
-    
-    // Lưu trạng thái hiện tại của đơn hàng
-    if (orderData) {
-      setCurrentStatus(orderData.trangThai);
-    }
-  }, [timeSlots, orderData]);
   
-  useEffect(() => {
-    checkOrderStatus();
-  }, [timeSlots, checkOrderStatus]);
-
-  // Cập nhật hàm handleWorkCompleteClick để kiểm tra điều kiện
-  const handleWorkCompleteClick = () => {
-    if (!allSchedulesCompleted) {
-      setShowNotification({
-        status: "warning",
-        message: "Không thể chuyển trạng thái",
-        description: "Tất cả các đơn nhỏ phải được hoàn thành trước khi chuyển sang chờ thanh toán!",
-      });
-      
-      setTimeout(() => {
-        setShowNotification(null);
-      }, 3000);
-      return;
-    }
+  // Hàm xử lý khi xác nhận chuyển sang chờ thanh toán cho đơn nhỏ
+  const handleDetailWaitPaymentConfirm = () => {
+    if (!selectedDetailForWaitPayment) return;
     
-    setIsWorkCompleteModalVisible(true);
-  };
-
-  // Thêm hàm xử lý khi xác nhận chờ thanh toán
-  const handleWorkCompleteConfirm = () => {
-    const dataForBackend = {
-      requestId: id,
-    };
-
-    // Gửi request đến backend
-    axios
-      .patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestWaitPayment/${id}`,
-        dataForBackend,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
-      .then((response) => {
-        if (!response) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response;
-      })
-      .then((data) => {
-        console.log("Responaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:", data);
-        
-        // Hiển thị thông báo thành công
+    axios.patch(
+      `${process.env.REACT_APP_API_URL}admin/requests/updateDetailWaitPayment/${selectedDetailForWaitPayment.scheduleId}`
+    )
+    .then(response => {
+      if (response && response.data && response.data.success) {
         setShowNotification({
           status: "success",
           message: "Thành công",
           description: "Đã chuyển trạng thái sang chờ thanh toán!",
         });
-
-        // Cập nhật lại dữ liệu sau khi thành công
+        
         fetchData();
-
-        // Đóng modal và xóa thông báo sau một khoảng thời gian
+        
         setTimeout(() => {
-          setIsWorkCompleteModalVisible(false);
+          setIsDetailWaitPaymentModalVisible(false);
           setShowNotification(null);
         }, 1500);
-      })
-      .catch((error) => {
-        console.error("Error updating status:", error);
-        
-        // Kiểm tra error response để hiển thị thông báo phù hợp
-        const errorMessage =
-          error.response?.data?.message ||
-          "Không thể chuyển trạng thái. Vui lòng thử lại.";
-        
-        // Hiển thị thông báo lỗi
-        setShowNotification({
-          status: "error",
-          message: "Thất bại",
-          description: errorMessage,
-        });
-
-        // Đóng modal và xóa thông báo sau một khoảng thời gian
-        setTimeout(() => {
-          setIsWorkCompleteModalVisible(false);
-          setShowNotification(null);
-        }, 1500);
-      });
-  };
-
-  // Hàm xử lý chuyển sang đã thanh toán
-  // const handlePaidClick = () => {
-  //   setIsPaidModalVisible(true);
-  // };
-
-  const handlePaidConfirm = async () => {
-    try {
-      await axios.patch(
-        `${process.env.REACT_APP_API_URL}admin/requests/updateRequestPaid/${id}`
-      );
-
-      // Nếu thành công
-      setShowNotification({
-        status: "success",
-        message: "Thành công",
-        description: "Đã chuyển trạng thái sang đã thanh toán!",
-      });
-
-      fetchData();
-
-      setTimeout(() => {
-        setIsPaidModalVisible(false);
-        setShowNotification(null);
-      }, 1500);
-    } catch (error) {
+      }
+    })
+    .catch(error => {
       console.error("Error:", error);
-
-      // Kiểm tra error response
-      const errorMessage =
-        error.response?.data?.message ||
-        "Không thể chuyển trạng thái. Vui lòng thử lại.";
-
+      
       setShowNotification({
         status: "error",
         message: "Thất bại",
-        description: errorMessage,
+        description: "Không thể chuyển trạng thái. Vui lòng thử lại.",
       });
-
+      
       setTimeout(() => {
-        setIsPaidModalVisible(false);
+        setIsDetailWaitPaymentModalVisible(false);
         setShowNotification(null);
       }, 1500);
-    }
+    });
   };
 
   const columns = [
@@ -380,7 +214,7 @@ const ShowProcessingDetail = () => {
       key: "nguoiGiupViec",
       width: 160,
     },
-      {
+    {
       title: "Chi Phí NGV",
       dataIndex: "chiPhiNGV",
       key: "chiPhiNGV",
@@ -397,50 +231,37 @@ const ShowProcessingDetail = () => {
       key: "xuLy",
       render: (_, record) => (
         <div style={{ display: "flex", gap: "4px", whiteSpace: "nowrap" }}>
-          {record.trangThai !== "Đã hoàn thành" ? (
+          {/* 1. Khi trạng thái "Chưa tiến hành" (notDone) */}
+          {record.trangThai === "Chưa tiến hành" && (
             <>
-              {record.trangThai !== "Đã hủy" && (
+              <Button
+                type="primary"
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => showEditModal(record)}
+              >
+                Sửa
+              </Button>
+              
+              {record.nguoiGiupViec === "Chưa có" ? (
                 <Button
                   type="primary"
                   size="small"
-                  style={{ marginRight: 8 }}
-                  onClick={() => showEditModal(record)}
+                  style={{ marginRight: 8, background: "#10ce80" }}
+                  onClick={() => showModal(record)}
                 >
-                  Sửa
+                  Giao việc
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  style={{ marginRight: 8 }}
+                  onClick={() => showModal(record)}
+                >
+                  Đổi NGV
                 </Button>
               )}
-      
-              {record.nguoiGiupViec !== "Chưa có" ? (
-                <>
-                  <Button
-                    size="small"
-                    style={{ marginRight: 8 }}
-                    onClick={() => showModal(record)}
-                  >
-                    Đổi NGV
-                  </Button>
-                  <Button
-                    type="primary"
-                    size="small"
-                    style={{ marginRight: 8 }}
-                    onClick={() => showFinishModal(record)}
-                  >
-                    Hoàn Thành
-                  </Button>
-                </>
-              ) : (
-                record.trangThai !== "Đã hủy" && (
-                  <Button
-                    type="primary"
-                    size="small"
-                    style={{ marginRight: 8, background: "#10ce80" }}
-                    onClick={() => showModal(record)}
-                  >
-                    Giao việc
-                  </Button>
-                )
-              )}
-      
+              
               <Button
                 danger
                 size="small"
@@ -449,7 +270,61 @@ const ShowProcessingDetail = () => {
                 Hủy
               </Button>
             </>
-          ) : null}
+          )}
+          
+          {/* 2. Khi trạng thái "Đã giao việc" (assigned) */}
+          {record.trangThai === "Đã giao việc" && (
+            <>
+              <Button
+                type="primary"
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => showEditModal(record)}
+              >
+                Sửa
+              </Button>
+              
+              <Button
+                size="small"
+                style={{ marginRight: 8 }}
+                onClick={() => showModal(record)}
+              >
+                Đổi NGV
+              </Button>
+              
+              <Button
+                danger
+                size="small"
+                onClick={() => showDeleteModal(record)}
+              >
+                Hủy
+              </Button>
+            </>
+          )}
+          
+          {/* 3. Khi trạng thái "Đang tiến hành" (processing) */}
+          {record.trangThai === "Đang tiến hành" && (
+            <Button
+              type="primary"
+              size="small"
+              style={{ marginRight: 8, background: "#fa8c16" }}
+              onClick={() => showDetailWaitPaymentModal(record)}
+            >
+              Chờ thanh toán
+            </Button>
+          )}
+          
+          {/* 4. Khi trạng thái "Chờ thanh toán" (waitPayment) */}
+          {record.trangThai === "Chờ thanh toán" && (
+            <Button
+              type="primary"
+              size="small"
+              style={{ marginRight: 8, background: "#4096FF" }}
+              onClick={() => showFinishModal(record)}
+            >
+              Hoàn thành
+            </Button>
+          )}
         </div>
       ),
     },
@@ -461,7 +336,6 @@ const ShowProcessingDetail = () => {
         `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
       const { data } = response;
-      console.log("detailresponsedataaaaaaaaaa", data);
 
       const helperData = data.helpers.map((helper) => ({
         id: helper._id,
@@ -470,7 +344,6 @@ const ShowProcessingDetail = () => {
         dateOfBirth: helper.birthDate,
         address: helper.address,
         baseFactor: helper.baseFactor,
-        // Add any other relevant helper information
       }));
       setAllHelpers(helperData);
 
@@ -486,9 +359,8 @@ const ShowProcessingDetail = () => {
       } else if (data.request.status === "processing") {
         statusNow = "Đang tiến hành";
       } else if (data.request.status === "waitPayment") {
-        statusNow = "Chờ thanh toán"
-      }
-      else {
+        statusNow = "Chờ thanh toán";
+      } else {
         statusNow = "Đã hoàn thành";
       }
       setOrderData({
@@ -505,14 +377,12 @@ const ShowProcessingDetail = () => {
       });
 
       setTimeSlots(
-        data.scheduleRequest.map((schedule, index) => {
-          // Tìm helper info từ danh sách helpers
+        data.scheduleRequest.map((schedule) => {
           const currentHelper = data.helpers.find(
             (h) => h._id === schedule.helper_id
           );
-          // Map helpers với key duy nhất
           const helpersList = data.helpers.map((helper) => ({
-            key: helper._id, // Sửa helper._id thành helper.id
+            key: helper._id,
             helperId: helper._id,
             helperName: helper.fullName,
             haveHelper: true,
@@ -528,10 +398,9 @@ const ShowProcessingDetail = () => {
 
           return {
             key: `schedule_${schedule._id}`,
-            gioBatDau: schedule.startTime || "NaN", 
-            gioKetThuc: schedule.endTime || "NaN", 
+            gioBatDau: schedule.startTime || "NaN",
+            gioKetThuc: schedule.endTime || "NaN",
             ngayLam: new Date(schedule.workingDate).toLocaleDateString(
-              // Sửa thành workingDate
               "vi-VN",
               {
                 weekday: "long",
@@ -540,14 +409,13 @@ const ShowProcessingDetail = () => {
                 day: "numeric",
               }
             ),
-            
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
             trangThai: (() => {
               if (schedule.status === "notDone") return "Chưa tiến hành";
               else if (schedule.status === "assigned") return "Đã giao việc";
-              else if (schedule.status === "unconfirmed") return "Chờ xác nhận";
               else if (schedule.status === "processing")
                 return "Đang tiến hành";
+              else if (schedule.status === "waitPayment") return "Chờ thanh toán"
               else if (schedule.status === "done") return "Đã hoàn thành";
               else if (schedule.status === "cancelled") return "Đã hủy";
               else return "Không xác định";
@@ -588,7 +456,7 @@ const ShowProcessingDetail = () => {
           <Card
             style={{
               position: "relative",
-              height: "calc(32vh)", // Chiều cao động dựa theo viewport
+              height: "calc(32vh)",
               minHeight: "300px",
               display: "flex",
               flexDirection: "column",
@@ -596,13 +464,12 @@ const ShowProcessingDetail = () => {
             title="Thông tin chi tiết khung giờ của đơn hàng"
             bodyStyle={{
               flex: 1,
-              overflow: "hidden", // Ngăn scroll của Card
+              overflow: "hidden",
             }}
           >
             <Descriptions bordered>
               <Descriptions.Item label="Loại Yêu Cầu">
-                {orderData?.loaiYeuCau || "N/A"}{" "}
-                {/* Fallback to "N/A" if undefined */}
+                {orderData?.loaiYeuCau || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Họ Tên Khách Hàng">
                 {orderData?.hoTenKhachHang || "N/A"}
@@ -634,75 +501,54 @@ const ShowProcessingDetail = () => {
             style={{ position: "relative" }}
             title="Thông tin chi tiết khung giờ của đơn hàng"
           >
-            {/* Chỉ hiển thị nút Giao việc dài hạn khi chưa giao hết việc */}
-            {!allSchedulesAssigned && (
-              <Button
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  left: "20%",
-                  background: "#10ce80",
-                  maxWidth: "120px",
-                  marginLeft: "90px"
-                }}
-                type="primary"
-                size="normal"
-                onClick={handleLongTermAssignment}
-                onAssignLong={handleSuccess}
-              >
-                Giao việc dài hạn
-              </Button>
-            )}
+            {/* Nút giao việc dài hạn cho đơn lớn */}
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "20%",
+                background: "#10ce80",
+                maxWidth: "120px",
+                marginLeft: "90px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleLongTermAssignment}
+              onAssignLong={handleSuccess}
+            >
+              Giao việc dài hạn
+            </Button>
 
-            {/* Chỉ hiển thị nút Chờ thanh toán khi tất cả đơn đã được hoàn thành */}
-            {allSchedulesCompleted && currentStatus !== "Chờ thanh toán" && (
-              <Button
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  left: "20%",
-                  background: "#fa8c16",
-                  maxWidth: "120px",
-                   marginLeft: "90px"
-                }}
-                type="primary"
-                size="normal"
-                onClick={handleWorkCompleteClick}
-              >
-                Chờ thanh toán
-              </Button>
-            )}
-
-            {/* Chỉ hiển thị nút Hoàn thành khi đơn đã ở trạng thái chờ thanh toán */}
-            {currentStatus === "Chờ thanh toán" && (
-              <Button
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  left: "20%",
-                  background: "#4096FF",
-                  maxWidth: "120px",
-                   marginLeft: "90px"
-                }}
-                type="primary"
-                size="normal"
-                onClick={handleCompleteClick}
-              >
-                Hoàn thành
-              </Button>
-            )}
+            {/* Nút hoàn thành cho đơn lớn */}
+            <Button
+              style={{
+                position: "absolute",
+                top: "2px",
+                left: "20%",
+                background: "#4096FF",
+                maxWidth: "120px",
+                marginLeft: "220px",
+              }}
+              type="primary"
+              size="normal"
+              onClick={handleCompleteClick}
+            >
+              Hoàn thành
+            </Button>
 
             <Table
               columns={columns}
               dataSource={timeSlots}
               pagination={false}
               scroll={{
-                y: "calc(100vh - 500px)", // Chiều cao scroll của table
+                y: "calc(100vh - 500px)",
               }}
               style={{
                 height: "100%",
               }}
             />
+            
+            {/* Modal hiện tại */}
             <PopupModalDetail
               isVisible={isModalVisible}
               onClose={() => setIsModalVisible(false)}
@@ -733,6 +579,8 @@ const ShowProcessingDetail = () => {
               orderData={orderData}
               onFinish={handleSuccess}
             />
+            
+            {/* Modal xác nhận hoàn thành đơn lớn */}
             <Modal
               title={
                 <div
@@ -752,7 +600,7 @@ const ShowProcessingDetail = () => {
               open={isConfirmModalVisible}
               onOk={handleCompleteConfirm}
               onCancel={() => setIsConfirmModalVisible(false)}
-              okText="Xóa"
+              okText="Hoàn thành"
               cancelText="Hủy"
               className="custom-modal"
               style={{
@@ -775,7 +623,7 @@ const ShowProcessingDetail = () => {
                   danger
                   className="cancel-button"
                   onClick={() => setIsConfirmModalVisible(false)}
-                  style={{ backgound: "#ff4d4f", color: "#ff4d4f" }}
+                  style={{ background: "#ff4d4f", color: "#fff" }}
                 >
                   Hủy
                 </Button>,
@@ -791,7 +639,8 @@ const ShowProcessingDetail = () => {
                 Bạn có chắc chắn muốn hoàn thành đơn hàng này?
               </p>
             </Modal>
-            {/* Modal xác nhận đã tiến hành xong (đổi từ chờ thanh toán) */}
+            
+            {/* Modal xác nhận chờ thanh toán cho đơn nhỏ */}
             <Modal
               title={
                 <div
@@ -808,9 +657,9 @@ const ShowProcessingDetail = () => {
                   <span style={{ fontWeight: "600" }}>Xác nhận</span>
                 </div>
               }
-              open={isWorkCompleteModalVisible}
-              onOk={handleWorkCompleteConfirm}
-              onCancel={() => setIsWorkCompleteModalVisible(false)}
+              open={isDetailWaitPaymentModalVisible}
+              onOk={handleDetailWaitPaymentConfirm}
+              onCancel={() => setIsDetailWaitPaymentModalVisible(false)}
               okText="Xác nhận"
               cancelText="Hủy"
               className="custom-modal"
@@ -823,7 +672,7 @@ const ShowProcessingDetail = () => {
                 <Button
                   key="ok"
                   type="primary"
-                  onClick={handleWorkCompleteConfirm}
+                  onClick={handleDetailWaitPaymentConfirm}
                   style={{ background: "#fa8c16" }}
                 >
                   Xác nhận
@@ -831,7 +680,7 @@ const ShowProcessingDetail = () => {
                 <Button
                   key="cancel"
                   danger
-                  onClick={() => setIsWorkCompleteModalVisible(false)}
+                  onClick={() => setIsDetailWaitPaymentModalVisible(false)}
                   style={{ background: "#ff4d4f", color: "#fff" }}
                 >
                   Hủy
@@ -845,68 +694,12 @@ const ShowProcessingDetail = () => {
                   marginTop: "20px",
                 }}
               >
-                Bạn có chắc chắn muốn chuyển đơn hàng này sang trạng thái chờ thanh toán?
-              </p>
-            </Modal>
-
-            {/* Modal xác nhận chuyển trạng thái đã thanh toán */}
-            <Modal
-              title={
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "24px",
-                  }}
-                >
-                  <CheckCircleOutlined
-                    style={{ color: "#12c68a", fontSize: "24px" }}
-                  />
-                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
-                </div>
-              }
-              open={isPaidModalVisible}
-              onOk={handlePaidConfirm}
-              onCancel={() => setIsPaidModalVisible(false)}
-              okText="Xác nhận"
-              cancelText="Hủy"
-              className="custom-modal"
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-              wrapClassName="custom-modal-wrap"
-              footer={[
-                <Button
-                  key="ok"
-                  type="primary"
-                  onClick={handlePaidConfirm}
-                  style={{ background: "#12c68a" }}
-                >
-                  Xác nhận
-                </Button>,
-                <Button
-                  key="cancel"
-                  danger
-                  onClick={() => setIsPaidModalVisible(false)}
-                  style={{ background: "#ff4d4f", color: "#fff" }}
-                >
-                  Hủy
-                </Button>,
-              ]}
-            >
-              <p
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  marginTop: "20px",
-                }}
-              >
-                Bạn có chắc chắn xác nhận khách hàng đã thanh toán đơn hàng này?
+                Bạn có chắc chắn muốn chuyển đơn nhỏ này sang trạng thái chờ thanh toán?
               </p>
             </Modal>
           </Card>
+          
+          {/* Component thông báo */}
           {showNotification && (
             <NotificationComponent
               status={showNotification.status}
