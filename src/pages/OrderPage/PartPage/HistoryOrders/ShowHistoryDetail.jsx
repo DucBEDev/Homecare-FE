@@ -108,7 +108,7 @@ const ShowHistoryDetail = () => {
       setAllHelpers(helperData);
 
       let requestType =
-        data.request.requestType === "shortTerm" ? "Ngắn hạn" : "Dài hạn";
+        data.request.requestType === "Ngắn hạn" ? "Ngắn hạn" : "Dài hạn";
       let statusNow = "";
       if (data.request.status === "notDone") {
         statusNow = "Chưa tiến hành";
