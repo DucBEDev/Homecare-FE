@@ -126,16 +126,17 @@ const AddStaff = () => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("phone", values.phoneNumber); // Sửa thành "phone"
-      formData.append("staff_id", values.staff_id); // Sửa thành staff_id
-      formData.append("fullname", values.fullName);
+      formData.append("phone", values.phoneNumber);
+      formData.append("staff_id", values.staff_id);
+      formData.append("fullName", values.fullName);
       formData.append("birthDate", values.birthDate.format("YYYY-MM-DD"));
       formData.append("gender", values.gioiTinh);
       formData.append("birthPlace", values.location.join(", "));
       formData.append("role_id", values.role);
       formData.append("email", values.email);
-      formData.append("salary", values.salary); 
-
+      formData.append("salary", values.salary);
+      formData.append("password", "default123");
+      formData.append("status", "active");
 
       if (avatarFileList.length > 0 && avatarFileList[0].originFileObj) {
         formData.append("avatar", avatarFileList[0].originFileObj);
@@ -151,7 +152,7 @@ const AddStaff = () => {
         }
       );
 
-      if (response.status === 201) { // Sửa thành 201 Created
+      if (response.data.success) {
         setShowNotification({
           status: "success",
           message: "Thành công",
@@ -164,7 +165,7 @@ const AddStaff = () => {
         setShowNotification({
           status: "error",
           message: "Thất bại",
-          description: "Thêm nhân viên thất bại!",
+          description: response.data.msg || "Thêm nhân viên thất bại!",
         });
       }
     } catch (error) {
@@ -209,7 +210,7 @@ const AddStaff = () => {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item
-                  name="fullname"
+                  name="fullName"
                   label="Họ tên"
                   rules={[
                     {
