@@ -137,7 +137,6 @@ const PopupModalDetail = ({
         // Đóng modal sau 1.5s
         setTimeout(() => {
           setShowNotification(null);
-          console.log("closeeeeeeeeeeeeeeeee", showNotification);
           onClose();
         }, 1000);
       }

@@ -87,10 +87,14 @@ const ShowProcessingDetail = () => {
   };
 
   const handleSuccess = () => {
-    // Refresh lại data sau khi giao việc thành công
+    // Force a full data refresh
     fetchData();
-    // Đóng modal
-    // setIsModalVisible(false);
+    
+    // Update UI state as needed
+    setIsModalVisible(false);
+    setIsEditModalVisible(false);
+    setIsDeleteModalVisible(false);
+    setIsFinishModalVisible(false);
   };
 
   // Thêm hàm xử lý cho giao việc dài hạn
@@ -376,6 +380,12 @@ const ShowProcessingDetail = () => {
       key: "nguoiGiupViec",
       width: 160,
     },
+      {
+      title: "Chi Phí NGV",
+      dataIndex: "chiPhiNGV",
+      key: "chiPhiNGV",
+      width: 160,
+    },
     {
       title: "Trạng Thái",
       dataIndex: "trangThai",
@@ -518,8 +528,8 @@ const ShowProcessingDetail = () => {
 
           return {
             key: `schedule_${schedule._id}`,
-            gioBatDau: schedule.startTime || "NaN", // Lấy trực tiếp từ API
-            gioKetThuc: schedule.endTime || "NaN", // Lấy trực tiếp từ API
+            gioBatDau: schedule.startTime || "NaN", 
+            gioKetThuc: schedule.endTime || "NaN", 
             ngayLam: new Date(schedule.workingDate).toLocaleDateString(
               // Sửa thành workingDate
               "vi-VN",
@@ -530,6 +540,7 @@ const ShowProcessingDetail = () => {
                 day: "numeric",
               }
             ),
+            
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
             trangThai: (() => {
               if (schedule.status === "notDone") return "Chưa tiến hành";
@@ -612,6 +623,9 @@ const ShowProcessingDetail = () => {
                 {orderData?.trangThai || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Tổng Chi Phí">
+                {orderData?.tongChiPhi || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lợi nhuận (Hiện tại)">
                 {orderData?.tongChiPhi || "N/A"}
               </Descriptions.Item>
             </Descriptions>

@@ -136,11 +136,15 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
     console.log("ca", editedRecord);
     console.log("cab", record);
     try {
+      // Find the correct helper with matching helperId
+      const selectedHelper = editedRecord.helpers.find(
+        (helper) => editedRecord.currentHelperId === helper.helperId
+      );
 
       const payload = {
         startTime: editedRecord.gioBatDauMoi,
         endTime: editedRecord.gioKetThucMoi,
-        helper_baseFactor: editedRecord.helpers.find((helper) => (editedRecord.currentHelperId === helper.helperId))?.baseFactor,
+        helper_baseFactor: selectedHelper?.baseFactor || 0,
         coefficient_other: editedRecord.coefficient_other,
         coefficient_OT: editedRecord.coefficientOtherList[0].value,
         coefficient_service: editedRecord.coefficient_service,

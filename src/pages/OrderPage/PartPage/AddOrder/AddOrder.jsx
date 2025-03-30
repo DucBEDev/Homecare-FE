@@ -340,16 +340,15 @@ const AddOrder = () => {
         // 3. Các giờ đã qua trong ngày hiện tại
         // 4. Các giờ không thể hoàn thành trước giờ đóng cửa (thêm 2 giờ tối thiểu)
         if (i < openHour || 
-            i > closeHour || 
-            i <= currentHour || 
-            (i + 2 > closeHour)) {
+            i > closeHour + 1 || 
+            i <= currentHour) {
           hours.push(i);
         }
       }
     } else {
       // Đối với các ngày trong tương lai, chỉ vô hiệu hóa giờ ngoài giờ làm việc
       for (let i = 0; i < 24; i++) {
-        if (i < openHour || i > closeHour || (i + 2 > closeHour)) {
+        if (i < openHour || i > closeHour + 1) {
           hours.push(i);
         }
       }
@@ -391,17 +390,15 @@ const AddOrder = () => {
       (Array.isArray(workDate) && workDate[0]?.isSame(currentTime, 'day')) : 
       (workDate?.isSame(currentTime, 'day'));
     
-    if (isToday && start.isBefore(currentTime)) {
-      setTimeErrors("Không thể đặt thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
-      return false;
-    }
-    
-    // Kiểm tra khoảng cách tối thiểu 2 giờ từ thời điểm hiện tại
+    // Kiểm tra khoảng cách 2 tiếng từ thời điểm hiện tại
     if (isToday) {
-    const diffFromNow = start.diff(currentTime, "hour", true);
-    if (diffFromNow < 2) {
-      setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng.");
-      return false;
+      // Tính số giờ từ thời điểm hiện tại đến thời điểm bắt đầu
+      const diffFromNow = start.diff(currentTime, "hour", true);
+      
+      // Nếu thời gian bắt đầu cách thời điểm hiện tại chưa đủ 2 tiếng
+      if (diffFromNow < 2) {
+        setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng.");
+        return false;
       }
     }
     
@@ -418,6 +415,8 @@ const AddOrder = () => {
       return false;
     }
 
+    // Xóa lỗi nếu tất cả điều kiện đều thỏa mãn
+    setTimeErrors("");
     return true;
   };
   //handle set time
