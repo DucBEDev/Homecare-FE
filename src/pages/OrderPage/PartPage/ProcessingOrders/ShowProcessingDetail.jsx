@@ -106,6 +106,7 @@ const ShowProcessingDetail = () => {
       coefficientOtherList: timeSlots[0]?.coefficientOtherList || [],
       coefficient_service: timeSlots[0]?.coefficient_service,
       coefficient_other: timeSlots[0]?.coefficient_other,
+      coefficient_ot: timeSlots[0]?.coefficient_ot,
       scheduleIds: timeSlots.map((slot) => slot.scheduleId),
     };
 
@@ -444,8 +445,9 @@ const ShowProcessingDetail = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
-      console.log("detailresponse", response);
       const { data } = response;
+      console.log("detailresponsedataaaaaaaaaa", data);
+
       const helperData = data.helpers.map((helper) => ({
         id: helper._id,
         fullName: helper.fullName,
@@ -539,6 +541,7 @@ const ShowProcessingDetail = () => {
             currentHelperId: schedule.helper_id,
             coefficient_service: data.request.service.coefficient_service,
             coefficient_other: data.request.service.coefficient_other,
+            coefficient_ot: data.request.service.coefficient_ot,
             isLongTerm: false,
             coefficientOtherList: coefficientOtherList,
             scheduleIds: timeSlots.map((slot) => slot.scheduleId),
@@ -685,6 +688,7 @@ const ShowProcessingDetail = () => {
               orderData={orderData}
               allHelpers={allHelpers}
               onAssign={handleSuccess}
+              timeSlots={timeSlots}
             />
             <PopupModalEdit
               isVisible={isEditModalVisible}

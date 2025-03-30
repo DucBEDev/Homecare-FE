@@ -31,6 +31,12 @@ const AddOrder = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
 
+  // Thêm state để lưu trữ hệ số áp dụng
+  const [appliedCoefficients, setAppliedCoefficients] = useState({
+    overtime: null,
+    weekend: null
+  });
+
   //fetch data from backend for actions
   useEffect(() => {
     const fetchData = async () => {
@@ -95,102 +101,84 @@ const AddOrder = () => {
       startTime,
       endTime,
       workDate,
-      coefficient_other,
       requestType,
     } = formValues;
-  
-    if (!serviceTitle || !startTime || !endTime || !workDate || !coefficient_other) {
+
+    if (!serviceTitle || !startTime || !endTime || !workDate) {
       return 0;
     }
-  
+
     const selectedService = dataFetch.serviceList.find(
       (service) => service.title === serviceTitle
     );
-  
+
     if (!selectedService) {
       return 0;
     }
-  
+
     const basicCost = parseFloat(selectedService.basicPrice);
     const HSDV = parseFloat(selectedService.coefficient);
-    const HSovertime = parseFloat(dataFetch.coefficientOtherList[0].value);
-    const HScuoituan = parseFloat(dataFetch.coefficientOtherList[1].value); 
-  
+    const HSovertime = parseFloat(dataFetch.coefficientOtherList[0]?.value || 1);
+    const HScuoituan = parseFloat(dataFetch.coefficientOtherList[1]?.value || 1);
+
     const start = dayjs(startTime);
     const end = dayjs(endTime);
-  
+    
     const officeStartTime = dayjs(dataFetch.timeList.officeStartTime, "HH:mm");
     const officeEndTime = dayjs(dataFetch.timeList.officeEndTime, "HH:mm");
-  
+
     let totalCost = 0;
-  
+
+    // Hàm tính chi phí cho một ngày cụ thể
+    const calculateDailyCost = (currentDate) => {
+      const dayOfWeek = currentDate.day();
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+      
+      const dailyHours = end.diff(start, "hour", true);
+      
+      // Tính giờ làm việc ngoài giờ (T1) và trong giờ hành chính (T2)
+      let T1 = 0; // Số giờ ngoài giờ hành chính
+      
+      // Trước giờ hành chính
+      if (start.isBefore(officeStartTime)) {
+        T1 += officeStartTime.diff(start, "hour", true);
+      }
+      
+      // Sau giờ hành chính
+      if (end.isAfter(officeEndTime)) {
+        T1 += end.diff(officeEndTime, "hour", true);
+      }
+      
+      // Thời gian trong giờ hành chính
+      const T2 = Math.max(0, dailyHours - T1);
+      
+      // Xác định hệ số áp dụng
+      const weekendCoefficient = isWeekend ? HScuoituan : 1;
+      
+      // Tính chi phí: cost = basicCost * HSDV * [(HSovertime * T1 * weekendCoefficient) + (weekendCoefficient * T2)]
+      const overtimeCost = HSovertime * T1 * weekendCoefficient;
+      const normalCost = weekendCoefficient * T2;
+      
+      return basicCost * HSDV * (overtimeCost + normalCost);
+    };
+
     if (requestType === "long") {
-      // Long-term request (multiple days)
+      // Tính chi phí cho đơn dài hạn (nhiều ngày)
       const startDate = dayjs(workDate[0]);
       const endDate = dayjs(workDate[1]);
       let currentDate = startDate;
-  
+      
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
-        const dayOfWeek = currentDate.day();
-        const dailyHours = (end.diff(start, "hour", true));
-        
-        let T1 = 0; 
-        let T2 = 0; 
-        
-        if (start.isBefore(officeStartTime)) {
-          T1 += (officeStartTime.diff(start, "hour", true));
-        }
-        
-        if (end.isAfter(officeEndTime)) {
-          T1 += (end.diff(officeEndTime, "hour", true));
-        }
-        
-        T2 = Math.max(0, dailyHours - T1);
-        
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        
-        const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
-        
-        // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
-        const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
-        const normalCost = applicableWeekendCoefficient * T2;
-        
-        const dailyCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
-        
-        totalCost += dailyCost;
+        totalCost += calculateDailyCost(currentDate);
         currentDate = currentDate.add(1, "day");
       }
     } else {
-      const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = (end.diff(start, "hour"));
-      
-      let T1 = 0; 
-      let T2 = 0; 
-      
-      if (start.isBefore(officeStartTime)) {
-        T1 += (officeStartTime.diff(start, "hour", true));
-      }
-      
-      if (end.isAfter(officeEndTime)) {
-        T1 += (end.diff(officeEndTime, "hour", true));
-      }
-      
-      T2 = Math.max(0, dailyHours - T1);
-      
-      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-      
-      const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
-      console.log(applicableWeekendCoefficient);
-      
-      // Calculate cost based on your formula:
-      // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
-      const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
-      const normalCost = applicableWeekendCoefficient * T2;
-      
-      totalCost = Math.ceil(basicCost * HSDV * (overtimeCost + normalCost));
+      // Tính chi phí cho đơn ngắn hạn (một ngày)
+      totalCost = calculateDailyCost(dayjs(workDate));
     }
     
-    return Math.ceil(totalCost/1000) * 1000;
+    // Làm tròn lên đến hàng nghìn
+    return (totalCost / 1000) * 1000;
   };
   
   //HANDLE SET COEFFICIENT AUTOMATICALLY
@@ -201,74 +189,23 @@ const AddOrder = () => {
   };
   //check coefficient automatically return value coefficient
   const checkCoefficient = (orderDate, startTime, endTime, timeList) => {
-    const saturday = 6;
-    const sunday = 0;
-  
     if (!orderDate || !startTime || !endTime || !timeList) return "0";
   
-    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
-    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
-  
-    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
-    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
-    const dayStartMinutes = timeToMinutes(timeList.openHour);
-    const dayEndMinutes = timeToMinutes(timeList.closeHour);
-  
-    const coefficientWeekend = dataFetch.coefficientOtherList[1].value;
-    const coefficientOutside = dataFetch.coefficientOtherList[0].value;
-    const coefficientNormal = "1";
-  
-    // Check if we're dealing with a date range (long-term request)
-    if (Array.isArray(orderDate)) {
-      // Get the start and end dates from the array
-      const startDate = orderDate[0];
-      const endDate = orderDate[1];
-      
-      // Check if any day in the range is a weekend
-      let hasWeekend = false;
-      let currentDate = startDate;
-      
-      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
-        const currentDay = currentDate.day();
-        if (currentDay === saturday || currentDay === sunday) {
-          hasWeekend = true;
-          break;
-        }
-        currentDate = currentDate.add(1, 'day');
-      }
-      
-      if (hasWeekend) {
+    const isWeekend = checkIsWeekend(orderDate);
+    const isOutsideOfficeHours = checkIsOutsideOfficeHours(startTime, endTime, timeList);
+    
+    const coefficientWeekend = dataFetch.coefficientOtherList[1]?.value ?? 1;
+    const coefficientOutside = dataFetch.coefficientOtherList[0]?.value ?? 1;
+    
+    if (isWeekend) {
         return coefficientWeekend;
       }
       
-      // If no weekend, check for outside office hours
-      if (
-        (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
-        (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
-      ) {
+    if (isOutsideOfficeHours) {
         return coefficientOutside;
       }
       
-      return coefficientNormal;
-    } else {
-      // Single date (short-term request)
-      const orderDay = orderDate.day();
-      console.log("orderDayyyyyyyyyyyyyyy", orderDay);
-      
-      if (orderDay === saturday || orderDay === sunday) {
-        return coefficientWeekend;
-      }
-      
-      // Check for outside office hours
-      if (
-        (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
-        (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
-      ) {
-        return coefficientOutside; // Outside office hours coefficient
-      }
-      
-      return coefficientNormal; // Default to normal coefficient
-    }
+    return "1"; // Hệ số mặc định
   };
 
   //update coefficient into form
@@ -278,15 +215,36 @@ const AddOrder = () => {
     const endTime = form.getFieldValue("endTime");
   
     if (workDate && startTime && endTime && dataFetch.timeList) {
-      // Handle both single date and date range
-      const newCoefficient = checkCoefficient(
-        workDate, // Pass workDate directly, whether it's a single date or array
+      // Kiểm tra xem đơn hàng có nằm trong ngày nghỉ không
+      const isWeekend = checkIsWeekend(workDate);
+      
+      // Kiểm tra xem đơn hàng có nằm ngoài giờ làm việc không
+      const isOutsideOfficeHours = checkIsOutsideOfficeHours(
         dayjs(startTime),
         dayjs(endTime),
         dataFetch.timeList
       );
-      setCoefficient(newCoefficient);
-      form.setFieldsValue({ coefficient_other: newCoefficient });
+      
+      // Lấy giá trị hệ số
+      const coefficientWeekend = dataFetch.coefficientOtherList[1]?.value ?? 1;
+      const coefficientOutside = dataFetch.coefficientOtherList[0]?.value ?? 1;
+      
+      // Cập nhật state để lưu các hệ số đang áp dụng
+      setAppliedCoefficients({
+        overtime: isOutsideOfficeHours ? coefficientOutside : null,
+        weekend: isWeekend ? coefficientWeekend : null
+      });
+      
+      // Xác định hệ số cao nhất để hiển thị
+      let finalCoefficient = "1"; // Mặc định là 1
+      if (isWeekend) {
+        finalCoefficient = coefficientWeekend.toString();
+      } else if (isOutsideOfficeHours) {
+        finalCoefficient = coefficientOutside.toString();
+      }
+      
+      setCoefficient(finalCoefficient);
+      form.setFieldsValue({ coefficient_other: finalCoefficient });
     }
   };
   //once change date, update coefficient
@@ -522,28 +480,8 @@ const AddOrder = () => {
     updateTotalCost();
   };
 
-  /*fetch location data*/
-  // useEffect(() => {
-  //   if (dataFetch && dataFetch.locations) {
-  //     const formattedLocations = dataFetch.locations.map((province) => ({
-  //       value: province.Name,
-  //       label: province.Name,
-  //       children: province.Districts.map((district) => ({
-  //         value: district.Name,
-  //         label: district.Name,
-  //         children: district.Wards.map((ward) => ({
-  //           value: ward.Name,
-  //           label: ward.Name,
-  //         })),
-  //       })),
-  //     }));
-  //     setLocations(formattedLocations);
-  //   }
-  // }, [dataFetch]);
-
   /*onFinish create order*/
   const onFinish = (values) => {
-    console.log("test value", values);
     const {
       startTime,
       endTime,
@@ -554,18 +492,19 @@ const AddOrder = () => {
       ...otherValues
     } = values;
 
+    // Tìm service được chọn
+    const selectedService = dataFetch.serviceList.find(
+      (service) => service.title === serviceTitle
+    );
+
     // Prepare data for backend
     const dataForBackend = {
       ...otherValues,
       startTime: values.startTime?.format("HH:mm"),
       endTime: values.endTime?.format("HH:mm"),
       requestType: requestType === "short" ? "Ngắn hạn" : "Dài hạn",
-      serviceBasePrice: dataFetch?.serviceList?.find(
-        (item) => item.title === values.serviceTitle
-      )?.basicPrice,
-      coefficient_service: dataFetch?.serviceList?.find(
-        (item) => item.title === values.serviceTitle
-      )?.coefficient,
+      serviceBasePrice: selectedService?.basicPrice,
+      coefficient_service: selectedService?.coefficient,
       startDate:
         requestType === "short"
           ? values.workDate?.format("YYYY-MM-DD")
@@ -577,13 +516,17 @@ const AddOrder = () => {
       province: values.location?.[0],
       district: values.location?.[1],
       ward: values.location?.[2],
-      coefficient_other: values.coefficient_other,
+      
+      // Chỉ gửi các hệ số đang được áp dụng
+      coefficient_ot: appliedCoefficients.overtime || null,
+      coefficient_other: appliedCoefficients.weekend || 1, 
+      
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
     };
 
     // Send data to backend
-    console.log("dttaforbe", dataForBackend);
+    console.log("Data to be sent:", dataForBackend);
     axios
       .post(
         `${process.env.REACT_APP_API_URL}admin/requests/create`,
@@ -602,7 +545,6 @@ const AddOrder = () => {
       })
       .then((data) => {
         console.log("Response from backend:", data);
-        console.log(dataForBackend);
         setShowNotification({
           status: "success",
           message: "Thành công",
@@ -622,6 +564,48 @@ const AddOrder = () => {
           description: "Không thể tạo đơn hàng. Vui lòng thử lại.",
         });
       });
+  };
+
+  // Hàm kiểm tra xem ngày có phải cuối tuần không
+  const checkIsWeekend = (date) => {
+    const saturday = 6;
+    const sunday = 0;
+    
+    if (Array.isArray(date)) {
+      // Trường hợp dài hạn
+      const startDate = date[0];
+      const endDate = date[1];
+      let currentDate = startDate;
+      
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+        const currentDay = currentDate.day();
+        if (currentDay === saturday || currentDay === sunday) {
+          return true;
+        }
+        currentDate = currentDate.add(1, 'day');
+      }
+      return false;
+    } else {
+      // Trường hợp ngắn hạn
+      const orderDay = date.day();
+      return orderDay === saturday || orderDay === sunday;
+    }
+  };
+
+  // Hàm kiểm tra xem thời gian có nằm ngoài giờ làm việc không
+  const checkIsOutsideOfficeHours = (startTime, endTime, timeList) => {
+    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
+    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
+
+    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
+    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
+    const dayStartMinutes = timeToMinutes(timeList.openHour);
+    const dayEndMinutes = timeToMinutes(timeList.closeHour);
+    
+    return (
+      (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
+      (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+    );
   };
 
   return (
@@ -784,17 +768,6 @@ const AddOrder = () => {
                 disabledMinutes={disabledMinutes}
                 hideDisabledOptions={true}
               />
-            </Form.Item>
-          </Col>
-          <Col span={3}>
-            <Form.Item
-              name="coefficient_other"
-              label="Hệ số"
-              rules={[
-                {required: true}
-              ]}
-            >
-              <Input disabled value={coefficient} style={{height: "38px", width: "80%"}}/>
             </Form.Item>
           </Col>
         </Row>

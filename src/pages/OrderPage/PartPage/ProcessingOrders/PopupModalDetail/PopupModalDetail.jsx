@@ -13,8 +13,9 @@ const PopupModalDetail = ({
   record,
   orderData,
   allHelpers,
+  timeSlots,
 }) => {
-  console.log("ccdmm", record);
+  console.log("ccdmm", timeSlots);
   const [selectedHelper, setSelectedHelper] = useState(
     record?.currentHelperId
       ? allHelpers.find((h) => h.id === record.currentHelperId)?.fullName ||
@@ -78,9 +79,9 @@ const PopupModalDetail = ({
           startTime: record.gioBatDau,
           endTime: record.gioKetThuc,
           baseFactor: selectedHelperInfo.baseFactor,
-          coefficient_other: record.coefficient_other,
-          coefficient_OT: record.coefficientOtherList[0].value,
+          coefficient_other: timeSlots[0]?.coefficient_other,
           coefficient_service: record.coefficient_service,
+          coefficient_ot: record.coefficientOtherList[0].value,
         };
 
         console.log("payload", payload);
