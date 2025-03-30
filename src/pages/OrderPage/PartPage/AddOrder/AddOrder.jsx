@@ -169,7 +169,6 @@ const AddOrder = () => {
       let currentDate = startDate;
       
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
-<<<<<<< HEAD
         totalCost += calculateDailyCost(currentDate);
         currentDate = currentDate.add(1, "day");
       }
@@ -180,68 +179,6 @@ const AddOrder = () => {
     
     // Làm tròn lên đến hàng nghìn
     return (totalCost / 1000) * 1000;
-=======
-        const dayOfWeek = currentDate.day();
-        const dailyHours = (end.diff(start, "hour", true));
-        
-        let T1 = 0; 
-        let T2 = 0; 
-        
-        if (start.isBefore(officeStartTime)) {
-          T1 += (officeStartTime.diff(start, "hour", true));
-        }
-        
-        if (end.isAfter(officeEndTime)) {
-          T1 += (end.diff(officeEndTime, "hour", true));
-        }
-        
-        T2 = Math.max(0, dailyHours - T1);
-        
-        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-        
-        const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
-        
-        // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
-        const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
-        const normalCost = applicableWeekendCoefficient * T2;
-        
-        const dailyCost = (basicCost * HSDV * (overtimeCost + normalCost));
-        
-        totalCost += dailyCost;
-        currentDate = currentDate.add(1, "day");
-      }
-    } else {
-      const dayOfWeek = dayjs(workDate).day();
-      const dailyHours = (end.diff(start, "hour"));
-      
-      let T1 = 0; 
-      let T2 = 0; 
-      
-      if (start.isBefore(officeStartTime)) {
-        T1 += (officeStartTime.diff(start, "hour", true));
-      }
-      
-      if (end.isAfter(officeEndTime)) {
-        T1 += (end.diff(officeEndTime, "hour", true));
-      }
-      
-      T2 = Math.max(0, dailyHours - T1);
-      
-      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-      
-      const applicableWeekendCoefficient = isWeekend ? HScuoituan : 1;
-      console.log(applicableWeekendCoefficient);
-      
-      // Calculate cost based on your formula:
-      // cost = basicCost * HSDV * [(HSovertime * T1 * max(Hscuoituan, lễ)(if applicable)) + (max(Hscuoituan, lễ) * T2)]
-      const overtimeCost = HSovertime * T1 * applicableWeekendCoefficient;
-      const normalCost = applicableWeekendCoefficient * T2;
-      
-      totalCost = (basicCost * HSDV * (overtimeCost + normalCost));
-    }
-    
-    return (totalCost/1000) * 1000;
->>>>>>> aa02e56d64da40bee5517c9ede238b2ba857e0eb
   };
   
   //HANDLE SET COEFFICIENT AUTOMATICALLY
