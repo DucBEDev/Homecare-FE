@@ -231,8 +231,8 @@ const AddOrder = () => {
       
       // Cập nhật state để lưu các hệ số đang áp dụng
       setAppliedCoefficients({
-        overtime: isOutsideOfficeHours ? coefficientOutside : null,
-        weekend: isWeekend ? coefficientWeekend : null
+        overtime: isOutsideOfficeHours ? coefficientOutside : 1,
+        weekend: isWeekend ? coefficientWeekend : 1
       });
       
       // Xác định hệ số cao nhất để hiển thị
@@ -517,7 +517,7 @@ const AddOrder = () => {
       ward: values.location?.[2],
       
       // Chỉ gửi các hệ số đang được áp dụng
-      coefficient_ot: appliedCoefficients.overtime || null,
+      coefficient_ot: appliedCoefficients.overtime || 1,
       coefficient_other: appliedCoefficients.weekend || 1, 
       
       serviceTitle: values.serviceTitle,

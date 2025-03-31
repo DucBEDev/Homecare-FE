@@ -15,7 +15,7 @@ const PopupModalDetail = ({
   allHelpers,
   timeSlots,
 }) => {
-  console.log("ccdmm", timeSlots);
+  console.log("ccdmm", allHelpers);
   const [selectedHelper, setSelectedHelper] = useState(
     record?.currentHelperId
       ? allHelpers.find((h) => h.id === record.currentHelperId)?.fullName ||
@@ -87,7 +87,6 @@ const PopupModalDetail = ({
         console.log("payload", payload);
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignFullRequest`,
-
           payload,
           {
             headers: {
@@ -95,6 +94,15 @@ const PopupModalDetail = ({
             },
           }
         );
+        
+        // Lưu danh sách helper cost để truyền ngược lại
+        const helperCostList = response.data.helperCostList;
+        console.log("Helper Cost List:", helperCostList);
+        
+        // Gọi callback để refresh data và truyền lại danh sách cost
+        if (onAssign) {
+          onAssign(helperCostList);
+        }
       } else {
         // Chuẩn bị dữ liệu gửi đi
         const payload = {
@@ -108,10 +116,8 @@ const PopupModalDetail = ({
           coefficient_service: record.coefficient_service,
         };
 
-        console.log("payload", payload);
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignSubRequest/${record.scheduleId}`,
-
           payload,
           {
             headers: {
@@ -119,7 +125,18 @@ const PopupModalDetail = ({
             },
           }
         );
+        
+        // Lấy totalCost từ response
+        const totalCost = response.data.totalCost;
+        console.log("Total Cost:", totalCost);
+        
+        // Gọi callback để refresh data và truyền lại totalCost
+        if (onAssign) {
+          onAssign({[record.scheduleId]: totalCost});
+        }
       }
+
+      console.log("Response:", response);
 
       // Xử lý kết quả thành công
       if (response.status === 200) {
@@ -130,10 +147,6 @@ const PopupModalDetail = ({
           description: "Giao việc thành công!",
         });
 
-        // Gọi callback để refresh data
-        if (onAssign) {
-          onAssign();
-        }
         // Đóng modal sau 1.5s
         setTimeout(() => {
           setShowNotification(null);

@@ -42,6 +42,10 @@ const ShowProcessingDetail = () => {
   const [isDetailWaitPaymentModalVisible, setIsDetailWaitPaymentModalVisible] = useState(false);
   const [selectedDetailForWaitPayment, setSelectedDetailForWaitPayment] = useState(null);
 
+  // Thêm state mới cho modal xác nhận tiến hành của đơn nhỏ
+  const [isDetailProcessingModalVisible, setIsDetailProcessingModalVisible] = useState(false);
+  const [selectedDetailForProcessing, setSelectedDetailForProcessing] = useState(null);
+
   const showModal = (record) => {
     setSelectedRecord({
       ...record,
@@ -82,8 +86,31 @@ const ShowProcessingDetail = () => {
     setIsDetailWaitPaymentModalVisible(true);
   };
 
-  const handleSuccess = () => {
+  // Hàm hiển thị modal xác nhận chuyển trạng thái sang đang tiến hành
+  const showDetailProcessingModal = (record) => {
+    setSelectedDetailForProcessing(record);
+    setIsDetailProcessingModalVisible(true);
+  };
+
+  const handleSuccess = (helperCosts = null) => {
+    if (helperCosts) {
+      // Cập nhật chi phí NGV trong timeSlots
+      const updatedTimeSlots = timeSlots.map(slot => {
+        if (helperCosts[slot.scheduleId]) {
+          return {
+            ...slot,
+            chiPhiNGV: helperCosts[slot.scheduleId].toLocaleString() + " VND"
+          };
+        }
+        return slot;
+      });
+      setTimeSlots(updatedTimeSlots);
+    }
+    
+    // Gọi API để lấy dữ liệu mới
     fetchData();
+    
+    // Đóng các modal
     setIsModalVisible(false);
     setIsEditModalVisible(false);
     setIsDeleteModalVisible(false);
@@ -194,6 +221,46 @@ const ShowProcessingDetail = () => {
     });
   };
 
+  // Hàm xử lý khi xác nhận chuyển sang đang tiến hành cho đơn nhỏ
+  const handleDetailProcessingConfirm = () => {
+    if (!selectedDetailForProcessing) return;
+    
+    axios.patch(
+      `${process.env.REACT_APP_API_URL}admin/requests/updateRequestProcessing/${selectedDetailForProcessing.scheduleId}`
+    )
+    .then(response => {
+      if (response && response.data && response.data.success) {
+        
+        setShowNotification({
+          status: "success",
+          message: "Thành công",
+          description: "Đã chuyển trạng thái sang đang tiến hành!",
+        });
+        
+        fetchData();
+        
+        setTimeout(() => {
+          setIsDetailProcessingModalVisible(false);
+          setShowNotification(null);
+        }, 1500);
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      
+      setShowNotification({
+        status: "error",
+        message: "Thất bại",
+        description: "Không thể chuyển trạng thái. Vui lòng thử lại.",
+      });
+      
+      setTimeout(() => {
+        setIsDetailProcessingModalVisible(false);
+        setShowNotification(null);
+      }, 1500);
+    });
+  };
+
   const columns = [
     {
       title: "Giờ Bắt Đầu",
@@ -272,7 +339,7 @@ const ShowProcessingDetail = () => {
             </>
           )}
           
-          {/* 2. Khi trạng thái "Đã giao việc" (assigned) */}
+          {/* 2. Khi trạng thái "Đã giao việc" (assigned) - THÊM NÚT "TIẾN HÀNH" */}
           {record.trangThai === "Đã giao việc" && (
             <>
               <Button
@@ -290,6 +357,15 @@ const ShowProcessingDetail = () => {
                 onClick={() => showModal(record)}
               >
                 Đổi NGV
+              </Button>
+              
+              <Button
+                type="primary"
+                size="small"
+                style={{ marginRight: 8, background: "#fdc41a" }}
+                onClick={() => showDetailProcessingModal(record)}
+              >
+                Tiến hành
               </Button>
               
               <Button
@@ -336,7 +412,8 @@ const ShowProcessingDetail = () => {
         `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
       const { data } = response;
-
+      console.log("detailllllllllllllllllllllll", data);
+      
       const helperData = data.helpers.map((helper) => ({
         id: helper._id,
         fullName: helper.fullName,
@@ -373,6 +450,7 @@ const ShowProcessingDetail = () => {
           "vi-VN"
         ),
         trangThai: statusNow,
+        chiPhiNGV: `${data.request.profit.toLocaleString()} VND`,
         tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
       });
 
@@ -410,6 +488,9 @@ const ShowProcessingDetail = () => {
               }
             ),
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
+            chiPhiNGV: schedule.helper_cost ? 
+              schedule.helper_cost.toLocaleString() + " VND" : 
+              "0 VND",
             trangThai: (() => {
               if (schedule.status === "notDone") return "Chưa tiến hành";
               else if (schedule.status === "assigned") return "Đã giao việc";
@@ -493,7 +574,7 @@ const ShowProcessingDetail = () => {
                 {orderData?.tongChiPhi || "N/A"}
               </Descriptions.Item>
               <Descriptions.Item label="Lợi nhuận (Hiện tại)">
-                {orderData?.tongChiPhi || "N/A"}
+                {orderData?.chiPhiNGV || "N/A"}
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -695,6 +776,64 @@ const ShowProcessingDetail = () => {
                 }}
               >
                 Bạn có chắc chắn muốn chuyển đơn nhỏ này sang trạng thái chờ thanh toán?
+              </p>
+            </Modal>
+            
+            {/* Modal xác nhận tiến hành cho đơn nhỏ */}
+            <Modal
+              title={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "24px",
+                  }}
+                >
+                  <CheckCircleOutlined
+                    style={{ color: "#fdc41a", fontSize: "24px" }}
+                  />
+                  <span style={{ fontWeight: "600" }}>Xác nhận</span>
+                </div>
+              }
+              open={isDetailProcessingModalVisible}
+              onOk={handleDetailProcessingConfirm}
+              onCancel={() => setIsDetailProcessingModalVisible(false)}
+              okText="Xác nhận"
+              cancelText="Hủy"
+              className="custom-modal"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+              wrapClassName="custom-modal-wrap"
+              footer={[
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={handleDetailProcessingConfirm}
+                  style={{ background: "#fdc41a" }}
+                >
+                  Xác nhận
+                </Button>,
+                <Button
+                  key="cancel"
+                  danger
+                  onClick={() => setIsDetailProcessingModalVisible(false)}
+                  style={{ background: "#ff4d4f", color: "#fff" }}
+                >
+                  Hủy
+                </Button>,
+              ]}
+            >
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  marginTop: "20px",
+                }}
+              >
+                Bạn có chắc chắn muốn chuyển đơn nhỏ này sang trạng thái đang tiến hành?
               </p>
             </Modal>
           </Card>
