@@ -15,7 +15,6 @@ const PopupModalDetail = ({
   allHelpers,
   timeSlots,
 }) => {
-  console.log("ccdmm", allHelpers);
   const [selectedHelper, setSelectedHelper] = useState(
     record?.currentHelperId
       ? allHelpers.find((h) => h.id === record.currentHelperId)?.fullName ||
@@ -47,7 +46,6 @@ const PopupModalDetail = ({
         (helper) => helper.fullName === selectedHelper
       );
       setSelectedHelperInfo(helperInfo);
-      console.log("helperinfo ccc", helperInfo);
     } else {
       setSelectedHelperInfo(null);
     }
@@ -72,7 +70,7 @@ const PopupModalDetail = ({
       // Gọi API
       let response = "";
       if (record.isLongTerm) {
-        // Chuẩn bị dữ liệu gửi đi
+        // Chuẩn bị dữ liệu gửi đi cho đơn dài hạn
         const payload = {
           scheduleIds: record.scheduleIds,
           helper_id: selectedHelperInfo?.id, // ID của helper được chọn
@@ -84,7 +82,7 @@ const PopupModalDetail = ({
           coefficient_ot: record.coefficientOtherList[0].value,
         };
 
-        console.log("payload", payload);
+        console.log("payloadddddddddddddđik", payload);
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignFullRequest`,
           payload,
@@ -97,14 +95,17 @@ const PopupModalDetail = ({
         
         // Lưu danh sách helper cost để truyền ngược lại
         const helperCostList = response.data.helperCostList;
-        console.log("Helper Cost List:", helperCostList);
         
         // Gọi callback để refresh data và truyền lại danh sách cost
         if (onAssign) {
           onAssign(helperCostList);
         }
       } else {
-        // Chuẩn bị dữ liệu gửi đi
+        // Lấy chi phí hiện tại của người giúp việc A (nếu có)
+        const currentHelperCost = record.chiPhiNGV ? 
+          parseInt(record.chiPhiNGV.replace(/[^0-9]/g, '')) : 0;
+        
+        // Chuẩn bị dữ liệu gửi đi cho đơn nhỏ, thêm helperCost
         const payload = {
           requestDetailId: record.scheduleId,
           helper_id: selectedHelperInfo?.id, // ID của helper được chọn
@@ -114,7 +115,10 @@ const PopupModalDetail = ({
           coefficient_other: record.coefficient_other,
           coefficient_ot: record.coefficientOtherList[0].value,
           coefficient_service: record.coefficient_service,
+          helperCost: currentHelperCost  // Thêm chi phí của helper hiện tại
         };
+
+        console.log("payloaddddddddddddđik:", payload);
 
         response = await axios.patch(
           `${process.env.REACT_APP_API_URL}admin/requests/detail/assignSubRequest/${record.scheduleId}`,
@@ -126,17 +130,14 @@ const PopupModalDetail = ({
           }
         );
         
-        // Lấy totalCost từ response
+        // Lấy totalCost mới từ response
         const totalCost = response.data.totalCost;
-        console.log("Total Cost:", totalCost);
         
         // Gọi callback để refresh data và truyền lại totalCost
         if (onAssign) {
           onAssign({[record.scheduleId]: totalCost});
         }
       }
-
-      console.log("Response:", response);
 
       // Xử lý kết quả thành công
       if (response.status === 200) {
@@ -147,7 +148,7 @@ const PopupModalDetail = ({
           description: "Giao việc thành công!",
         });
 
-        // Đóng modal sau 1.5s
+        // Đóng modal sau 1s
         setTimeout(() => {
           setShowNotification(null);
           onClose();
@@ -166,11 +167,6 @@ const PopupModalDetail = ({
       }, 1000);
     }
   };
-
-// Thêm useEffect để theo dõi thay đổi của showNotification
-useEffect(() => {
-  console.log("showNotification changed:", showNotification);
-}, [showNotification]);
 
   const isButtonDisabled = () => {
     // Nếu đã chọn helper mới (selectedHelper không null và khác "Chưa có")

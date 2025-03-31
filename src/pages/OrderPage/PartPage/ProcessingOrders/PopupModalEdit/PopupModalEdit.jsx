@@ -89,7 +89,6 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
           `${process.env.REACT_APP_API_URL}admin/requests/create`
         );
         setTimeList(response.data.timeList);
-        console.log("timeList", timeList);
       } catch (error) {
         console.error("Error fetching time data:", error);
       }
@@ -133,8 +132,6 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   if (!editedRecord) return null;
 
   const handleSave = async (editedRecord) => {
-    console.log("ca", editedRecord);
-    console.log("cab", record);
     try {
       // Find the correct helper with matching helperId
       const selectedHelper = editedRecord.helpers.find(

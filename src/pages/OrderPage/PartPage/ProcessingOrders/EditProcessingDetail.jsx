@@ -40,7 +40,6 @@ const EditProcessingOrder = () => {
           `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`
         );
         const orderData = response.data;
-        console.log("Order data:", orderData);
 
         // Set giá trị cho các trường trong form
         form.setFieldsValue({
@@ -504,8 +503,6 @@ const EditProcessingOrder = () => {
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
     };
-
-    console.log("data", dataForBackend);
 
     try {
       const response = await axios.patch(
