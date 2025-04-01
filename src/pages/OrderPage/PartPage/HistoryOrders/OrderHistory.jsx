@@ -11,7 +11,7 @@ const OrderHistory = () => {
   const [data, setData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState(data);
-  const pageSize = 5;
+  const pageSize = 6;
   const navigate = useNavigate();
 
   const columns = [
@@ -31,32 +31,29 @@ const OrderHistory = () => {
       render: (text) => (
         <span className="column-with-icon request-icon">{text}</span>
       ),
-      filters: [
-        { text: "Ngắn hạn", value: "Ngắn hạn" },
-        { text: "Dài hạn", value: "Dài hạn" },
-      ],
-      onFilter: (value, record) => record.requestType.indexOf(value) === 0,
+      sorter: (a, b) => a.requestType.localeCompare(b.requestType),
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
       key: "address",
+      ellipsis: true,
       render: (text) => (
         <span className="column-with-icon request-icon">{text}</span>
       ),
-      filters: [
-        { text: "Quận 1", value: "Quận 1" },
-        // ... keep other district options ...
-      ],
-      onFilter: (value, record) => record.address.indexOf(value) === 0,
+      sorter: (a, b) => a.address.localeCompare(b.address),
+
     },
     {
       title: "Loại Dịch Vụ",
       dataIndex: "serviceType",
       key: "serviceType",
+      ellipsis: true,
       render: (text) => (
         <span className="column-with-icon service-icon">{text}</span>
       ),
+      sorter: (a, b) => a.serviceType.localeCompare(b.serviceType),
+
     },
     {
       title: "Ngày Đặt Yêu Cầu",
@@ -74,6 +71,8 @@ const OrderHistory = () => {
       render: (text) => (
         <span className="column-with-icon cost-icon">{text}</span>
       ),
+      sorter: (a, b) => a.status.localeCompare(b.status),
+
     },
     {
       title: "Lựa Chọn",

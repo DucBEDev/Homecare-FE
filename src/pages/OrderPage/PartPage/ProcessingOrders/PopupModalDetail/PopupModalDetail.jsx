@@ -103,7 +103,7 @@ const PopupModalDetail = ({
       } else {
         // Lấy chi phí hiện tại của người giúp việc A (nếu có)
         const currentHelperCost = record.chiPhiNGV ? 
-          parseInt(record.chiPhiNGV.replace(/[^0-9]/g, '')) : 0;
+          parseInt(record.chiPhiNGV) : 0;
         
         // Chuẩn bị dữ liệu gửi đi cho đơn nhỏ, thêm helperCost
         const payload = {
@@ -115,7 +115,7 @@ const PopupModalDetail = ({
           coefficient_other: record.coefficient_other,
           coefficient_ot: record.coefficientOtherList[0].value,
           coefficient_service: record.coefficient_service,
-          helperCost: currentHelperCost  // Thêm chi phí của helper hiện tại
+          helperCost: currentHelperCost 
         };
 
         console.log("payloaddddddddddddđik:", payload);

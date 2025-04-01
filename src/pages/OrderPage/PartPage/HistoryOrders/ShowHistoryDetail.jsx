@@ -62,6 +62,12 @@ const ShowHistoryDetail = () => {
       width: 160,
     },
     {
+      title: "Chi Phí NGV",
+      dataIndex: "chiPhiNGV",
+      key: "chiPhiNGV",
+      width: 160,
+    },
+    {
       title: "Trạng Thái",
       dataIndex: "trangThai",
       key: "trangThai",
@@ -94,7 +100,6 @@ const ShowHistoryDetail = () => {
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/requests/detail/${id}`
       );
-      console.log("cafas", id)
       console.log("re1", response);
       const { data } = response;
       const helperData = data.helpers.map((helper) => ({
@@ -133,6 +138,7 @@ const ShowHistoryDetail = () => {
         ),
         trangThai: statusNow,
         tongChiPhi: `${data.request.totalCost.toLocaleString()} VND`,
+        chiPhiNGV: `${data.request.profit.toLocaleString()} VND`,
       });
 
       setTimeSlots(
@@ -172,6 +178,7 @@ const ShowHistoryDetail = () => {
               }
             ),
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
+            chiPhiNGV: schedule.helper_cost ? schedule.helper_cost.toLocaleString() + " VND" : "0 VND",
             trangThai: (() => {
               if (schedule.status === "notDone") return "Chưa tiến hành";
               else if (schedule.status === "assigned") return "Đã giao việc";
@@ -217,7 +224,8 @@ const ShowHistoryDetail = () => {
           <Card
             style={{
               position: "relative",
-              height: "calc(100vh - 460px)",
+              height: "calc(32vh)",
+              minHeight: "300px",
               display: "flex",
               flexDirection: "column",
             }}
@@ -251,6 +259,9 @@ const ShowHistoryDetail = () => {
               </Descriptions.Item>
               <Descriptions.Item label="Tổng Chi Phí">
                 {orderData?.tongChiPhi || "N/A"}
+              </Descriptions.Item>
+              <Descriptions.Item label="Lợi nhuận (Hiện tại)">
+                {orderData?.chiPhiNGV || "N/A"}
               </Descriptions.Item>
             </Descriptions>
           </Card>
