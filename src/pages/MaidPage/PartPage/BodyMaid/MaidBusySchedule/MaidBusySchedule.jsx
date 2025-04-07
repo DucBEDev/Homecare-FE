@@ -10,6 +10,7 @@ import {
   Calendar,
   Modal,
   List,
+  Space,
 } from "antd";
 import {
   UserOutlined,
@@ -17,6 +18,8 @@ import {
   CalendarOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
+  UpOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
@@ -32,7 +35,10 @@ const MaidBusySchedule = () => {
   const [timeOffs, setTimeOffs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [dateDetails, setDateDetails] = useState({ workingDateList: [], busyDateList: [] });
+  const [dateDetails, setDateDetails] = useState({
+    workingDateList: [],
+    busyDateList: [],
+  });
   const [modalVisible, setModalVisible] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
@@ -44,7 +50,7 @@ const MaidBusySchedule = () => {
         `${process.env.REACT_APP_API_URL}admin/timeOffs/${helperId}`
       );
       console.log("Schedule GET", response.data);
-      
+
       setHelper(response.data.helperInfo);
       setTimeOffs(response.data.timeOffs);
     } catch (error) {
@@ -64,12 +70,12 @@ const MaidBusySchedule = () => {
   const fetchDateDetails = async (date) => {
     try {
       setModalLoading(true);
-      const formattedDate = date.format('YYYY-MM-DD');
+      const formattedDate = date.format("YYYY-MM-DD");
       const response = await axios.get(
         `${process.env.REACT_APP_API_URL}admin/timeOffs/detailSchedule/${helperId}/${formattedDate}`
       );
       console.log("Sechdule", response.data);
-      
+
       setDateDetails(response.data);
     } catch (error) {
       console.error("Error fetching date details:", error);
@@ -80,32 +86,34 @@ const MaidBusySchedule = () => {
 
   // Get data for calendar cell rendering
   const getTimeOffData = (value) => {
-    const formattedDate = value.format('YYYY-MM-DD');
-    return timeOffs.filter(timeOff => 
-      timeOff.dateOff === formattedDate
-    );
+    const formattedDate = value.format("YYYY-MM-DD");
+    return timeOffs.filter((timeOff) => timeOff.dateOff === formattedDate);
   };
 
   // Calendar cell rendering
   const dateCellRender = (value) => {
     const listData = getTimeOffData(value);
+    if (listData.length === 0) return null;
+
+    // Get the status of the first timeOff for this date
+    const status = listData[0].status;
     
-    // Only render badge dots, no text content
+    // Map status to background colors (using lighter shades for better visibility)
+    let backgroundColor = "transparent";
+    if (status === "approved") backgroundColor = "#ffccc7"; // Light red
+    else if (status === "done") backgroundColor = "#d9f7be"; // Light green
+    
     return (
-      <ul className="events">
-        {listData.map((item, index) => {
-          // Map status to badge colors
-          let badgeStatus = "default";
-          if (item.status === "approved") badgeStatus = "error";
-          else if (item.status === "done") badgeStatus = "success";
-          
-          return (
-            <li key={index}>
-              <Badge status={badgeStatus} />
-            </li>
-          );
-        })}
-      </ul>
+      <div style={{ 
+        height: '100%',
+        width: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        backgroundColor,
+        opacity: 0.7,
+        zIndex: 0
+      }} />
     );
   };
 
@@ -121,7 +129,47 @@ const MaidBusySchedule = () => {
     if (minutes === undefined || minutes === null) return "00:00";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${mins
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Legend component to explain colors
+  const CalendarLegend = () => {
+    const [isExpanded, setIsExpanded] = useState(false);
+  
+    const toggleExpand = () => {
+      setIsExpanded(!isExpanded);
+    };
+  
+    return (
+      <div style={{ marginTop: "10px", padding: "10px" }}>
+        <div 
+          onClick={toggleExpand}
+          style={{ 
+            cursor: 'pointer',
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+         <Title level={5} style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+          Chú thích
+          <span style={{ marginLeft: '6px', fontSize: '20px' }}>
+            {isExpanded ? <UpOutlined /> : <DownOutlined />}
+          </span>
+        </Title>
+        </div>
+        
+        {isExpanded && (
+          <Space direction="vertical" style={{ marginTop: 8 }}>
+            <Badge status="error" text="Đang bận" />
+            <Badge status="success" text="Đã hoàn thành lịch bận" />
+            <Badge color="blue" status="click" text="Đang làm việc" />
+          </Space>
+        )}
+      </div>
+    );
   };
 
   // Render modal content
@@ -168,7 +216,7 @@ const MaidBusySchedule = () => {
                 // Use the numeric startTime and endTime directly
                 const startTime = formatTimeFromMinutes(item.startTime);
                 const endTime = formatTimeFromMinutes(item.endTime);
-                
+
                 return (
                   <List.Item>
                     <Badge status="error" text={`${startTime} - ${endTime}`} />
@@ -213,6 +261,11 @@ const MaidBusySchedule = () => {
           colorPrimary: "#1677ff",
           borderRadius: 8,
         },
+        components: {
+          Calendar: {
+            fullBg: "transparent", // Make sure calendar background is transparent
+          },
+        },
       }}
     >
       <div className="maid-schedule-container">
@@ -225,8 +278,11 @@ const MaidBusySchedule = () => {
           </div>
         </div>
 
-        <div className="content-wrapper" style={{ display: 'flex', gap: '20px', padding: '20px' }}>
-          <Card className="helper-info-card" style={{ flex: '3' }}>
+        <div
+          className="content-wrapper"
+          style={{ display: "flex", gap: "20px", padding: "20px" }}
+        >
+          <Card className="helper-info-card" style={{ flex: "3" }}>
             <div className="helper-avatar-section">
               <Avatar
                 size={100}
@@ -280,20 +336,29 @@ const MaidBusySchedule = () => {
                 <div className="detail-value">{helperInfo.district}</div>
               </div>
             </div>
-          </Card>
+            <CalendarLegend />
 
-          <div className="calendar-section" style={{ flex: '7' }}>
+          </Card>
+          
+
+          <div className="calendar-section" style={{ flex: "7" }}>
             <Card>
-              <Calendar 
-                dateCellRender={dateCellRender} 
+              <Calendar
+                dateCellRender={dateCellRender}
                 onSelect={onSelect}
+                mode="month"
+                fullscreen={true}
               />
             </Card>
           </div>
         </div>
 
         <Modal
-          title={selectedDate ? `Lịch trình ngày ${selectedDate.format('DD/MM/YYYY')}` : 'Lịch trình'}
+          title={
+            selectedDate
+              ? `Lịch trình ngày ${selectedDate.format("DD/MM/YYYY")}`
+              : "Lịch trình"
+          }
           open={modalVisible}
           onCancel={() => setModalVisible(false)}
           footer={null}
