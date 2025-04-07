@@ -1,21 +1,4 @@
 /* MaidBusySchedule.css */
-
-/* Variables for easy theming */
-:root {
-  --primary-color: #11C973; /* Màu xanh lá chính */
-  --primary-light: #e6fff2; /* Màu sáng hơn dựa trên #11C973 */
-  --primary-dark: #0a9655; /* Màu tối hơn dựa trên #11C973 */
-  --success-color: #52c41a;
-  --error-color: #f5222d;
-  --text-primary: #1a1f36;
-  --text-secondary: #637381;
-  --bg-light: #f7f9fc;
-  --border-color: #eaedf3;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --transition-base: all 0.3s ease;
-}
-  
   /* General Styles */
   .maid-schedule-container {
     padding: 0 24px;
@@ -155,6 +138,11 @@
     color: #637381;
     font-weight: 500;
     margin-bottom: 0;
+  }
+
+  .detail-label span {
+    font-size: 12px;
+    font-weight: 600;
   }
   
   .detail-icon {
@@ -485,6 +473,13 @@
     bottom: -12px;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .ant-picker-content thead tr th {
+    color: #11C973 !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    
   }
   
   /* Responsive adjustments */
