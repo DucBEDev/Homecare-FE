@@ -2,23 +2,23 @@
 
 /* Variables for easy theming */
 :root {
-    --primary-color: #1677ff;
-    --primary-light: #e6f7ff;
-    --primary-dark: #0958d9;
-    --success-color: #52c41a;
-    --error-color: #f5222d;
-    --text-primary: #1a1f36;
-    --text-secondary: #637381;
-    --bg-light: #f7f9fc;
-    --border-color: #eaedf3;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-    --transition-base: all 0.3s ease;
-  }
+  --primary-color: #11C973; /* Màu xanh lá chính */
+  --primary-light: #e6fff2; /* Màu sáng hơn dựa trên #11C973 */
+  --primary-dark: #0a9655; /* Màu tối hơn dựa trên #11C973 */
+  --success-color: #52c41a;
+  --error-color: #f5222d;
+  --text-primary: #1a1f36;
+  --text-secondary: #637381;
+  --bg-light: #f7f9fc;
+  --border-color: #eaedf3;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --transition-base: all 0.3s ease;
+}
   
   /* General Styles */
   .maid-schedule-container {
-    padding: 24px;
+    padding: 0 24px;
     background-color: #f5f7fa;
   }
   
@@ -35,7 +35,7 @@
     left: 0;
     width: 60px;
     height: 3px;
-    background: var(--primary-color);
+    background: #11C973;
     border-radius: 3px;
   }
   
@@ -43,7 +43,7 @@
   .header-icon {
     margin-right: 12px;
     font-size: 28px;
-    color: var(--primary-color);
+    color: #11C973;
   }
   
   /* Card Styles - Improved */
@@ -52,7 +52,7 @@
     border-radius: 12px;
     box-shadow: var(--shadow-sm);
     border: none;
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
     overflow: hidden;
     background: #fff;
     height: 100%;
@@ -60,14 +60,14 @@
   
   .helper-info-card:hover,
   .schedule-summary-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);;
     transform: translateY(-4px);
   }
   
   .helper-info-card .ant-card-head,
   .schedule-summary-card .ant-card-head {
-    background: linear-gradient(to right, var(--primary-light), #fff);
-    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(to right, #e6fff2, #fff);
+    border-bottom: 1px solid #eaedf3;
     padding: 16px 20px;
   }
   
@@ -81,13 +81,13 @@
     align-items: center;
     font-size: 16px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #1a1f36;
   }
   
   .title-icon {
     margin-right: 10px;
     font-size: 20px;
-    color: var(--primary-color);
+    color: #11C973;
   }
   
   /* Helper Avatar Section - Revamped */
@@ -97,7 +97,7 @@
     align-items: center;
     margin-bottom: 24px;
     padding: 20px;
-    background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255,255,255,0.8) 100%);
+    background: linear-gradient(135deg, #e6fff2 0%, rgba(255,255,255,0.8) 100%);
     border-radius: 10px;
     box-shadow: var(--shadow-sm);
   }
@@ -105,7 +105,7 @@
   .helper-avatar {
     border: 5px solid #fff;
     margin-bottom: 16px;
-    background-color: var(--primary-color);
+    background-color: #11C973;
     box-shadow: 0 5px 15px rgba(22, 119, 255, 0.2);
     transition: transform 0.3s ease;
   }
@@ -120,13 +120,13 @@
   
   .helper-name-section h4 {
     margin-bottom: 5px;
-    color: var(--text-primary);
+    color: #1a1f36;
     font-weight: 600;
     font-size: 20px;
   }
   
   .helper-name-section .ant-typography-secondary {
-    color: var(--text-secondary);
+    color: #637381;
   }
   
   /* Helper Details - Improved */
@@ -139,12 +139,12 @@
     margin-bottom: 16px;
     border-radius: 8px;
     padding: 10px;
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
     background-color: rgba(247, 249, 252, 0.4);
   }
   
   .detail-item:hover {
-    background-color: var(--bg-light);
+    background-color: #f7f9fc;
     transform: translateX(5px);
   }
   
@@ -152,14 +152,14 @@
     display: flex;
     align-items: center;
     width: 40%;
-    color: var(--text-secondary);
+    color: #637381;
     font-weight: 500;
     margin-bottom: 0;
   }
   
   .detail-icon {
     margin-right: 10px;
-    color: var(--primary-color);
+    color: #11C973;
     font-size: 16px;
   }
   
@@ -168,9 +168,9 @@
     background-color: white;
     padding: 8px 12px;
     border-radius: 6px;
-    border-left: 3px solid var(--primary-color);
+    border-left: 3px solid #11C973;
     font-weight: 500;
-    color: var(--text-primary);
+    color: #1a1f36;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   }
   
@@ -189,7 +189,7 @@
     height: 44px;
     font-weight: 600;
     border-radius: 8px;
-    background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(to right, #11C973, #0a9655);
     border: none;
     box-shadow: 0 4px 10px rgba(22, 119, 255, 0.25);
     transition: all 0.3s ease;
@@ -217,24 +217,24 @@
     border-radius: 10px;
     background: white;
     box-shadow: var(--shadow-sm);
-    transition: var(--transition-base);
-    border-bottom: 3px solid var(--primary-color);
+    transition: all 0.3s ease;
+    border-bottom: 3px solid #11C973;
   }
   
   .summary-stat:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);;
   }
   
   .stat-number {
     font-size: 28px;
     font-weight: 700;
-    color: var(--primary-color);
+    color: #11C973;
     margin-bottom: 5px;
   }
   
   .stat-label {
-    color: var(--text-secondary);
+    color: #637381;
     font-size: 13px;
     text-align: center;
   }
@@ -255,18 +255,18 @@
     background-color: white;
     border-radius: 20px;
     box-shadow: var(--shadow-sm);
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
   }
   
   .legend-item:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);;
   }
   
   .legend-item span {
     margin-left: 8px;
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #637381;
   }
   
   /* Keep original calendar styles */
@@ -330,7 +330,7 @@
   .modal-title-icon {
     margin-right: 10px;
     font-size: 20px;
-    color: var(--primary-color);
+    color: #11C973;
   }
   
   .schedule-detail-modal .ant-modal-content,
@@ -342,9 +342,9 @@
   
   .schedule-detail-modal .ant-modal-header,
   .create-time-off-modal .ant-modal-header {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #eaedf3;
     padding: 16px 24px;
-    background: linear-gradient(to right, var(--primary-light), #fff);
+    background: linear-gradient(to right, #e6fff2, #fff);
   }
   
   .schedule-detail-modal .ant-modal-body {
@@ -355,12 +355,12 @@
     border-radius: 8px;
     margin-bottom: 16px;
     box-shadow: var(--shadow-sm);
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
     border: none;
   }
   
   .schedule-section-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);;
   }
   
   .section-title {
@@ -391,23 +391,23 @@
     margin-bottom: 12px;
     padding: 12px;
     border-radius: 8px;
-    transition: var(--transition-base);
+    transition: all 0.3s ease;
     box-shadow: var(--shadow-sm);
   }
   
   .schedule-item:hover {
     transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);;
   }
   
   .work-item {
-    background: linear-gradient(to right, var(--primary-light), white);
-    border-left: 4px solid var(--primary-color);
+    background: linear-gradient(to right, #e6fff2, white);
+    border-left: 4px solid #11C973;
   }
   
   .busy-item {
     background: linear-gradient(to right, #fff2f0, white);
-    border-left: 4px solid var(--error-color);
+    border-left: 4px solid #f5222d;
   }
   
   .schedule-badge {
@@ -446,13 +446,13 @@
   .create-time-off-modal .ant-select-selector {
     height: 40px;
     border-radius: 6px;
-    border: 1px solid var(--border-color);
-    transition: var(--transition-base);
+    border: 1px solid #eaedf3;
+    transition: all 0.3s ease;
   }
   
   .create-time-off-modal .ant-input:hover,
   .create-time-off-modal .ant-select-selector:hover {
-    border-color: var(--primary-color);
+    border-color: #11C973;
   }
   
   .create-time-off-modal .ant-textarea {
@@ -479,7 +479,7 @@
   .helper-calendar .ant-picker-cell-today .ant-picker-calendar-date-value::after {
     content: '•';
     position: absolute;
-    color: var(--primary-color);
+    color: #11C973;
     font-size: 18px;
     line-height: 0;
     bottom: -12px;

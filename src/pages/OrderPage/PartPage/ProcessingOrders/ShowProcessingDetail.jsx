@@ -92,7 +92,7 @@ const ShowProcessingDetail = () => {
     setIsDetailProcessingModalVisible(true);
   };
 
-  const handleSuccess = (helperCosts = null) => {
+  const handleSuccess = (helperCosts = null, detailCosts = null) => {
     if (helperCosts) {
       // Cập nhật chi phí NGV trong timeSlots
       const updatedTimeSlots = timeSlots.map(slot => {
@@ -100,6 +100,20 @@ const ShowProcessingDetail = () => {
           return {
             ...slot,
             chiPhiNGV: helperCosts[slot.scheduleId].toLocaleString() + " VND"
+          };
+        }
+        return slot;
+      });
+      setTimeSlots(updatedTimeSlots);
+    }
+
+    if (detailCosts) {
+      // Cập nhật detailCost trong timeSlots
+      const updatedTimeSlots = timeSlots.map(slot => {
+        if (detailCosts[slot.scheduleId]) {
+          return {
+            ...slot,
+            detailCost: detailCosts[slot.scheduleId]
           };
         }
         return slot;

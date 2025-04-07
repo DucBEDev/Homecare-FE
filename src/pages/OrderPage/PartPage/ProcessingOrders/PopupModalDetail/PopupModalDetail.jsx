@@ -93,12 +93,13 @@ const PopupModalDetail = ({
           }
         );
         
-        // Lưu danh sách helper cost để truyền ngược lại
+        // Lưu danh sách helper cost và detailCost để truyền ngược lại
         const helperCostList = response.data.helperCostList;
+        const detailCostList = response.data.detailCostList; // Array of {scheduleId, detailCost}
         
         // Gọi callback để refresh data và truyền lại danh sách cost
         if (onAssign) {
-          onAssign(helperCostList);
+          onAssign(helperCostList, detailCostList);
         }
       } else {
         // Lấy chi phí hiện tại của người giúp việc A (nếu có)
@@ -130,12 +131,13 @@ const PopupModalDetail = ({
           }
         );
         
-        // Lấy totalCost mới từ response
+        // Lấy totalCost và detailCost mới từ response
         const totalCost = response.data.totalCost;
+        const detailCost = response.data.detailCost; // Single detailCost object
         
-        // Gọi callback để refresh data và truyền lại totalCost
+        // Gọi callback để refresh data và truyền lại totalCost và detailCost
         if (onAssign) {
-          onAssign({[record.scheduleId]: totalCost});
+          onAssign({[record.scheduleId]: totalCost}, {[record.scheduleId]: detailCost});
         }
       }
 
