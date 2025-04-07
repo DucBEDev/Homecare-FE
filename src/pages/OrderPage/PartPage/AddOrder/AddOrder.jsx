@@ -30,7 +30,6 @@ const AddOrder = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
-  const [detailCost, setDetailCost] = useState([]); // State to store detailed cost
 
   // Thêm state để lưu trữ hệ số áp dụng
   const [appliedCoefficients, setAppliedCoefficients] = useState({
@@ -91,9 +90,8 @@ const AddOrder = () => {
   //TOTAL COST
   //update cost into table
   const updateTotalCost = () => {
-    const { newTotalCost, newDetailCost } = calculateTotalCost();
+    const newTotalCost = calculateTotalCost();
     setTotalCost(newTotalCost);
-    setDetailCost(newDetailCost);
   };
   //calculate total cost
   const calculateTotalCost = () => {
@@ -107,7 +105,7 @@ const AddOrder = () => {
     } = formValues;
 
     if (!serviceTitle || !startTime || !endTime || !workDate) {
-      return { newTotalCost: 0, newDetailCost: [] };
+      return 0;
     }
 
     const selectedService = dataFetch.serviceList.find(
@@ -115,7 +113,7 @@ const AddOrder = () => {
     );
 
     if (!selectedService) {
-      return { newTotalCost: 0, newDetailCost: [] };
+      return 0;
     }
 
     const basicCost = parseFloat(selectedService.basicPrice);
@@ -130,7 +128,6 @@ const AddOrder = () => {
     const officeEndTime = dayjs(dataFetch.timeList.officeEndTime, "HH:mm");
 
     let totalCost = 0;
-    let detailCostArray = [];
 
     // Hàm tính chi phí cho một ngày cụ thể
     const calculateDailyCost = (currentDate) => {
@@ -161,27 +158,8 @@ const AddOrder = () => {
       // Tính chi phí: cost = basicCost * HSDV * [(HSovertime * T1 * weekendCoefficient) + (weekendCoefficient * T2)]
       const overtimeCost = HSovertime * T1 * weekendCoefficient;
       const normalCost = weekendCoefficient * T2;
-      const dayCost = basicCost * HSDV * (overtimeCost + normalCost);
       
-      // Làm tròn đến hàng nghìn
-      const roundedCost = Math.ceil(dayCost / 1000) * 1000;
-      
-      // Tạo đối tượng chi tiết cho ngày này
-      return {
-        date: currentDate.format("YYYY-MM-DD"),
-        startTime: start.format("HH:mm"),
-        endTime: end.format("HH:mm"),
-        isWeekend: isWeekend,
-        hasOvertimeHours: T1 > 0,
-        overtimeHours: T1,
-        normalHours: T2,
-        appliedCoefficients: {
-          service: HSDV,
-          overtime: HSovertime,
-          weekend: weekendCoefficient
-        },
-        cost: roundedCost
-      };
+      return basicCost * HSDV * (overtimeCost + normalCost);
     };
 
     if (requestType === "long") {
@@ -191,23 +169,16 @@ const AddOrder = () => {
       let currentDate = startDate;
       
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
-        const dailyCostDetail = calculateDailyCost(currentDate);
-        detailCostArray.push(dailyCostDetail);
-        totalCost += dailyCostDetail.cost;
+        totalCost += calculateDailyCost(currentDate);
         currentDate = currentDate.add(1, "day");
       }
     } else {
       // Tính chi phí cho đơn ngắn hạn (một ngày)
-      const dailyCostDetail = calculateDailyCost(dayjs(workDate));
-      detailCostArray.push(dailyCostDetail);
-      totalCost = dailyCostDetail.cost;
+      totalCost = calculateDailyCost(dayjs(workDate));
     }
     
-    // Làm tròn lên đến hàng nghìn (tổng chi phí đã được làm tròn trong từng ngày)
-    return { 
-      newTotalCost: totalCost,
-      newDetailCost: detailCostArray
-    };
+    // Làm tròn lên đến hàng nghìn
+    return (totalCost / 1000) * 1000;
   };
   
   //HANDLE SET COEFFICIENT AUTOMATICALLY
@@ -551,7 +522,6 @@ const AddOrder = () => {
       
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
-      detailCost: detailCost, // Add the detailed cost array
     };
 
     // Send data to backend
