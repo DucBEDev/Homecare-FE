@@ -81,20 +81,7 @@ const BodyStaffTable = () => {
             styleButtonText={{ color: "#fff" }}
             onClick={() => handleEdit(record.key)}
           />
-          <ButtonComponent
-            size="large"
-            textButton="Lịch"
-            styleButton={{
-              backgroundColor: "#3ebedd",
-              width: "40px",
-              height: "40px",
-              border: "1px",
-              borderRadius: "12px",
-              marginRight: "2px",
-            }}
-            styleButtonText={{ color: "#fff" }}
-            onClick={() => handleSchedule(record.key)}
-          />
+          
           <ButtonComponent
             size="large"
             textButton="Xóa"
@@ -163,13 +150,6 @@ const BodyStaffTable = () => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredData.slice(startIndex, startIndex + pageSize);
   }, [currentPage, filteredData, pageSize]);
-
-  const handleSchedule = useCallback(
-    (recordId) => {
-      navigate(`/staff/processing/schedule`, { state: { id: recordId } });
-    },
-    [navigate]
-  );
 
   const handleEdit = (recordId) => {
     const selected = staffs.find((staff) => staff.key === recordId);

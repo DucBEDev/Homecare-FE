@@ -23,7 +23,6 @@ import AddMaid from "../pages/MaidPage/PartPage/AddMaid/AddMaid";
 //import component con cua StaffPage
 import BodyStaffTable from "../pages/StaffPage/PartPage/BodyStaff/BodyStaffTable/BodyStaffTable";
 import AddStaff from "../pages/StaffPage/PartPage/AddStaff/AddStaff"
-import StaffBusySchedule from "../pages/StaffPage/PartPage/BodyStaff/StaffBusySchedule/StaffBusySchedule.jsx";
 import EditMaid from "../pages/MaidPage/PartPage/EditMaid/EditMaid"
 import MaidBusySchedule from "../pages/MaidPage/PartPage/BodyMaid/MaidBusySchedule/MaidBusySchedule.jsx"
 //import component con cua CustomerPage
@@ -227,12 +226,6 @@ export const routes = [
   {
     path: "staff/add",
     page: AddStaff,
-    isShowHeader: true,
-    isProtected: true,
-  },
-  {
-    path: "/staff/processing/schedule",
-    page: StaffBusySchedule,
     isShowHeader: true,
     isProtected: true,
   },
