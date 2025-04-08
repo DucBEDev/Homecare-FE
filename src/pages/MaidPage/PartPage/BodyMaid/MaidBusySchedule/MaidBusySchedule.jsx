@@ -11,6 +11,13 @@ import {
   Modal,
   List,
   Space,
+  Button,
+  TimePicker,
+  Form,
+  message,
+  Row,
+  Col,
+  Input,
 } from "antd";
 import {
   UserOutlined,
@@ -23,6 +30,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import moment from "moment";
+import dayjs from "dayjs";
 import { useLocation } from "react-router-dom";
 import "./MaidBusySchedule.css";
 
@@ -41,6 +49,13 @@ const MaidBusySchedule = () => {
   });
   const [modalVisible, setModalVisible] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [isAddingDateOff, setIsAddingDateOff] = useState(false);
+  const [newTimeOff, setNewTimeOff] = useState({
+    startTime: null,
+    endTime: null,
+    reason: "",
+  });
+  const [timeList, setTimeList] = useState(null);
 
   // Fetch helper information and timeoffs
   const fetchHelper = async () => {
@@ -84,6 +99,20 @@ const MaidBusySchedule = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchTimeData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/create`
+        );
+        setTimeList(response.data.timeList);
+      } catch (error) {
+        console.error("Error fetching time data:", error);
+      }
+    };
+    fetchTimeData();
+  }, []);
+
   // Get data for calendar cell rendering
   const getTimeOffData = (value) => {
     const formattedDate = value.format("YYYY-MM-DD");
@@ -97,23 +126,25 @@ const MaidBusySchedule = () => {
 
     // Get the status of the first timeOff for this date
     const status = listData[0].status;
-    
+
     // Map status to background colors (using lighter shades for better visibility)
     let backgroundColor = "transparent";
     if (status === "approved") backgroundColor = "#ffccc7"; // Light red
     else if (status === "done") backgroundColor = "#d9f7be"; // Light green
-    
+
     return (
-      <div style={{ 
-        height: '100%',
-        width: '100%',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        backgroundColor,
-        opacity: 0.7,
-        zIndex: 0
-      }} />
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          backgroundColor,
+          opacity: 0.7,
+          zIndex: 0,
+        }}
+      />
     );
   };
 
@@ -122,6 +153,8 @@ const MaidBusySchedule = () => {
     setSelectedDate(date);
     fetchDateDetails(date);
     setModalVisible(true);
+    setIsAddingDateOff(false);
+    setNewTimeOff({ startTime: null, endTime: null, reason: "" });
   };
 
   // Format minute value to time string
@@ -137,30 +170,33 @@ const MaidBusySchedule = () => {
   // Legend component to explain colors
   const CalendarLegend = () => {
     const [isExpanded, setIsExpanded] = useState(false);
-  
+
     const toggleExpand = () => {
       setIsExpanded(!isExpanded);
     };
-  
+
     return (
       <div style={{ marginTop: "10px", padding: "10px" }}>
-        <div 
+        <div
           onClick={toggleExpand}
-          style={{ 
-            cursor: 'pointer',
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'space-between'
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-         <Title level={5} style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-          Chú thích
-          <span style={{ marginLeft: '6px', fontSize: '20px' }}>
-            {isExpanded ? <UpOutlined /> : <DownOutlined />}
-          </span>
-        </Title>
+          <Title
+            level={5}
+            style={{ margin: 0, display: "flex", alignItems: "center" }}
+          >
+            Chú thích
+            <span style={{ marginLeft: "6px", fontSize: "20px" }}>
+              {isExpanded ? <UpOutlined /> : <DownOutlined />}
+            </span>
+          </Title>
         </div>
-        
+
         {isExpanded && (
           <Space direction="vertical" style={{ marginTop: 8 }}>
             <Badge status="error" text="Đang bận" />
@@ -172,36 +208,131 @@ const MaidBusySchedule = () => {
     );
   };
 
+  const handleAddDateOff = () => {
+    setIsAddingDateOff(true);
+  };
+
+  const handleTimeOffFormCancel = () => {
+    setIsAddingDateOff(false);
+    setNewTimeOff({ startTime: null, endTime: null, reason: "" });
+  };
+
+  const onTimeOffFormChange = (values) => {
+    const newStartTime = values.startTime ? moment(values.startTime).format('HH:mm') : null;
+    const newEndTime = values.endTime ? moment(values.endTime).format('HH:mm') : null;
+    setNewTimeOff({ ...newTimeOff, startTime: newStartTime, endTime: newEndTime, reason: values.reason });
+  };
+
+  const handleCreateTimeOff = async () => {
+    if (!newTimeOff.startTime || !newTimeOff.endTime) {
+      message.error("Vui lòng chọn thời gian bắt đầu và kết thúc.");
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}admin/timeOffs/createDateOff/${formattedDate}`,
+        {
+          helper_id: helperId,
+          startTime: newTimeOff.startTime,
+          endTime: newTimeOff.endTime,
+          reason: newTimeOff.reason,
+        }
+      );
+      console.log("Create TimeOff Response:", response.data);
+      if (response.data.success) {
+        message.success("Thêm ngày nghỉ thành công.");
+        setIsAddingDateOff(false);
+        setNewTimeOff({ startTime: null, endTime: null, reason: "" });
+        fetchHelper();
+        fetchDateDetails(selectedDate);
+        setModalVisible(false); // Close the modal after successful creation
+      } else {
+        message.error(response.data.error || "Có lỗi xảy ra khi thêm ngày nghỉ.");
+      }
+    } catch (error) {
+      console.error("Error creating time off:", error);
+      message.error("Có lỗi xảy ra khi thêm ngày nghỉ.");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const disabledHours = () => {
+    if (!timeList) return [];
+
+    const openHour = parseInt(timeList.openHour.split(":")[0], 10);
+    const closeHour = parseInt(timeList.closeHour.split(":")[0], 10);
+    const hours = [];
+
+    for (let i = 0; i < 24; i++) {
+      if (i < openHour || i > closeHour) {
+        hours.push(i);
+      }
+    }
+    return hours;
+  };
+
+  const disabledMinutes = () => {
+    return []; // Allow all minutes
+  };
+
+  const renderAddTimeOffForm = () => {
+    if (!isAddingDateOff) return null;
+
+    return (
+      <div style={{ marginTop: 20 }}>
+        <Title level={5}>Thêm ngày nghỉ cho ngày {selectedDate.format("DD/MM/YYYY")}</Title>
+        <Form layout="vertical" onValuesChange={onTimeOffFormChange}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Thời gian bắt đầu" name="startTime" rules={[{ required: true, message: 'Vui lòng chọn thời gian bắt đầu!' }]}>
+                <TimePicker
+                  format="HH:mm"
+                  style={{ width: '100%' }}
+                  minuteStep={1} // Allow all minutes
+                  disabledHours={disabledHours}
+                  disabledMinutes={disabledMinutes}
+                  allowClear={false}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Thời gian kết thúc" name="endTime" rules={[{ required: true, message: 'Vui lòng chọn thời gian kết thúc!' }]}>
+                <TimePicker
+                  format="HH:mm"
+                  style={{ width: '100%' }}
+                  minuteStep={1} // Allow all minutes
+                  disabledHours={disabledHours}
+                  disabledMinutes={disabledMinutes}
+                  allowClear={false}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item label="Lý do" name="reason">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+        </Form>
+      </div>
+    );
+  };
+
   // Render modal content
   const renderModalContent = () => {
-    if (modalLoading) {
+    if (modalLoading && !isAddingDateOff) {
       return <Spin size="large" />;
+    }
+    if (isAddingDateOff) {
+      return renderAddTimeOffForm();
     }
 
     return (
       <div>
         <div style={{ marginBottom: 20 }}>
           <Title level={4}>Lịch làm việc</Title>
-          {/* {dateDetails.workingDateList && dateDetails.workingDateList.length > 0 ? (
-            <List
-              size="small"
-              bordered
-              dataSource={dateDetails.workingDateList}
-              renderItem={(item) => {
-                // Use the numeric startTime and endTime directly
-                const startTime = formatTimeFromMinutes(item.startTime);
-                const endTime = formatTimeFromMinutes(item.endTime);
-                
-                return (
-                  <List.Item>
-                    <Badge status="processing" text={`${startTime} - ${endTime}`} />
-                  </List.Item>
-                );
-              }}
-            />
-          ) : (
-            <Text>Không có lịch làm việc</Text>
-          )} */}
           <Text>Không có lịch làm việc</Text>
         </div>
 
@@ -213,7 +344,6 @@ const MaidBusySchedule = () => {
               bordered
               dataSource={dateDetails.busyDateList}
               renderItem={(item) => {
-                // Use the numeric startTime and endTime directly
                 const startTime = formatTimeFromMinutes(item.startTime);
                 const endTime = formatTimeFromMinutes(item.endTime);
 
@@ -263,7 +393,7 @@ const MaidBusySchedule = () => {
         },
         components: {
           Calendar: {
-            fullBg: "transparent", // Make sure calendar background is transparent
+            fullBg: "transparent",
           },
         },
       }}
@@ -337,9 +467,7 @@ const MaidBusySchedule = () => {
               </div>
             </div>
             <CalendarLegend />
-
           </Card>
-          
 
           <div className="calendar-section" style={{ flex: "7" }}>
             <Card>
@@ -348,6 +476,7 @@ const MaidBusySchedule = () => {
                 onSelect={onSelect}
                 mode="month"
                 fullscreen={true}
+                className="custom-calendar"
               />
             </Card>
           </div>
@@ -360,8 +489,30 @@ const MaidBusySchedule = () => {
               : "Lịch trình"
           }
           open={modalVisible}
-          onCancel={() => setModalVisible(false)}
-          footer={null}
+          onCancel={() => {
+            setModalVisible(false);
+            setIsAddingDateOff(false);
+            setNewTimeOff({ startTime: null, endTime: null, reason: "" });
+          }}
+          footer={[
+            <Button key="back" onClick={() => {
+              setModalVisible(false);
+              setIsAddingDateOff(false);
+              setNewTimeOff({ startTime: null, endTime: null, reason: "" });
+            }}>
+              Đóng
+            </Button>,
+            selectedDate && (
+              <Button
+                key="submit"
+                type="primary"
+                onClick={handleCreateTimeOff}
+                loading={modalLoading && isAddingDateOff} // Show loading only when adding
+              >
+                Thêm ngày nghỉ
+              </Button>
+            ),
+          ]}
           width={600}
         >
           {renderModalContent()}

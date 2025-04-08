@@ -470,6 +470,10 @@
     
   }
   
+  .custom-calendar .ant-picker-calendar-header .ant-picker-calendar-mode-switch {
+    display: none !important; /* Ẩn hoàn toàn cụm nút chuyển đổi Month/Year */
+  }
+  
   /* Responsive adjustments */
   @media (max-width: 992px) {
     .summary-stat-list {
