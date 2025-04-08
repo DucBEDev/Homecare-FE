@@ -55,7 +55,6 @@ const MaidBusySchedule = () => {
     endTime: null,
     reason: "",
   });
-  const [timeList, setTimeList] = useState(null);
 
   // Fetch helper information and timeoffs
   const fetchHelper = async () => {
@@ -99,19 +98,6 @@ const MaidBusySchedule = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchTimeData = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create`
-        );
-        setTimeList(response.data.timeList);
-      } catch (error) {
-        console.error("Error fetching time data:", error);
-      }
-    };
-    fetchTimeData();
-  }, []);
 
   // Get data for calendar cell rendering
   const getTimeOffData = (value) => {
@@ -212,108 +198,173 @@ const MaidBusySchedule = () => {
     setIsAddingDateOff(true);
   };
 
-  const handleTimeOffFormCancel = () => {
-    setIsAddingDateOff(false);
-    setNewTimeOff({ startTime: null, endTime: null, reason: "" });
-  };
-
   const onTimeOffFormChange = (values) => {
-    const newStartTime = values.startTime ? moment(values.startTime).format('HH:mm') : null;
-    const newEndTime = values.endTime ? moment(values.endTime).format('HH:mm') : null;
-    setNewTimeOff({ ...newTimeOff, startTime: newStartTime, endTime: newEndTime, reason: values.reason });
+    const newStartTime = values.startTime
+      ? moment(values.startTime).format("HH:mm")
+      : null;
+    const newEndTime = values.endTime
+      ? moment(values.endTime).format("HH:mm")
+      : null;
+    setNewTimeOff({
+      ...newTimeOff,
+      startTime: newStartTime,
+      endTime: newEndTime,
+      reason: values.reason,
+    });
   };
 
+  // Cập nhật hàm handleCreateTimeOff
   const handleCreateTimeOff = async () => {
     if (!newTimeOff.startTime || !newTimeOff.endTime) {
       message.error("Vui lòng chọn thời gian bắt đầu và kết thúc.");
       return;
     }
+    console.log("cakasubfa dating off");
+
+    // Kiểm tra thời gian kết thúc phải sau thời gian bắt đầu
+    const startMinutes = convertTimeToMinutes(newTimeOff.startTime);
+    const endMinutes = convertTimeToMinutes(newTimeOff.endTime);
+    if (endMinutes <= startMinutes) {
+      message.error("Thời gian kết thúc phải sau thời gian bắt đầu.");
+      return;
+    }
 
     try {
+      
       setModalLoading(true);
-      const formattedDate = selectedDate.format('YYYY-MM-DD');
+      const formattedDate = selectedDate.format("YYYY-MM-DD");
+      const startMinutes = convertTimeToMinutes(newTimeOff.startTime);
+      const endMinutes = convertTimeToMinutes(newTimeOff.endTime);
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}admin/timeOffs/createDateOff/${formattedDate}`,
         {
           helper_id: helperId,
-          startTime: newTimeOff.startTime,
-          endTime: newTimeOff.endTime,
-          reason: newTimeOff.reason,
+          startTime: startMinutes,
+          endTime: endMinutes,
+          reason: newTimeOff.reason || "Không có lý do",
         }
       );
-      console.log("Create TimeOff Response:", response.data);
+
       if (response.data.success) {
-        message.success("Thêm ngày nghỉ thành công.");
+        message.success("Thêm ngày nghỉ thành công");
+        // Cập nhật lại dữ liệu
+        await fetchHelper();
+        await fetchDateDetails(selectedDate);
+        // Đóng form và reset dữ liệu
         setIsAddingDateOff(false);
         setNewTimeOff({ startTime: null, endTime: null, reason: "" });
-        fetchHelper();
-        fetchDateDetails(selectedDate);
-        setModalVisible(false); // Close the modal after successful creation
-      } else {
-        message.error(response.data.error || "Có lỗi xảy ra khi thêm ngày nghỉ.");
+        setModalVisible(false);
       }
     } catch (error) {
-      console.error("Error creating time off:", error);
-      message.error("Có lỗi xảy ra khi thêm ngày nghỉ.");
+      if (error.response?.status === 400) {
+        message.error(error.response.data.error || "Thời gian này đã được đặt");
+        console.log(
+          "Date off time overlaps with existing date offs"
+        );
+      } else {
+        message.error("Có lỗi xảy ra khi thêm ngày nghỉ");
+        console.log("Error creating time off:", error.response?.data || error);
+      }
+      console.log("Error creating time off:", error);
     } finally {
       setModalLoading(false);
     }
   };
 
-  const disabledHours = () => {
-    if (!timeList) return [];
-
-    const openHour = parseInt(timeList.openHour.split(":")[0], 10);
-    const closeHour = parseInt(timeList.closeHour.split(":")[0], 10);
-    const hours = [];
-
-    for (let i = 0; i < 24; i++) {
-      if (i < openHour || i > closeHour) {
-        hours.push(i);
-      }
-    }
-    return hours;
+  // Thêm hàm helper để chuyển đổi thời gian
+  const convertTimeToMinutes = (timeString) => {
+    if (!timeString) return 0;
+    const [hours, minutes] = timeString.split(":").map(Number);
+    return hours * 60 + minutes;
   };
 
   const disabledMinutes = () => {
     return []; // Allow all minutes
   };
 
+  // Cập nhật renderAddTimeOffForm
   const renderAddTimeOffForm = () => {
     if (!isAddingDateOff) return null;
 
     return (
       <div style={{ marginTop: 20 }}>
-        <Title level={5}>Thêm ngày nghỉ cho ngày {selectedDate.format("DD/MM/YYYY")}</Title>
-        <Form layout="vertical" onValuesChange={onTimeOffFormChange}>
+        <Title level={5}>
+          Thêm ngày nghỉ cho ngày {selectedDate.format("DD/MM/YYYY")}
+        </Title>
+        <Form
+          layout="vertical"
+          onValuesChange={onTimeOffFormChange}
+          onFinish={handleCreateTimeOff}
+        >
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Thời gian bắt đầu" name="startTime" rules={[{ required: true, message: 'Vui lòng chọn thời gian bắt đầu!' }]}>
+              <Form.Item
+                label="Thời gian bắt đầu"
+                name="startTime"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn thời gian bắt đầu!",
+                  },
+                ]}
+              >
                 <TimePicker
                   format="HH:mm"
-                  style={{ width: '100%' }}
-                  minuteStep={1} // Allow all minutes
-                  disabledHours={disabledHours}
+                  style={{ width: "100%" }}
+                  minuteStep={30}
                   disabledMinutes={disabledMinutes}
                   allowClear={false}
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Thời gian kết thúc" name="endTime" rules={[{ required: true, message: 'Vui lòng chọn thời gian kết thúc!' }]}>
+              <Form.Item
+                label="Thời gian kết thúc"
+                name="endTime"
+                rules={[
+                  {
+                    required: true,
+                    message: "Vui lòng chọn thời gian kết thúc!",
+                  },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const startTime = getFieldValue("startTime");
+                      if (!startTime || !value) {
+                        return Promise.resolve();
+                      }
+                      if (value.isBefore(startTime)) {
+                        return Promise.reject(
+                          new Error(
+                            "Thời gian kết thúc phải sau thời gian bắt đầu!"
+                          )
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
+                ]}
+              >
                 <TimePicker
                   format="HH:mm"
-                  style={{ width: '100%' }}
-                  minuteStep={1} // Allow all minutes
-                  disabledHours={disabledHours}
+                  style={{ width: "100%" }}
+                  minuteStep={30}
                   disabledMinutes={disabledMinutes}
                   allowClear={false}
                 />
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item label="Lý do" name="reason">
-            <Input.TextArea rows={3} />
+          <Form.Item
+            label="Lý do"
+            name="reason"
+            rules={[
+              { max: 500, message: "Lý do không được vượt quá 500 ký tự!" },
+            ]}
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder="Nhập lý do nghỉ (không bắt buộc)"
+            />
           </Form.Item>
         </Form>
       </div>
@@ -495,21 +546,29 @@ const MaidBusySchedule = () => {
             setNewTimeOff({ startTime: null, endTime: null, reason: "" });
           }}
           footer={[
-            <Button key="back" onClick={() => {
-              setModalVisible(false);
-              setIsAddingDateOff(false);
-              setNewTimeOff({ startTime: null, endTime: null, reason: "" });
-            }}>
+            <Button
+              key="back"
+              onClick={() => {
+                setModalVisible(false);
+                setIsAddingDateOff(false);
+                setNewTimeOff({ startTime: null, endTime: null, reason: "" });
+              }}
+            >
               Đóng
             </Button>,
-            selectedDate && (
+            !isAddingDateOff && (
+              <Button key="add" type="primary" onClick={handleAddDateOff}>
+                Thêm ngày nghỉ
+              </Button>
+            ),
+            isAddingDateOff && (
               <Button
                 key="submit"
                 type="primary"
                 onClick={handleCreateTimeOff}
-                loading={modalLoading && isAddingDateOff} // Show loading only when adding
+                loading={modalLoading}
               >
-                Thêm ngày nghỉ
+                Xác nhận
               </Button>
             ),
           ]}

@@ -463,12 +463,6 @@
     transform: translateX(-50%);
   }
 
-  .ant-picker-content thead tr th {
-    color: #11C973 !important;
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    
-  }
   
   .custom-calendar .ant-picker-calendar-header .ant-picker-calendar-mode-switch {
     display: none !important; /* Ẩn hoàn toàn cụm nút chuyển đổi Month/Year */
