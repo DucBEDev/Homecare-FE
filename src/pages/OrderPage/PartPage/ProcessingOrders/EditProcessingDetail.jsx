@@ -25,12 +25,17 @@ const EditProcessingOrder = () => {
   const location = useLocation();
   const orderId = location.state?.id;
   const [locations, setLocations] = useState([]);
-  const [appliedCoefficient, setAppliedCoefficient] = useState("0");
+  const [coefficient, setCoefficient] = useState("0");
   const [requestType, setRequestType] = useState("short");
   const [timeErrors, setTimeErrors] = useState("");
   const [isFormValid, setIsFormValid] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [totalCost, setTotalCost] = useState(0);
+  const [detailCost, setDetailCost] = useState([]); // State to store detailed cost
+  const [appliedCoefficients, setAppliedCoefficients] = useState({
+    overtime: null,
+    weekend: null
+  });
 
   // Fetch dữ liệu đơn hàng cụ thể
   useEffect(() => {
@@ -50,26 +55,25 @@ const EditProcessingOrder = () => {
           location: orderData.request.customerInfo.address
             .split(",")
             .slice(1)
-            .join(","),
+            .map(item => item.trim()),
           requestType:
             orderData.request.requestType === "Dài hạn" ? "long" : "short",
           workDate:
             orderData.request.requestType === "Dài hạn"
               ? [
-                  dayjs(orderData.request.startTime),
-                  dayjs(orderData.request.endTime),
+                  dayjs(orderData.request.startDate),
+                  dayjs(orderData.request.endDate),
                 ]
-              : dayjs(orderData.request.startTime),
-          startTime: dayjs(orderData.request.formatStartTime, "HH:mm"),
-          endTime: dayjs(orderData.request.formatEndTime, "HH:mm"),
-          coefficientOther: orderData.request.service.coefficient_other,
+              : dayjs(orderData.request.startDate),
+          startTime: dayjs(orderData.request.startTime, "HH:mm"),
+          endTime: dayjs(orderData.request.endTime, "HH:mm"),
         });
 
         setRequestType(
           orderData.request.requestType === "Dài hạn" ? "long" : "short"
         );
-        setAppliedCoefficient(orderData.request.service.coefficient_other);
         setTotalCost(orderData.request.totalCost);
+        setDetailCost(orderData.detailCost || []);
         setIsFormValid(true);
       } catch (error) {
         console.error("Error fetching order detail:", error);
@@ -91,26 +95,30 @@ const EditProcessingOrder = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create` // Assuming this endpoint provides locations data
+          `${process.env.REACT_APP_API_URL}admin/requests/create`
         );
         setDataFetch(response.data);
 
-        if (response.data?.locations) {
-          const formattedLocations = response.data.locations.map(
-            (province) => ({
-              value: province.Name,
-              label: province.Name,
-              children: (province.Districts || []).map((district) => ({
-                value: district.Name,
-                label: district.Name,
-                children: (district.Wards || []).map((ward) => ({
-                  value: ward.Name,
-                  label: ward.Name,
-                })),
+        const locationResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/locations`
+        );
+        console.log("Location Data:", locationResponse.data);
+        if (locationResponse.data.success && locationResponse.data.data) {
+          const formattedLocations = locationResponse.data.data.map((province) => ({
+            value: province.Name || province.name,
+            label: province.Name || province.name,
+            children: province.Districts.map((district) => ({
+              value: district.Name || district.name,
+              label: district.Name || district.name,
+              children: district.Wards.map((ward) => ({
+                value: ward.Name || ward.name,
+                label: ward.Name || ward.name,
               })),
-            })
-          );
+            })),
+          }));
           setLocations(formattedLocations);
+        } else {
+          console.error("Error fetching location data or invalid format:", locationResponse.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -120,11 +128,13 @@ const EditProcessingOrder = () => {
   }, []);
 
   //TOTAL COST
+  //update cost into table
   const updateTotalCost = () => {
-    const newTotalCost = calculateTotalCost();
+    const { newTotalCost, newDetailCost } = calculateTotalCost();
     setTotalCost(newTotalCost);
+    setDetailCost(newDetailCost);
   };
-
+  //calculate total cost
   const calculateTotalCost = () => {
     const formValues = form.getFieldsValue();
     const {
@@ -132,18 +142,11 @@ const EditProcessingOrder = () => {
       startTime,
       endTime,
       workDate,
-      coefficientOther,
       requestType,
     } = formValues;
 
-    if (
-      !serviceTitle ||
-      !startTime ||
-      !endTime ||
-      !workDate ||
-      !coefficientOther
-    ) {
-      return 0;
+    if (!serviceTitle || !startTime || !endTime || !workDate) {
+      return { newTotalCost: 0, newDetailCost: [] };
     }
 
     const selectedService = dataFetch.serviceList?.find(
@@ -151,16 +154,13 @@ const EditProcessingOrder = () => {
     );
 
     if (!selectedService) {
-      return 0;
+      return { newTotalCost: 0, newDetailCost: [] };
     }
 
-    const { basicPrice, coefficient: coefficientService } = selectedService;
-    const coefficientWeekend = parseFloat(
-      dataFetch.coefficientOtherList?.[1]?.value || 1
-    );
-    const coefficientOvertime = parseFloat(
-      dataFetch.coefficientOtherList?.[0]?.value || 1
-    );
+    const basicCost = parseFloat(selectedService.basicPrice);
+    const HSDV = parseFloat(selectedService.coefficient);
+    const HSovertime = parseFloat(dataFetch.coefficientOtherList?.[0]?.value || 1);
+    const HScuoituan = parseFloat(dataFetch.coefficientOtherList?.[1]?.value || 1);
 
     const start = dayjs(startTime);
     const end = dayjs(endTime);
@@ -169,232 +169,260 @@ const EditProcessingOrder = () => {
     const officeEndTime = dayjs(dataFetch.timeList?.officeEndTime, "HH:mm");
 
     let totalCost = 0;
+    let detailCostArray = [];
+
+    // Hàm tính chi phí cho một ngày cụ thể
+    const calculateDailyCost = (currentDate) => {
+      const dayOfWeek = currentDate.day();
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+
+      const dailyHours = end.diff(start, "hour", true);
+
+      // Tính giờ làm việc ngoài giờ (T1) và trong giờ hành chính (T2)
+      let T1 = 0; // Số giờ ngoài giờ hành chính
+
+      // Trước giờ hành chính
+      if (start.isBefore(officeStartTime)) {
+        T1 += officeStartTime.diff(start, "hour", true);
+      }
+
+      // Sau giờ hành chính
+      if (end.isAfter(officeEndTime)) {
+        T1 += end.diff(officeEndTime, "hour", true);
+      }
+
+      // Thời gian trong giờ hành chính
+      const T2 = Math.max(0, dailyHours - T1);
+
+      // Xác định hệ số áp dụng
+      const weekendCoefficient = isWeekend ? HScuoituan : 1;
+
+      // Tính chi phí: cost = basicCost * HSDV * [(HSovertime * T1 * weekendCoefficient) + (weekendCoefficient * T2)]
+      const overtimeCost = HSovertime * T1 * weekendCoefficient;
+      const normalCost = weekendCoefficient * T2;
+      const dayCost = basicCost * HSDV * (overtimeCost + normalCost);
+
+      // Tạo đối tượng chi tiết cho ngày này
+      return {
+        date: currentDate.format("YYYY-MM-DD"),
+        startTime: start.format("HH:mm"),
+        endTime: end.format("HH:mm"),
+        isWeekend: isWeekend,
+        hasOvertimeHours: T1 > 0,
+        overtimeHours: T1,
+        normalHours: T2,
+        appliedCoefficients: {
+          service: HSDV,
+          overtime: HSovertime,
+          weekend: weekendCoefficient
+        },
+        cost: dayCost // Remove rounding, keep exact value
+      };
+    };
 
     if (requestType === "long") {
+      // Tính chi phí cho đơn dài hạn (nhiều ngày)
       const startDate = dayjs(workDate[0]);
       const endDate = dayjs(workDate[1]);
       let currentDate = startDate;
 
-      while (
-        currentDate.isBefore(endDate) ||
-        currentDate.isSame(endDate, "day")
-      ) {
-        const dayOfWeek = currentDate.day();
-        let dailyHours = end.diff(start, "hour");
-        // Handle cases where endTime is earlier than startTime (working overnight)
-        if (dailyHours < 0) {
-          dailyHours += 24;
-        }
-
-        let normalHours = 0;
-        let overtimeHours = 0;
-
-        if (start.isBefore(officeStartTime) && end.isAfter(officeStartTime)) {
-          overtimeHours += officeStartTime.diff(start, "hour");
-        }
-
-        if (end.isAfter(officeEndTime) && start.isBefore(officeEndTime)) {
-          overtimeHours += end.diff(officeEndTime, "hour");
-        }
-
-        // Handle cases where work time spans across office hours
-        if (
-          start.isBefore(officeStartTime) &&
-          end.isBefore(officeStartTime) &&
-          end.isAfter(start)
-        ) {
-          overtimeHours += end.diff(start, "hour");
-        }
-        if (
-          start.isAfter(officeEndTime) &&
-          end.isAfter(officeEndTime) &&
-          end.isAfter(start)
-        ) {
-          overtimeHours += end.diff(start, "hour");
-        }
-
-        normalHours = Math.max(0, dailyHours - overtimeHours);
-
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          const weekendCost =
-            basicPrice * normalHours * coefficientService * coefficientWeekend;
-          const overtimeCost =
-            basicPrice *
-            overtimeHours *
-            coefficientService *
-            coefficientWeekend *
-            coefficientOvertime;
-          totalCost += weekendCost + overtimeCost;
-        } else {
-          const normalCost = basicPrice * normalHours * coefficientService;
-          const overtimeCost =
-            basicPrice *
-            overtimeHours *
-            coefficientService *
-            coefficientOvertime;
-          totalCost += normalCost + overtimeCost;
-        }
-
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, "day")) {
+        const dailyCostDetail = calculateDailyCost(currentDate);
+        detailCostArray.push(dailyCostDetail);
+        totalCost += dailyCostDetail.cost;
         currentDate = currentDate.add(1, "day");
       }
     } else {
-      const dayOfWeek = dayjs(workDate).day();
-      let dailyHours = end.diff(start, "hour");
-      // Handle cases where endTime is earlier than startTime (working overnight)
-      if (dailyHours < 0) {
-        dailyHours += 24;
-      }
-
-      let normalHours = 0;
-      let overtimeHours = 0;
-
-      if (start.isBefore(officeStartTime) && end.isAfter(officeStartTime)) {
-        overtimeHours += officeStartTime.diff(start, "hour");
-      }
-
-      if (end.isAfter(officeEndTime) && start.isBefore(officeEndTime)) {
-        overtimeHours += end.diff(officeEndTime, "hour");
-      }
-
-      // Handle cases where work time spans across office hours
-      if (
-        start.isBefore(officeStartTime) &&
-        end.isBefore(officeStartTime) &&
-        end.isAfter(start)
-      ) {
-        overtimeHours += end.diff(start, "hour");
-      }
-      if (
-        start.isAfter(officeEndTime) &&
-        end.isAfter(officeEndTime) &&
-        end.isAfter(start)
-      ) {
-        overtimeHours += end.diff(start, "hour");
-      }
-
-      normalHours = Math.max(0, dailyHours - overtimeHours);
-
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        const weekendCost =
-          basicPrice * normalHours * coefficientService * coefficientWeekend;
-        const overtimeCost =
-          basicPrice *
-          overtimeHours *
-          coefficientService *
-          coefficientWeekend *
-          coefficientOvertime;
-        totalCost = weekendCost + overtimeCost;
-      } else {
-        const normalCost = basicPrice * normalHours * coefficientService;
-        const overtimeCost =
-          basicPrice * overtimeHours * coefficientService * coefficientOvertime;
-        totalCost = normalCost + overtimeCost;
-      }
+      // Tính chi phí cho đơn ngắn hạn (một ngày)
+      const dailyCostDetail = calculateDailyCost(dayjs(workDate));
+      detailCostArray.push(dailyCostDetail);
+      totalCost = dailyCostDetail.cost;
     }
 
-    return Math.floor(totalCost);
+    return {
+      newTotalCost: totalCost,
+      newDetailCost: detailCostArray
+    };
   };
 
+  //HANDLE SET COEFFICIENT AUTOMATICALLY
+  //convert time to minutes
   const timeToMinutes = (time) => {
     const [hours, minutes] = time.split(":").map(Number);
     return hours * 60 + minutes;
   };
-
+  //check coefficient automatically return value coefficient
   const checkCoefficient = (orderDate, startTime, endTime, timeList) => {
-    const saturday = 6;
-    const sunday = 0;
-
     if (!orderDate || !startTime || !endTime || !timeList) return "0";
 
-    const coefficientWeekend =
-      dataFetch.coefficientOtherList?.[1]?.value || "1";
-    const coefficientOutside =
-      dataFetch.coefficientOtherList?.[0]?.value || "1";
-    const coefficientNormal = "1";
+    const isWeekend = checkIsWeekend(orderDate);
+    const isOutsideOfficeHours = checkIsOutsideOfficeHours(startTime, endTime, timeList);
 
-    if (Array.isArray(orderDate)) {
-      const startDate = orderDate[0];
-      const endDate = orderDate[1];
+    const coefficientWeekend = dataFetch.coefficientOtherList?.[1]?.value ?? 1;
+    const coefficientOutside = dataFetch.coefficientOtherList?.[0]?.value ?? 1;
 
-      for (
-        let currentDate = startDate;
-        currentDate.isSameOrBefore(endDate);
-        currentDate = currentDate.add(1, "day")
-      ) {
-        const currentDay = currentDate.day();
-        if (currentDay === saturday || currentDay === sunday) {
-          return coefficientWeekend;
-        }
-      }
-    } else {
-      const orderDay = orderDate.day();
-      if (orderDay === saturday || orderDay === sunday) {
-        return coefficientWeekend;
-      }
+    if (isWeekend) {
+      return coefficientWeekend;
     }
 
-    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
-    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
-    const officeStartMinutes = timeToMinutes(timeList.officeStartTime);
-    const officeEndMinutes = timeToMinutes(timeList.officeEndTime);
-    const dayStartMinutes = timeToMinutes(timeList.openHour);
-    const dayEndMinutes = timeToMinutes(timeList.closeHour);
-
-    if (
-      (orderStartMinutes >= dayStartMinutes &&
-        orderStartMinutes < officeStartMinutes) ||
-      orderStartMinutes === dayStartMinutes ||
-      (orderEndMinutes > officeEndMinutes &&
-        orderEndMinutes <= dayEndMinutes) ||
-      orderEndMinutes === dayEndMinutes
-    ) {
+    if (isOutsideOfficeHours) {
       return coefficientOutside;
     }
 
-    return coefficientNormal;
+    return "1"; // Hệ số mặc định
   };
 
+  //update coefficient into form
   const updateCoefficient = () => {
     const workDate = form.getFieldValue("workDate");
     const startTime = form.getFieldValue("startTime");
     const endTime = form.getFieldValue("endTime");
 
     if (workDate && startTime && endTime && dataFetch.timeList) {
-      const newCoefficient = checkCoefficient(
-        dayjs(workDate),
+      // Kiểm tra xem đơn hàng có nằm trong ngày nghỉ không
+      const isWeekend = checkIsWeekend(workDate);
+
+      // Kiểm tra xem đơn hàng có nằm ngoài giờ làm việc không
+      const isOutsideOfficeHours = checkIsOutsideOfficeHours(
         dayjs(startTime),
         dayjs(endTime),
         dataFetch.timeList
       );
-      setAppliedCoefficient(newCoefficient);
-      form.setFieldsValue({ coefficientOther: newCoefficient });
+
+      // Lấy giá trị hệ số
+      const coefficientWeekend = dataFetch.coefficientOtherList?.[1]?.value ?? 1;
+      const coefficientOutside = dataFetch.coefficientOtherList?.[0]?.value ?? 1;
+
+      // Cập nhật state để lưu các hệ số đang áp dụng
+      setAppliedCoefficients({
+        overtime: isOutsideOfficeHours ? coefficientOutside : 1,
+        weekend: isWeekend ? coefficientWeekend : 1
+      });
+
+      // Xác định hệ số cao nhất để hiển thị
+      let finalCoefficient = "1"; // Mặc định là 1
+      if (isWeekend) {
+        finalCoefficient = coefficientWeekend.toString();
+      } else if (isOutsideOfficeHours) {
+        finalCoefficient = coefficientOutside.toString();
+      }
+
+      setCoefficient(finalCoefficient);
     }
   };
-
+  //once change date, update coefficient
   const handleDateChange = (date) => {
+    const currentDate = dayjs();
+
+    // Luôn cập nhật giá trị workDate vào form trước, để không làm mất chọn lựa của người dùng
     form.setFieldsValue({ workDate: date });
+
+    // Xử lý với đơn dài hạn
+    if (requestType === 'long' && Array.isArray(date)) {
+      const startDate = date[0];
+      const endDate = date[1];
+
+      // Nếu ngày bắt đầu là quá khứ hoặc ngày kết thúc là quá khứ
+      if (startDate.isBefore(currentDate, 'day') || endDate.isBefore(currentDate, 'day')) {
+        setTimeErrors("Không thể đặt đơn cho ngày trong quá khứ. Vui lòng chọn ngày trong tương lai.");
+        return;
+      }
+
+      // Nếu ngày bắt đầu là hôm nay, kiểm tra thời gian
+      if (startDate.isSame(currentDate, 'day')) {
+        const startTime = form.getFieldValue('startTime');
+        if (startTime) {
+          const start = dayjs(startTime);
+          const currentHour = currentDate.hour();
+
+          if (start.hour() <= currentHour) {
+            setTimeErrors("Không thể đặt đơn dài hạn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+            return;
+          }
+        } else {
+          // Nếu chưa chọn thời gian bắt đầu, chỉ hiển thị thông báo nhưng không xóa ngày
+          setTimeErrors("Hãy chọn giờ bắt đầu sau thời điểm hiện tại.");
+          return;
+        }
+      }
+    }
+    // Đơn ngắn hạn
+    else if (date) {
+      // Nếu ngày được chọn là hôm nay
+      if (date.isSame(currentDate, 'day')) {
+        const startTime = form.getFieldValue('startTime');
+        if (startTime) {
+          const start = dayjs(startTime);
+          const currentHour = currentDate.hour();
+
+          if (start.hour() <= currentHour) {
+            setTimeErrors("Không thể đặt đơn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+            return;
+          }
+        } else {
+          // Nếu chưa chọn thời gian bắt đầu, chỉ hiển thị thông báo
+          setTimeErrors("Hãy chọn giờ bắt đầu sau thời điểm hiện tại.");
+          return;
+        }
+      }
+    }
+
+    // Xóa lỗi nếu mọi kiểm tra đều thành công
+    setTimeErrors("");
+
+    // Cập nhật hệ số và tổng chi phí
     updateCoefficient();
     updateTotalCost();
   };
 
+  //*HANDLE SET TIME*/
+  //condition only choose hour in working time
   const disabledHours = () => {
-    if (!dataFetch.timeList) {
+    if (!dataFetch || !dataFetch.timeList) {
       return [];
     }
+
+    const currentDate = dayjs();
+    const selectedDate = form.getFieldValue('workDate');
     const openHour = parseInt(dataFetch.timeList.openHour.split(":")[0], 10);
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const hours = [];
-    for (let i = 0; i < 24; i++) {
-      if (i < openHour || i > closeHour) {
-        hours.push(i);
+
+    // Kiểm tra xem selectedDate có phải là đối tượng dayjs và có isSame method
+    // Nếu selectedDate là mảng (long-term), lấy ngày đầu tiên
+    const dateToCheck = Array.isArray(selectedDate) ? selectedDate[0] : selectedDate;
+
+    // Chỉ vô hiệu hóa giờ đã qua nếu ngày được chọn là hôm nay
+    if (dateToCheck && dayjs.isDayjs(dateToCheck) && dateToCheck.isSame(currentDate, 'day')) {
+      const currentHour = currentDate.hour();
+
+      for (let i = 0; i < 24; i++) {
+        // Vô hiệu hóa các giờ:
+        // 1. Trước giờ mở cửa
+        // 2. Sau giờ đóng cửa
+        // 3. Các giờ đã qua trong ngày hiện tại
+        // 4. Các giờ không thể hoàn thành trước giờ đóng cửa (thêm 2 giờ tối thiểu)
+        if (i < openHour ||
+          i > closeHour + 1 ||
+          i <= currentHour) {
+          hours.push(i);
+        }
+      }
+    } else {
+      // Đối với các ngày trong tương lai, chỉ vô hiệu hóa giờ ngoài giờ làm việc
+      for (let i = 0; i < 24; i++) {
+        if (i < openHour || i > closeHour + 1) {
+          hours.push(i);
+        }
       }
     }
+
     return hours;
   };
-
+  //condition only choose hour in working time
   const disabledMinutes = (selectedHour) => {
-    if (!dataFetch.timeList) {
-      return [];
+    if (!dataFetch || !dataFetch.timeList) {
+      return []; //trả về một mảng phút mặc định
     }
     const closeHour = parseInt(dataFetch.timeList.closeHour.split(":")[0], 10);
     const minutes = [];
@@ -405,54 +433,100 @@ const EditProcessingOrder = () => {
     }
     return minutes;
   };
-
+  //condition only choose time with condition 2 hours and not 30 minutes
   const isValidTimeRange = (startTime, endTime) => {
     if (!startTime || !endTime) return false;
 
     const start = dayjs(startTime);
     const end = dayjs(endTime);
+    const currentTime = dayjs();
+    const closeHour = dayjs().set('hour', parseInt(dataFetch.timeList?.closeHour?.split(":")[0] || 23, 10)).set('minute', 0);
 
     const diffInHours = end.diff(start, "hour", true);
 
-    // Handle cases where endTime is earlier than startTime (working overnight)
-    if (diffInHours < 0) {
-      return diffInHours + 24 >= 2 && (diffInHours + 24) % 1 === 0;
+    // Lấy ngày làm việc từ form
+    const workDate = form.getFieldValue("workDate");
+    const isLongTerm = requestType === "long";
+
+    // Kiểm tra xem thời gian bắt đầu đã qua chưa (chỉ áp dụng nếu ngày làm việc là hôm nay)
+    const isToday = isLongTerm ?
+      (Array.isArray(workDate) && workDate[0]?.isSame(currentTime, 'day')) :
+      (workDate?.isSame(currentTime, 'day'));
+
+    // Kiểm tra khoảng cách 2 tiếng từ thời điểm hiện tại
+    if (isToday) {
+      // Tính số giờ từ thời điểm hiện tại đến thời điểm bắt đầu
+      const diffFromNow = start.diff(currentTime, "hour", true);
+
+      // Nếu thời gian bắt đầu cách thời điểm hiện tại chưa đủ 2 tiếng
+      if (diffFromNow < 2) {
+        setTimeErrors("Thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng.");
+        return false;
+      }
     }
 
-    return diffInHours >= 2 && diffInHours % 1 === 0;
-  };
+    // Kiểm tra nếu thời gian kết thúc vượt quá giờ đóng cửa
+    const exceedsCloseHour = end.isAfter(closeHour);
+    if (exceedsCloseHour) {
+      setTimeErrors("Thời gian kết thúc không được vượt quá giờ đóng cửa.");
+      return false;
+    }
 
+    // Kiểm tra thời gian tối thiểu 2 giờ và không lẻ 30 phút
+    if (!(diffInHours >= 2 && diffInHours % 1 === 0)) {
+      setTimeErrors("Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút.");
+      return false;
+    }
+
+    // Xóa lỗi nếu tất cả điều kiện đều thỏa mãn
+    setTimeErrors("");
+    return true;
+  };
+  //handle set time
   const handleTimeChange = (field, time) => {
     form.setFieldsValue({ [field]: time });
 
-    updateCoefficient();
-    updateTotalCost();
-
-    const startTime =
-      field === "startTime" ? time : form.getFieldValue("startTime");
+    const startTime = field === "startTime" ? time : form.getFieldValue("startTime");
     const endTime = field === "endTime" ? time : form.getFieldValue("endTime");
+    const workDate = form.getFieldValue("workDate");
 
     if (startTime && endTime) {
       const isValid = isValidTimeRange(startTime, endTime);
+
       if (!isValid) {
-        setTimeErrors(
-          "Thời gian không hợp lệ. Giờ kết thúc phải cách giờ bắt đầu ít nhất 2 tiếng và không được lẻ 30 phút."
-        );
         setIsFormValid(false);
       } else {
+        // Nếu thời gian hợp lệ, hãy kiểm tra thêm với ngày hiện tại
+        const currentDate = dayjs();
+        const dateToCheck = Array.isArray(workDate) ? workDate[0] : workDate;
+
+        if (dateToCheck && dateToCheck.isSame(currentDate, 'day')) {
+          // Nếu thời gian bắt đầu đã qua
+          const start = dayjs(startTime);
+          if (start.hour() <= currentDate.hour()) {
+            setTimeErrors("Không thể đặt đơn với thời gian đã qua. Vui lòng chọn thời gian trong tương lai.");
+            setIsFormValid(false);
+            return;
+          }
+        }
+
         setTimeErrors("");
         setIsFormValid(true);
+        updateCoefficient();
+        updateTotalCost();
       }
     }
   };
 
   const disabledDate = (current) => {
+    // Không cho phép chọn ngày trong quá khứ (trước ngày hôm nay)
     return current && current < dayjs().startOf("day");
   };
 
+  /*handle validate phone number*/
   const validatePhoneNumber = (_, value) => {
     if (!value) {
-      return Promise.resolve();
+      return Promise.resolve(); // Nếu trống, trả về resolved mà không có lỗi
     }
     const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
     if (!phoneRegex.test(value)) {
@@ -461,11 +535,13 @@ const EditProcessingOrder = () => {
     return Promise.resolve();
   };
 
+  /*handle request type*/
   const handleRequestType = (value) => {
     setRequestType(value.target.value);
     updateTotalCost();
   };
 
+  /*onFinish create order*/
   const onFinish = async (values) => {
     const {
       startTime,
@@ -477,17 +553,19 @@ const EditProcessingOrder = () => {
       ...otherValues
     } = values;
 
+    // Tìm service được chọn
+    const selectedService = dataFetch.serviceList?.find(
+      (service) => service.title === serviceTitle
+    );
+
+    // Prepare data for backend
     const dataForBackend = {
       ...otherValues,
       startTime: values.startTime?.format("HH:mm"),
       endTime: values.endTime?.format("HH:mm"),
       requestType: requestType === "short" ? "Ngắn hạn" : "Dài hạn",
-      serviceBasePrice: dataFetch?.serviceList?.find(
-        (item) => item.title === values.serviceTitle
-      )?.basicPrice,
-      coefficientService: dataFetch?.serviceList?.find(
-        (item) => item.title === values.serviceTitle
-      )?.coefficient,
+      serviceBasePrice: selectedService?.basicPrice,
+      coefficient_service: selectedService?.coefficient,
       startDate:
         requestType === "short"
           ? values.workDate?.format("YYYY-MM-DD")
@@ -499,15 +577,25 @@ const EditProcessingOrder = () => {
       province: values.location?.[0],
       district: values.location?.[1],
       ward: values.location?.[2],
-      coefficientOther: values.coefficientOther,
+
+      // Chỉ gửi các hệ số đang được áp dụng
+      coefficient_ot: appliedCoefficients.overtime || 1,
+      coefficient_other: appliedCoefficients.weekend || 1,
+
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
+      detailCost: detailCost, // Add the detailed cost array
     };
 
     try {
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`,
-        dataForBackend
+        dataForBackend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       if (response.status === 200) {
@@ -520,7 +608,7 @@ const EditProcessingOrder = () => {
         setTimeout(() => {
           navigate("/order");
           setShowNotification(null);
-        }, 1500);
+        }, 600);
       }
     } catch (error) {
       console.error("Error updating order:", error);
@@ -532,10 +620,47 @@ const EditProcessingOrder = () => {
     }
   };
 
-  // Check if dataFetch is loaded before rendering
-  if (!dataFetch || !dataFetch.locations) {
-    return <div>Loading...</div>; // Or a more sophisticated loading indicator
-  }
+  // Hàm kiểm tra xem ngày có phải cuối tuần không
+  const checkIsWeekend = (date) => {
+    const saturday = 6;
+    const sunday = 0;
+
+    if (Array.isArray(date)) {
+      // Trường hợp dài hạn
+      const startDate = date[0];
+      const endDate = date[1];
+      let currentDate = startDate;
+
+      while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+        const currentDay = currentDate.day();
+        if (currentDay === saturday || currentDay === sunday) {
+          return true;
+        }
+        currentDate = currentDate.add(1, 'day');
+      }
+      return false;
+    } else {
+      // Trường hợp ngắn hạn
+      const orderDay = date.day();
+      return orderDay === saturday || orderDay === sunday;
+    }
+  };
+
+  // Hàm kiểm tra xem thời gian có nằm ngoài giờ làm việc không
+  const checkIsOutsideOfficeHours = (startTime, endTime, timeList) => {
+    const orderStartMinutes = timeToMinutes(startTime.format("HH:mm"));
+    const orderEndMinutes = timeToMinutes(endTime.format("HH:mm"));
+
+    const officeStartMinutes = timeToMinutes(timeList?.officeStartTime);
+    const officeEndMinutes = timeToMinutes(timeList?.officeEndTime);
+    const dayStartMinutes = timeToMinutes(timeList?.openHour);
+    const dayEndMinutes = timeToMinutes(timeList?.closeHour);
+
+    return (
+      (orderStartMinutes >= dayStartMinutes && orderStartMinutes < officeStartMinutes) ||
+      (orderEndMinutes > officeEndMinutes && orderEndMinutes <= dayEndMinutes)
+    );
+  };
 
   return (
     <Card className="card" title="Thông tin đơn hàng">
@@ -549,22 +674,22 @@ const EditProcessingOrder = () => {
           <Col span={10}>
             <Form.Item
               name="phone"
-              label="Số Điện Thoại KH"
+              label="Số điện thoại KH"
               rules={[
                 { required: true, message: "Vui lòng nhập số điện thoại!" },
                 { validator: validatePhoneNumber },
               ]}
             >
-              <Input id="phone" />
+              <Input />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item
               name="fullName"
-              label="Họ và Tên KH"
+              label="Họ và tên KH"
               rules={[{ required: true, message: "Vui lòng nhập họ tên!" }]}
             >
-              <Input id="fullName" />
+              <Input />
             </Form.Item>
           </Col>
         </Row>
@@ -573,15 +698,15 @@ const EditProcessingOrder = () => {
           <Col span={10}>
             <Form.Item
               name="address"
-              label="Địa Chỉ Khách Hàng"
+              label="Địa chỉ khách hàng"
               rules={[{ required: true, message: "Vui lòng nhập địa chỉ!" }]}
             >
-              <Input id="address" />
+              <Input />
             </Form.Item>
           </Col>
           <Col span={8} className="location-custom">
             <Form.Item
-              name="location"
+              name="location" // Name for the location data in form values
               label="Địa điểm"
               rules={[{ required: true, message: "Vui lòng chọn địa điểm!" }]}
             >
@@ -595,32 +720,38 @@ const EditProcessingOrder = () => {
             </Form.Item>
           </Col>
         </Row>
-
         <Row>
           <Col span={7}>
             <Form.Item
               name="serviceTitle"
-              label="Loại Dịch Vụ"
+              label="Loại dịch dụ"
               rules={[{ required: true, message: "Vui lòng chọn dịch vụ!" }]}
             >
-              <Radio.Group className="service-radio-group">
+              <Radio.Group
+                className="service-radio-group"
+                onChange={updateTotalCost}
+                value={form.getFieldValue("serviceTitle")}
+              >
                 {dataFetch &&
-                dataFetch.serviceList &&
-                dataFetch.serviceList.length > 0 ? (
-                  dataFetch.serviceList.map((service, index) => (
-                    <Radio key={index} value={service.title}>
-                      {service.title}
-                    </Radio>
-                  ))
-                ) : (
-                  <div>Đang tải dịch vụ...</div>
-                )}
+                  dataFetch.serviceList &&
+                  dataFetch.serviceList.length > 0 ? (
+                    dataFetch.serviceList.map((service, index) => (
+                      <Radio key={index} value={service.title}>
+                        {service.title}
+                      </Radio>
+                    ))
+                  ) : (
+                    <div>Đang tải dịch vụ...</div>
+                  )}
               </Radio.Group>
             </Form.Item>
           </Col>
           <Col span={5}>
-            <Form.Item name="requestType" label="Loại Yêu Cầu">
-              <Radio.Group onChange={handleRequestType}>
+            <Form.Item name="requestType" label="Loại yêu cầu">
+              <Radio.Group
+                onChange={handleRequestType}
+                value={form.getFieldValue("requestType")}
+              >
                 <Radio value="short">Ngắn hạn</Radio>
                 <Radio value="long">Dài hạn</Radio>
               </Radio.Group>
@@ -631,7 +762,7 @@ const EditProcessingOrder = () => {
               name="workDate"
               label={
                 requestType === "short"
-                  ? "Ngày Làm Việc"
+                  ? "Ngày làm việc"
                   : "Khoảng Thời Gian Làm Việc"
               }
               rules={[
@@ -657,10 +788,10 @@ const EditProcessingOrder = () => {
         </Row>
 
         <Row>
-          <Col span={3}>
+          <Col span={3} style={{ marginRight: "18px" }}>
             <Form.Item
               name="startTime"
-              label="Giờ Bắt Đầu"
+              label="Giờ bắt đầu"
               rules={[
                 { required: true, message: "Vui lòng chọn giờ bắt đầu!" },
               ]}
@@ -677,10 +808,10 @@ const EditProcessingOrder = () => {
               />
             </Form.Item>
           </Col>
-          <Col span={3}>
+          <Col span={3} style={{ marginRight: "18px" }}>
             <Form.Item
               name="endTime"
-              label="Giờ Kết Thúc"
+              label="Giờ kết thúc"
               rules={[
                 { required: true, message: "Vui lòng chọn giờ kết thúc!" },
               ]}
@@ -695,15 +826,6 @@ const EditProcessingOrder = () => {
                 disabledMinutes={disabledMinutes}
                 hideDisabledOptions={true}
               />
-            </Form.Item>
-          </Col>
-          <Col span={3}>
-            <Form.Item
-              name="coefficientOther"
-              label="Hệ số"
-              rules={[{ required: true, message: "Vui lòng chọn hệ số phụ!" }]}
-            >
-              <Input disabled value={appliedCoefficient} />
             </Form.Item>
           </Col>
         </Row>
