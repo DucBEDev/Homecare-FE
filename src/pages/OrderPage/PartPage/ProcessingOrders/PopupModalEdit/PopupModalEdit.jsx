@@ -11,6 +11,9 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   const [isFormValid, setIsFormValid] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const [timeList, setTimeList] = useState(null);
+  const [totalCost, setTotalCost] = useState(0);
+  const [detailCost, setDetailCost] = useState([]);
+  const [serviceBasePrice, setServiceBasePrice] = useState(0);
 
   useEffect(() => {
     if (record) {
@@ -21,7 +24,138 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       });
       setIsFormValid(true);
       setTimeErrors("");
+      
+      // Fetch service base price if needed
+      fetchServiceBasePrice();
     }
+  }, [record]);
+
+  // Fetch service base price
+  const fetchServiceBasePrice = async () => {
+    try {
+      if (record && record.mainOrderId) {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/detail/${record.mainOrderId}`
+        );
+        
+        if (response.data && response.data.request && response.data.request.service) {
+          setServiceBasePrice(response.data.request.service.cost || 0);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching service base price:", error);
+    }
+  };
+
+  // Calculate total cost function from AddOrder.jsx
+  const calculateTotalCost = (startTime, endTime, workDate) => {
+    if (!startTime || !endTime || !timeList) {
+      return { newTotalCost: 0, newDetailCost: [] };
+    }
+
+    // Get service data from record
+    const basicCost = parseFloat(serviceBasePrice || 0);
+    const HSDV = parseFloat(record.coefficient_service || 1);
+    const HSovertime = parseFloat(record.coefficientOtherList?.[0]?.value || 1);
+    const HScuoituan = parseFloat(record.coefficientOtherList?.[1]?.value || 1);
+
+    const start = dayjs(startTime, "HH:mm");
+    const end = dayjs(endTime, "HH:mm");
+    
+    const officeStartTime = dayjs(timeList.officeStartTime, "HH:mm");
+    const officeEndTime = dayjs(timeList.officeEndTime, "HH:mm");
+
+    let totalCost = 0;
+    let detailCostArray = [];
+
+    // Calculate cost for a specific day
+    const calculateDailyCost = (currentDate) => {
+      // Convert string date to dayjs object if needed
+      const dateObj = typeof currentDate === 'string' ? dayjs(currentDate) : currentDate;
+      
+      const dayOfWeek = dateObj.day();
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+      
+      const dailyHours = end.diff(start, "hour", true);
+      
+      // Calculate overtime hours (T1) and regular hours (T2)
+      let T1 = 0; // Overtime hours
+      
+      // Before office hours
+      if (start.isBefore(officeStartTime)) {
+        T1 += officeStartTime.diff(start, "hour", true);
+      }
+      
+      // After office hours
+      if (end.isAfter(officeEndTime)) {
+        T1 += end.diff(officeEndTime, "hour", true);
+      }
+      
+      // Regular hours
+      const T2 = Math.max(0, dailyHours - T1);
+      
+      // Determine applied coefficient
+      const weekendCoefficient = isWeekend ? HScuoituan : 1;
+      
+      // Calculate cost: cost = basicCost * HSDV * [(HSovertime * T1 * weekendCoefficient) + (weekendCoefficient * T2)]
+      const overtimeCost = HSovertime * T1 * weekendCoefficient;
+      const normalCost = weekendCoefficient * T2;
+      const dayCost = basicCost * HSDV * (overtimeCost + normalCost);
+      
+      // Create detail object for this day
+      return {
+        date: dateObj.format("YYYY-MM-DD"),
+        startTime: start.format("HH:mm"),
+        endTime: end.format("HH:mm"),
+        isWeekend: isWeekend,
+        hasOvertimeHours: T1 > 0,
+        overtimeHours: T1,
+        normalHours: T2,
+        appliedCoefficients: {
+          service: HSDV,
+          overtime: HSovertime,
+          weekend: weekendCoefficient
+        },
+        cost: dayCost
+      };
+    };
+
+    // Calculate cost for the specific day
+    // Use the raw workingDate from the record if available
+    const dateToUse = record.workingDate || workDate;
+    const dailyCostDetail = calculateDailyCost(dateToUse);
+    detailCostArray.push(dailyCostDetail);
+    totalCost = dailyCostDetail.cost;
+    
+    return { 
+      newTotalCost: totalCost,
+      newDetailCost: detailCostArray
+    };
+  };
+
+  useEffect(() => {
+    const fetchTimeData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_API_URL}admin/requests/create`
+        );
+        setTimeList(response.data.timeList);
+        
+        // Calculate initial cost once time data is loaded
+        if (record && record.gioBatDau && record.gioKetThuc) {
+          const { newTotalCost, newDetailCost } = calculateTotalCost(
+            record.gioBatDau,
+            record.gioKetThuc,
+            record.workingDate
+          );
+          setTotalCost(newTotalCost);
+          setDetailCost(newDetailCost);
+        }
+      } catch (error) {
+        console.error("Error fetching time data:", error);
+      }
+    };
+    fetchTimeData();
   }, [record]);
 
   const handleTimeChange = (field, time) => {
@@ -65,6 +199,17 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
         )
       );
 
+      // Recalculate cost when time changes
+      if (updatedRecord.gioBatDauMoi && updatedRecord.gioKetThucMoi && timeList) {
+        const { newTotalCost, newDetailCost } = calculateTotalCost(
+          updatedRecord.gioBatDauMoi,
+          updatedRecord.gioKetThucMoi,
+          record.workingDate
+        );
+        setTotalCost(newTotalCost);
+        setDetailCost(newDetailCost);
+      }
+
       return updatedRecord;
     });
   };
@@ -82,24 +227,8 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
     return diffInHours >= 2 && diffInHours % 1 === 0;
   };
 
-  useEffect(() => {
-    const fetchTimeData = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}admin/requests/create`
-        );
-        setTimeList(response.data.timeList);
-      } catch (error) {
-        console.error("Error fetching time data:", error);
-      }
-    };
-    fetchTimeData();
-  }, []);
-
   // Update the disabled hours function
   const disabledHours = () => {
-    
-
     if (!timeList) return [];
 
     const openHour = parseInt(timeList.openHour.split(":")[0], 10);
@@ -145,6 +274,8 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
         coefficient_other: editedRecord.coefficient_other,
         coefficient_OT: editedRecord.coefficientOtherList[0].value,
         coefficient_service: editedRecord.coefficient_service,
+        totalCost: totalCost,
+        detailCost: detailCost
       };
 
       console.log("payload edit:", payload);
@@ -294,6 +425,14 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
                 disabledMinutes={disabledMinutes}
                 hideDisabledOptions={true}
               />
+            </div>
+          </Col>
+          <Col span={24}>
+            <div className="info-item">
+              <span>Chi phí mới:</span>
+              <span style={{ color: "#32d48a", fontWeight: "bold" }}>
+                {totalCost.toLocaleString()} VND
+              </span>
             </div>
           </Col>
           <div className="error-message">{timeErrors}</div>

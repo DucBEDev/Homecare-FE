@@ -501,6 +501,7 @@ const ShowProcessingDetail = () => {
                 day: "numeric",
               }
             ),
+            workingDate: schedule.workingDate,
             nguoiGiupViec: currentHelper ? currentHelper.fullName : "Chưa có",
             chiPhiNGV: schedule.helper_cost ? 
               schedule.helper_cost.toLocaleString() + " VND" : 
