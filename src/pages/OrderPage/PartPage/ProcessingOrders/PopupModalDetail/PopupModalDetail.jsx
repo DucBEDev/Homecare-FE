@@ -104,7 +104,7 @@ const PopupModalDetail = ({
       } else {
         // Lấy chi phí hiện tại của người giúp việc A (nếu có)
         const currentHelperCost = record.chiPhiNGV ? 
-          parseInt(record.chiPhiNGV) : 0;
+          parseInt(record.chiPhiNGV.toString().replace(/[^0-9]/g, '')) : 0;
         
         // Chuẩn bị dữ liệu gửi đi cho đơn nhỏ, thêm helperCost
         const payload = {
