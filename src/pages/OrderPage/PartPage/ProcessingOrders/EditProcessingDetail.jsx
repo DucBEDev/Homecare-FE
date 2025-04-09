@@ -62,11 +62,11 @@ const EditProcessingOrder = () => {
             orderData.request.requestType === "Dài hạn" ? "long" : "short",
           workDate:
             orderData.request.requestType === "Dài hạn"
-              ? [
-                  dayjs(orderData.request.startDate),
-                  dayjs(orderData.request.endDate),
+              ? [ 
+                  dayjs(orderData.request.startTime),
+                  dayjs(orderData.request.endTime),
                 ]
-              : dayjs(orderData.request.startDate),
+              : dayjs(orderData.request.startTime),
           startTime: dayjs(orderData.request.formatStartTime, "HH:mm"),
           endTime: dayjs(orderData.request.formatEndTime, "HH:mm"),
         });
