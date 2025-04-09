@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Modal, Button, Row, Col, TimePicker, message } from "antd";
+import React, { useCallback, useEffect, useState } from "react";
+import { Modal, Button, Row, Col, TimePicker, message, Spin } from "antd";
 import dayjs from "dayjs";
 import "../../../StylePage/stylePopupModalEdit.css";
 import axios from "axios";
@@ -14,6 +14,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   const [totalCost, setTotalCost] = useState(0);
   const [detailCost, setDetailCost] = useState([]);
   const [serviceBasePrice, setServiceBasePrice] = useState(0);
+  const [isCalculatingCost, setIsCalculatingCost] = useState(true);
 
   useEffect(() => {
     if (record) {
@@ -48,7 +49,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
   };
 
   // Calculate total cost function from AddOrder.jsx
-  const calculateTotalCost = (startTime, endTime, workDate) => {
+  const calculateTotalCost = useCallback((startTime, endTime, workDate) => {
     if (!startTime || !endTime || !timeList) {
       return { newTotalCost: 0, newDetailCost: [] };
     }
@@ -131,7 +132,7 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
       newTotalCost: totalCost,
       newDetailCost: detailCostArray
     };
-  };
+  }, [timeList, serviceBasePrice, record]);
 
   useEffect(() => {
     const fetchTimeData = async () => {
@@ -141,22 +142,61 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
         );
         setTimeList(response.data.timeList);
         
-        // Calculate initial cost once time data is loaded
-        if (record && record.gioBatDau && record.gioKetThuc) {
-          const { newTotalCost, newDetailCost } = calculateTotalCost(
-            record.gioBatDau,
-            record.gioKetThuc,
-            record.workingDate
-          );
-          setTotalCost(newTotalCost);
-          setDetailCost(newDetailCost);
-        }
+        
       } catch (error) {
         console.error("Error fetching time data:", error);
       }
     };
     fetchTimeData();
-  }, [record]);
+  }, []);
+
+  // useEffect mới để tính toán chi phí
+  useEffect(() => {
+    // Kiểm tra xem tất cả dữ liệu cần thiết đã sẵn sàng chưa
+    if (
+      editedRecord?.gioBatDauMoi &&
+      editedRecord?.gioKetThucMoi &&
+      timeList &&
+      serviceBasePrice > 0 && // Đảm bảo giá dịch vụ đã được fetch
+      record?.workingDate &&
+      isFormValid // Chỉ tính khi form hợp lệ
+    ) {
+      setIsCalculatingCost(true); // <-- Bắt đầu loading
+
+      // Sử dụng setTimeout để đảm bảo state loading được cập nhật trước khi tính toán nặng (nếu cần)
+      // và cũng để người dùng thấy được trạng thái loading một cách rõ ràng hơn.
+      const timer = setTimeout(() => {
+          const { newTotalCost, newDetailCost } = calculateTotalCost(
+            editedRecord.gioBatDauMoi,
+            editedRecord.gioKetThucMoi,
+            record.workingDate
+          );
+          setTotalCost(newTotalCost);
+          setDetailCost(newDetailCost);
+          setIsCalculatingCost(false); // <-- Kết thúc loading
+      }, 50); // Delay nhỏ 50ms
+
+      // Cleanup timer nếu component unmount hoặc dependencies thay đổi trước khi timeout kết thúc
+       return () => clearTimeout(timer);
+
+    } else if (!isFormValid) {
+        // Nếu form không hợp lệ, không tính toán và ẩn loading
+        setTotalCost(0); // Có thể reset chi phí về 0
+        setDetailCost([]);
+        setIsCalculatingCost(false);
+    } else {
+        // Nếu dữ liệu chưa đủ, giữ trạng thái loading (hoặc set false nếu muốn ẩn)
+        // setIsCalculatingCost(true); // Đảm bảo vẫn loading nếu thiếu dữ liệu
+    }
+  }, [
+    editedRecord?.gioBatDauMoi,
+    editedRecord?.gioKetThucMoi,
+    timeList,
+    serviceBasePrice,
+    record?.workingDate,
+    calculateTotalCost, // Thêm calculateTotalCost (đã bọc useCallback) vào dependencies
+    isFormValid // Thêm isFormValid để không tính toán khi giờ không hợp lệ
+  ]);
 
   const handleTimeChange = (field, time) => {
     const newTime = time ? time.format("HH:mm") : null;
@@ -198,17 +238,6 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
           updatedRecord.gioKetThucMoi
         )
       );
-
-      // Recalculate cost when time changes
-      if (updatedRecord.gioBatDauMoi && updatedRecord.gioKetThucMoi && timeList) {
-        const { newTotalCost, newDetailCost } = calculateTotalCost(
-          updatedRecord.gioBatDauMoi,
-          updatedRecord.gioKetThucMoi,
-          record.workingDate
-        );
-        setTotalCost(newTotalCost);
-        setDetailCost(newDetailCost);
-      }
 
       return updatedRecord;
     });
@@ -430,9 +459,13 @@ const PopupModalEdit = ({ isVisible, onClose, onEdit, record, orderData }) => {
           <Col span={24}>
             <div className="info-item">
               <span>Chi phí mới:</span>
-              <span style={{ color: "#32d48a", fontWeight: "bold" }}>
-                {totalCost.toLocaleString()} VND
-              </span>
+              {isCalculatingCost ? ( // <-- Kiểm tra trạng thái loading
+                <Spin size="small" style={{ marginLeft: '10px' }} /> // <-- Hiển thị Spin nếu đang loading
+              ) : (
+                <span style={{ color: isFormValid ? "#32d48a" : "#ccc", fontWeight: "bold" }}> {/* Thay đổi màu nếu không hợp lệ */}
+                   {isFormValid ? `${totalCost.toLocaleString()} VND` : 'N/A'} {/* Hiển thị N/A nếu không hợp lệ */}
+                </span>
+              )}
             </div>
           </Col>
           <div className="error-message">{timeErrors}</div>
