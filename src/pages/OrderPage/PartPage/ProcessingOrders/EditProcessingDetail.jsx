@@ -44,6 +44,8 @@ const EditProcessingOrder = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`
         );
+        console.log( "ccc", response.data);
+        
         const orderData = response.data;
 
         // Set giá trị cho các trường trong form
@@ -65,9 +67,11 @@ const EditProcessingOrder = () => {
                   dayjs(orderData.request.endDate),
                 ]
               : dayjs(orderData.request.startDate),
-          startTime: dayjs(orderData.request.startTime, "HH:mm"),
-          endTime: dayjs(orderData.request.endTime, "HH:mm"),
+          startTime: dayjs(orderData.request.formatStartTime, "HH:mm"),
+          endTime: dayjs(orderData.request.formatEndTime, "HH:mm"),
         });
+
+        console.log(dayjs(orderData.request.startTime, "HH:mm"), "\n" , dayjs(orderData.request.endTime, "HH:mm"))
 
         setRequestType(
           orderData.request.requestType === "Dài hạn" ? "long" : "short"
@@ -565,7 +569,7 @@ const EditProcessingOrder = () => {
       endTime: values.endTime?.format("HH:mm"),
       requestType: requestType === "short" ? "Ngắn hạn" : "Dài hạn",
       serviceBasePrice: selectedService?.basicPrice,
-      coefficient_service: selectedService?.coefficient,
+      coefficientService: selectedService?.coefficient,
       startDate:
         requestType === "short"
           ? values.workDate?.format("YYYY-MM-DD")
@@ -579,14 +583,15 @@ const EditProcessingOrder = () => {
       ward: values.location?.[2],
 
       // Chỉ gửi các hệ số đang được áp dụng
-      coefficient_ot: appliedCoefficients.overtime || 1,
-      coefficient_other: appliedCoefficients.weekend || 1,
+      coefficientOt: appliedCoefficients.overtime || 1,
+      coefficientOther: appliedCoefficients.weekend || 1,
 
       serviceTitle: values.serviceTitle,
       totalCost: totalCost,
-      detailCost: detailCost, // Add the detailed cost array
+      detailCost: detailCost, 
     };
-
+    console.log("dtfbe", dataForBackend);
+    
     try {
       const response = await axios.patch(
         `${process.env.REACT_APP_API_URL}admin/requests/edit/${orderId}`,
